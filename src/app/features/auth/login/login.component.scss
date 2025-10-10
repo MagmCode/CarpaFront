@@ -1,0 +1,135 @@
+.login-bg, .login-card, .login-btn, .forgot-link, .login-footer, .form-label, .form-control, .input-group-text {
+  font-family: 'Nunito', Arial, sans-serif;
+  font-weight: 500;
+  color: rgba($color: #333333, $alpha: 1.0);
+}
+
+.login-bg {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background: #fff;
+}
+
+.login-card {
+  width: 500px;
+  margin-left: 12vw;
+  background: #fff;
+  border-radius: 2rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 2.5rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-control {
+  width: 100%;
+  min-width: 350px;
+  font-size: 1.1rem;
+  padding: 0.75rem 1.2rem;
+  border-radius: 1rem;
+}
+
+.login-logo img {
+  display: block;
+  margin: 0 auto 0.5rem auto;
+  height: 48px;
+}
+
+.login-title {
+  font-family: 'Nunito', Arial, sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0072ce;
+  text-align: center;
+}
+
+.login-btn {
+  width: 100%;
+  border-radius: 2rem;
+  font-size: 1.1rem;
+  padding: 0.7rem 0;
+  color: rgba($color: #ffffff, $alpha: 1.0);
+  background-color: #0072ce;
+}
+
+.forgot-link {
+  color: #0072ce;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+hr {
+  margin: 1.5rem 0 0.5rem 0;
+  border-top: 1px solid #e0e0e0;
+}
+
+@media (max-width: 600px) {
+  .login-card {
+    width: 95vw;
+    margin-left: 0;
+    // padding: 1.2rem;
+  }
+  .form-control {
+    min-width: 0;
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+  }
+}
+
+.logo-cuadros {
+  position: fixed;
+  bottom: -20px;
+  right: 0;
+  width: 700px;
+  height: 540px;
+  margin: 0;
+  z-index: 0;
+}
+
+.cuadro {
+  position: absolute;
+  // border-radius: 20px;
+  overflow: hidden;
+}
+
+.cuadro-rojo {
+  width: 330px;
+  height: 650px;
+  background: #db0032;
+  left: 0;
+  bottom: -100px;
+  border-radius: 20px;
+  transform: skewX(-10deg);
+  // z-index: 1;
+}
+
+.cuadro-amarillo {
+  width: 330px;
+  height: 700px;
+  background: #e89600;
+  left: 200px;
+  bottom: -60px;
+  border-radius: 20px;
+  transform: skewX(-10deg);
+  // z-index: 2;
+}
+
+.cuadro-azul {
+  width: 600px;
+  height: 180px;
+  background: #0067b1;
+  right: -20px;
+  top: 360px;
+  border-radius: 20px;
+  transform: skewX(-10deg);
+  z-index: 3;
+}
+
+/* Oculta el botón nativo de mostrar contraseña en navegadores Chromium */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-input-decoration-container {
+  display: none !important;
+}

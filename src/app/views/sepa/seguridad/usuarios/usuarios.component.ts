@@ -1,0 +1,243 @@
+import { Component, OnInit, TemplateRef } from '@angular/core';
+import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, Router } from '@angular/router';
+import { RolUsuario, Usuario } from 'src/app/core/models/usuarios/usuario';
+import { UsuariosService } from 'src/app/services/usuarios/usuarios.service';
+import { DataTable } from 'simple-datatables';
+import { ModificarStatusService } from 'src/app/services/usuarios/modificarStatus.service';
+
+@Component({
+  selector: 'app-usuarios',
+  templateUrl: './usuarios.component.html',
+  styleUrls: ['./usuarios.component.scss']
+})
+export class UsuariosComponent implements OnInit {
+  
+  usuarioId: string = '';
+  userStatus: number = 0;
+  aplicacion: string = '';
+  listaTodos: string = 'todos';
+  aplicaciones: Aplicacion[] = [];
+  
+  usuarios: Usuario[] = [];
+
+   private dataTable: any;
+  
+  rolesDisponibles: RolUsuario[] = [
+    { id: 1, alias: 'ADMIN', descripcion: 'Administrador', tipo: 'Usuarios de la Torre', aplicacion: 'Gestión Usuarios' },
+    { id: 2, alias: 'INV', descripcion: 'Inventario', tipo: 'Usuarios de Red Comercial', aplicacion: 'Inventario' },
+    { id: 3, alias: 'USER', descripcion: 'Usuario básico', tipo: 'Usuarios de la Torre', aplicacion: 'Gestión Usuarios' }
+  ];
+  
+  usuarioSeleccionado: Usuario | null = null;
+  
+  nuevoUsuarioId: string = '';
+  nuevoEstatus: boolean | null;
+  nuevoAplicacion: string = '';
+  
+  constructor(
+    private aplicacionesService: AplicacionesService,
+    private modalService: NgbModal,
+    private router: Router,
+    private usuariosService: UsuariosService,
+    private modificarStatusService: ModificarStatusService,
+    private route: ActivatedRoute
+  ) { }
+  
+  itemsPorPagina: number = 10;
+  paginaActual: number = 1;
+
+  usuariosFiltrados: Usuario[] = [];
+  
+  ngOnInit(): void {
+    this.aplicaciones = this.aplicacionesService.getAplicaciones();
+    this.usuariosAll()
+
+    // this.cargarUsuariosDesdeLocalStorage();
+    // const resolvedUsuarios = this.route.snapshot.data['usuarios'];
+
+  // this.usuariosService.usuarios$.subscribe((usuarios) => {
+  //     if (usuarios && usuarios.length > 0) {
+  //   this.usuarios = this.mapBackendUsuarios(usuarios); 
+  //   console.log('roles[]',usuarios)
+  //   setTimeout(() => {
+  //     if (this.dataTable) {
+  //       this.dataTable.destroy();
+  //     }
+  //     this.dataTable = new DataTable("#rolesConsultaTable");
+  //   }, 0);
+  // }
+  // });
+
+  }
+
+  usuariosAll() {
+     this.usuariosService.consultarUsuarios().subscribe({
+    next: (data) => {
+      // const usuarios = Array.isArray(data.data) ? data.data : [];
+      if (data.length > 0) {
+        this.usuariosService.setUsuarios(data);
+        localStorage.setItem('usuariosConsultados', JSON.stringify(data));
+         this.usuariosFiltrados = this.mapBackendUsuarios(data); 
+         console.log('Usuarios All jaja:', this.usuariosFiltrados);
+      }
+      console.log('Usuarios All:', data);
+    },
+      error: (err) => {
+        console.error('Error al consultar usuarios:', err);
+      }
+  });
+  }
+
+  private mapBackendUsuarios(backendUsuarios: any[]): Usuario[] {
+  return backendUsuarios.map(u => ({
+    mscUserId: u.mscUserId ?? 0,
+    userId: u.userId ?? '',
+    fullName: u.fullName ?? '',
+    email: u.email ?? '',
+    userStatus: u.userStatus ?? 0,
+    roles: Array.isArray(u.roles) ? u.roles : [],
+  }));
+}
+
+  cargarUsuariosDesdeLocalStorage() {
+  const LOCAL_KEY = 'usuariosConsultados';
+  const usuariosGuardados = localStorage.getItem(LOCAL_KEY);
+  console.log("usuarios guardados", usuariosGuardados);
+  if (usuariosGuardados) {
+    const usuarios = JSON.parse(usuariosGuardados);
+    this.usuarios = this.mapBackendUsuarios(usuarios);
+    this.filtrarUsuarios();
+    setTimeout(() => {
+      if (this.dataTable) {
+        this.dataTable.destroy();
+      }
+      this.dataTable = new DataTable("#rolesConsultaTable");
+    }, 0);
+  }
+}
+
+  filtrarUsuarios() {
+  this.paginaActual = 1;
+  this.usuariosFiltrados = this.usuarios.filter(u =>
+    (!this.usuarioId || u.userId.toLowerCase().includes(this.usuarioId.toLowerCase())) &&
+    // (!this.userStatus || u.userStatus === this.userStatus) &&
+    (!this.aplicacion || u.roles.some(r => r.aplicacion === this.aplicacion)) &&
+    (this.listaTodos === 'todos' || u.roles.some(r => r.alias === this.listaTodos))
+  );
+  }
+  
+  consultar() {
+    this.router.navigate(['/seguridad/usuarios/consultas']);
+  }
+  
+  openAddUserModal(content: any) {
+    this.nuevoUsuarioId = '';
+    this.nuevoEstatus = null;
+    this.nuevoAplicacion = '';
+    this.modalService.open(content, { centered: true });
+  }
+  
+  addUser(modal: any) {
+    modal.close();
+  }
+  
+  openEliminarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
+    this.usuarioSeleccionado = usuario;
+    this.modalService.open(TemplateRef, { centered: true });
+  }
+  
+  eliminarUsuario(usuario: Usuario, modal: any) {
+    this.usuarios = this.usuarios.filter(u => u.userId !== usuario.userId);
+    modal.close();
+  }
+  
+  openEditarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
+    this.usuarioSeleccionado = { ...usuario };
+    this.modalService.open(TemplateRef, { centered: true });
+  }
+
+  procesarStatus(modal: any) {
+    const userId  = this.usuarioSeleccionado?.userId;
+    const userStatus  = this.usuarioSeleccionado?.userStatus;
+    console.log("procesar", userId, userStatus)
+    if (userId !== undefined && userStatus !== undefined) {
+      const payload = {
+        userId: userId,
+        userStatus: userStatus
+      };
+      this.modificarStatusService.modificarStatus(payload).subscribe({
+        next: (response: any) => {
+          console.log("respuesta de estatus", response);
+          JSON.stringify(response);
+          modal.close();
+          this.usuariosAll();
+        }
+      });
+    } else {
+      console.error('userId or userStatus is undefined');
+    }
+  }
+  
+  guardarEdicionUsuario(modal: any) {
+    if (this.usuarioSeleccionado) {
+      const idx = this.usuarios.findIndex(u => u.userId === this.usuarioSeleccionado!.userId);
+      if (idx !== -1) {
+        this.usuarios[idx] = { ...this.usuarioSeleccionado };
+      }
+    }
+    modal.close();
+  }
+  
+  openEditarRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
+    this.usuarioSeleccionado = usuario;
+    this.modalService.open(TemplateRef, { centered: true });
+  }
+  
+  openAsociarRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
+    this.usuarioSeleccionado = usuario;
+    this.rolesDisponibles.forEach(r => {
+      r.seleccionado = !!usuario.roles.find(ur => ur.id === r.id);
+    });
+    this.modalService.open(TemplateRef, { centered: true });
+  }
+  
+  guardarAsociacionRoles(usuario: Usuario, modal: any) {
+    const rolesSeleccionados = this.rolesDisponibles.filter(r => r.seleccionado);
+    const idx = this.usuarios.findIndex(u => u.userId === usuario.userId);
+    if (idx !== -1) {
+      this.usuarios[idx].roles = rolesSeleccionados.map(r => ({
+        id: r.id,
+        alias: r.alias,
+        descripcion: r.descripcion,
+        tipo: r.tipo,
+        aplicacion: r.aplicacion
+      }));
+    }
+    modal.close();
+  }
+  
+  get totalPaginas(): number {
+    return Math.ceil(this.usuariosFiltrados.length / this.itemsPorPagina) || 1;
+  }
+  
+  get paginas(): number[] {
+    return Array(this.totalPaginas).fill(0).map((_, i) => i + 1);
+  }
+  
+  get usuariosPaginados(): Usuario[] {
+    const inicio = (this.paginaActual - 1) * this.itemsPorPagina;
+    return this.usuariosFiltrados.slice(inicio, inicio + this.itemsPorPagina);
+  }
+  
+  cambiarPagina(pagina: number) {
+    if (pagina >= 1 && pagina <= this.totalPaginas) {
+      this.paginaActual = pagina;
+    }
+  }
+
+  salir() {
+    console.log('Salir');
+  }
+}

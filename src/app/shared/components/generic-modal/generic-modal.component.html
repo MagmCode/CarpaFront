@@ -1,0 +1,12 @@
+<div class="modal-header">
+  <h5 class="modal-title">{{ title }}</h5>
+  <button type="button" class="btn-close" aria-label="Close" (click)="close('close')"></button>
+</div>
+<div class="modal-body">
+  <ng-content></ng-content>
+</div>
+<div class="modal-footer">
+  <button *ngFor="let action of actions" type="button" class="btn" [ngClass]="action.class" (click)="action.handler()">
+    {{ action.label }}
+  </button>
+</div>

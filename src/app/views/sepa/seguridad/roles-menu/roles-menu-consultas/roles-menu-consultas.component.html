@@ -1,0 +1,80 @@
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Seguridad/Roles-Menu</h6>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Seleccionar</th>
+                <th>Rol (Alias corto)</th>
+                <th>Descripción</th>
+                <th>Aplicación</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let registro of registros">
+                <td>
+                  <button class="btn btn-sm btn-primary" (click)="verDetalles(registro, addRoleModal)">
+                    <i class="mdi mdi-eye"></i>
+                  </button>
+                </td>
+                <td>{{ registro.alias }}</td>
+                <td>{{ registro.descripcion }}</td>
+                <td>{{ registro.aplicacion }}</td>
+              </tr>
+            </tbody>
+          </table>
+        <div class="d-flex justify-content-start gap-3 mt-5">
+          <button class="btn btn-success" (click)="openAddRoleModal(addRoleModal)">
+            <i class="mdi mdi-plus"></i> Añadir registro
+          </button>
+          <button class="btn btn-secondary" (click)="regresar()">
+            <i class="mdi mdi-arrow-left"></i> Regresar
+          </button>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para añadir registro -->
+<ng-template #addRoleModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Añadir Registro</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <form (ngSubmit)="addRole(modal)">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="rol" class="form-label">Rol (alias corto)</label>
+        <input id="rol" name="rol" class="form-control" [(ngModel)]="newRole.rol" required>
+      </div>
+      <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea id="descripcion" name="descripcion" class="form-control" [(ngModel)]="newRole.descripcion"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="tipo" class="form-label">Tipo</label>
+        <select id="tipo" name="tipo" class="form-select" [(ngModel)]="newRole.tipo" required>
+          <option value="" disabled selected>Seleccione un tipo</option>
+          <option value="usuarios de la torre">Usuarios de la Torre</option>
+          <option value="usuarios de red comercial">Usuarios de Red Comercial</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="aplicacion" class="form-label">Aplicación</label>
+        <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newRole.aplicacion" required>
+          <option value="" disabled selected>Seleccione una aplicación</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-success">Añadir</button>
+      <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+    </div>
+  </form>
+</ng-template>

@@ -1,0 +1,108 @@
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Seguridad/Parámetros del Sistema</h6>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Eliminar</th>
+                <th>Editar</th>
+                <th>Nombre del Parámetro</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let parametro of parametros">
+                <td>
+                  <button class="btn btn-sm btn-danger" (click)="openEliminarModal(parametro, eliminarModal)">
+                    <i class="mdi mdi-delete"></i>
+                  </button>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-primary" (click)="openEditarModal(parametro, editarModal)">
+                    <i class="mdi mdi-pencil"></i>
+                  </button>
+                </td>
+                <td>{{ parametro.nombre }}</td>
+                <td>{{ parametro.valor }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-start gap-3 mt-5">
+          <button class="btn btn-success" (click)="openAddParametroModal(addParametroModal)">
+            <i class="mdi mdi-plus"></i> Añadir registro
+          </button>
+          <button class="btn btn-danger" (click)="salir()">
+            <i class="mdi mdi-arrow-left"></i> Salir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para eliminar parámetro -->
+<ng-template #eliminarModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Eliminar Parámetro</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body text-center">
+    <p>¿Está seguro que desea eliminar el parámetro <strong>{{ parametroSeleccionado?.nombre }}</strong>?</p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-danger" (click)="eliminarParametro(parametroSeleccionado!, modal)">Eliminar</button>
+    <button class="btn btn-secondary" (click)="modal.close()">Cancelar</button>
+  </div>
+</ng-template>
+
+<!-- Modal para editar parámetro -->
+<ng-template #editarModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Editar Parámetro</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <form *ngIf="parametroSeleccionado" (ngSubmit)="guardarEdicionParametro(modal)">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="editNombre" class="form-label">Nombre</label>
+        <input id="editNombre" class="form-control" [(ngModel)]="parametroSeleccionado.nombre" name="editNombre" required>
+      </div>
+      <div class="mb-3">
+        <label for="editValor" class="form-label">Valor</label>
+        <input id="editValor" class="form-control" [(ngModel)]="parametroSeleccionado.valor" name="editValor" required>
+      </div>
+    </div>
+    <div class="modal-footer d-flex justify-content-start gap-3 mt-4">
+      <button class="btn btn-success" type="submit">Guardar</button>
+      <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
+    </div>
+  </form>
+</ng-template>
+
+<!-- Modal para añadir parámetro -->
+<ng-template #addParametroModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Añadir Parámetro</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <form (ngSubmit)="addParametro(modal)">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="nuevoNombre" class="form-label">Nombre</label>
+        <input id="nuevoNombre" name="nuevoNombre" class="form-control" [(ngModel)]="nuevoParametro.nombre" required>
+      </div>
+      <div class="mb-3">
+        <label for="nuevoValor" class="form-label">Valor</label>
+        <input id="nuevoValor" name="nuevoValor" class="form-control" [(ngModel)]="nuevoParametro.valor" required>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-success" type="submit">Añadir</button>
+      <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
+    </div>
+  </form>
+</ng-template>

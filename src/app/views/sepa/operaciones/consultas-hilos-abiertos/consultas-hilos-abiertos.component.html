@@ -1,0 +1,50 @@
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Consultas de Hilos Abiertos</h6>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>Ejecución ID</th>
+                <th>Fecha de Inicio</th>
+                <th>Fecha de Cierre</th>
+                <th>Nombre del Hilo</th>
+                <th>Estatus</th>
+                <th>Usuario</th>
+                <th>ID del Hilo</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ciclo of ciclos">
+                <td>{{ ciclo.ejecucionId }}</td>
+                <td>{{ ciclo.fechaInicio }}</td>
+                <td>{{ ciclo.fechaCierre }}</td>
+                <td>{{ ciclo.nombreHilo }}</td>
+                <td>
+                  <span class="badge" 
+                  [ngClass]="{
+                    'text-bg-success': ciclo.estatus === 'TERMINATED',
+                    'text-bg-warning': ciclo.estatus === 'RUNNING',
+                    'text-bg-danger': ciclo.estatus === 'FAILED'
+                  }">
+                  {{ ciclo.estatus }}
+                </span>
+                </td>
+                <td>{{ ciclo.usuario }}</td>
+                <td>{{ ciclo.idHilo }}</td>
+                <td>
+                  <button class="btn btn-danger btn-sm" (click)="forzarCierre(ciclo)">
+                    <i class="mdi mdi-close"></i> Forzar Cierre
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

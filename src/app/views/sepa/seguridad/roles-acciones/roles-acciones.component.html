@@ -1,0 +1,38 @@
+<div class="row">
+  <div class="col-md-6 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Seguridad/Roles-Acciones</h6>
+        <form>
+          <div class="mb-3">
+            <label for="alias" class="form-label">Alias (Rol)</label>
+            <input type="text" class="form-control" id="alias" [(ngModel)]="alias" name="alias" placeholder="Ingrese el alias del rol">
+          </div>
+          <div class="mb-3">
+            <label for="uso" class="form-label">Uso (Rol)</label>
+            <select class="form-select" id="uso" [(ngModel)]="uso" name="uso" required>
+              <option value="" disabled selected>Seleccione el uso</option>
+              <option value="red comercial">Red Comercial</option>
+              <option value="interno">Interno</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="aplicacion" class="form-label">Aplicación</label>
+            <select class="form-select" id="aplicacion" [(ngModel)]="aplicacion" name="aplicacion" required>
+              <option value="" disabled selected>Seleccione una aplicación</option>
+              <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+            </select>
+          </div>
+          <div class="d-flex gap-3 mt-4">
+            <button type="button" class="btn btn-info" (click)="consultar()">
+              <i class="mdi mdi-magnify"></i> Consultar
+            </button>
+            <button type="button" class="btn btn-danger" (click)="salir()">
+              <i class="mdi mdi-arrow-left"></i> Salir
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

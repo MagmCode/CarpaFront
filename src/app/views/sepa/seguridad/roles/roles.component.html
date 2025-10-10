@@ -1,0 +1,119 @@
+<div class="row">
+  <div class="col-md-4 col-lg-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title">Seguridad/Roles</h6>
+        <form>
+            <div class="mb-3">
+                <label for="alias" class="form-label">Alias (Rol)</label>
+                <input type="text" class="form-control" id="alias" placeholder="Ingrese el alias del rol" required>
+            </div>
+            <div class="mb-3">
+                <label for="uso" class="form-label">Uso</label>
+                <select class="form-select" id="uso" required>
+                    <option value="" disabled selected>Seleccione el uso</option>
+                    <option value="todos">Todos</option>
+                    <option value="red comercial">Red Comercial</option>
+                    <option value="interno">Interno</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="aplicacion" class="form-label">Aplicación</label>
+                <select class="form-select" id="aplicacion" required>
+                    <option value="" disabled selected>Seleccione una aplicación</option>
+                    <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+                </select>
+            </div>
+            <div class="actionButtons d-flex justify-content-start gap-3 mt-5">
+            <button class="btn btn-success mb-3" (click)="openAddRoleModal(addRoleModal)">
+                <i class="mdi mdi-plus"></i> Añadir registro
+            </button>
+            <button class="btn btn-info mb-3" routerLink="/seguridad/roles/consultas">
+                <i class="mdi mdi-table"></i> Consultar Roles
+            </button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Tabla de roles -->
+  <div class="col-md-8 col-lg-8">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title">Seguridad/Roles</h6>
+        <div class="table-responsive">
+            <table id="rolesConsultaTable" class="table">
+                <thead>
+                    <tr>
+                        <th>Editar</th>
+                        <th>Eliminar</th>
+                        <th>Rol</th>
+                        <th>Descripción</th>
+                        <th>Tipo</th>
+                        <th>Aplicación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let rol of roles">
+                        <td>
+                            <button class="btn btn-sm btn-primary" title="Editar">
+                                <i class="mdi mdi-pencil"></i>
+                            </button>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-danger" title="Eliminar">
+                        <i class="mdi mdi-delete"></i>
+                    </button>
+                </td>
+                <td>{{ rol.rol }}</td>
+                <td>{{ rol.descripcion }}</td>
+                <td>{{ rol.tipo }}</td>
+                <td>{{ rol.aplicacion }}</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+<!-- Modal para añadir rol -->
+<ng-template #addRoleModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Añadir Registro</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <form (ngSubmit)="addRole(modal)">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="rol" class="form-label">Rol (alias corto)</label>
+        <input id="rol" name="rol" class="form-control" [(ngModel)]="newRole.rol" required>
+      </div>
+      <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea id="descripcion" name="descripcion" class="form-control" [(ngModel)]="newRole.descripcion"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="tipo" class="form-label">Tipo</label>
+        <select id="tipo" name="tipo" class="form-select" [(ngModel)]="newRole.tipo" required>
+          <option value="" disabled selected>Seleccione un tipo</option>
+          <option value="usuarios de la torre">Usuarios de la Torre</option>
+          <option value="usuarios de red comercial">Usuarios de Red Comercial</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="aplicacion" class="form-label">Aplicación</label>
+        <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newRole.aplicacion" required>
+          <option value="" disabled selected>Seleccione una aplicación</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-success">Añadir</button>
+      <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+    </div>
+  </form>
+</ng-template>

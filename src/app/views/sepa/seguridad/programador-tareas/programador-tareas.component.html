@@ -1,0 +1,63 @@
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Programador de Tareas (SCHEDULER)</h6>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>Tarea</th>
+                <th>Día</th>
+                <th>Hora/Minuto</th>
+                <th>Hora Desde</th>
+                <th>Hora Hasta</th>
+                <th>Minuto</th>
+                <th>Activo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>MantenimientoLogInfi</td>
+                <td>
+                  <select class="form-select" [(ngModel)]="diaSeleccionado" name="diaSeleccionado">
+                    <option *ngFor="let dia of diasSemana" [value]="dia">{{ dia }}</option>
+                  </select>
+                </td>
+                <td>
+                  <ngb-timepicker [(ngModel)]="horaMinutoSeleccionada" [spinners]="true" [seconds]="false" [meridian]="false" name="horaSeleccionada"></ngb-timepicker>
+                </td>
+                <td>
+                  <ngb-timepicker [(ngModel)]="horaDesde" [spinners]="true" [seconds]="false" [meridian]="false" name="horaDesde"></ngb-timepicker>
+                </td>
+                <td>
+                  <ngb-timepicker [(ngModel)]="horaHasta" [spinners]="true" [seconds]="false" [meridian]="false" name="horaHasta"></ngb-timepicker>
+                </td>
+                <!-- <td>
+                  <ngb-timepicker [(ngModel)]="minutoSeleccionado" [spinners]="true" [seconds]="false" [meridian]="false" [minuteStep]="1" name="minutoSeleccionado"></ngb-timepicker>
+                </td> -->
+                <td>
+                  <input type="number" class="form-control" [(ngModel)]="minutoSeleccionado" name="minutoSeleccionado" min="0" max="59" placeholder="Minuto">
+                </td>
+                <td>
+                  <select class="form-select" [(ngModel)]="activoSeleccionado" name="activoSeleccionado">
+                    <option [value]="true">Activo</option>
+                    <option [value]="false">Inactivo</option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-start gap-3 mt-5">
+          <button class="btn btn-success" (click)="procesar()">
+            <i class="mdi mdi-play"></i> Procesar
+          </button>
+          <button class="btn btn-secondary" (click)="salir()">
+            <i class="mdi mdi-arrow-left"></i> Salir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

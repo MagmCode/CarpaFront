@@ -1,0 +1,124 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div class="row">
+    <div *ngFor="let field of fields; let i = index" [ngClass]="layout[i]" class="mb-3" [class.d-none]="field.advanced && !showAdvancedFilters">
+      <div class="form-group">
+        <label [for]="field.name" class="form-label">{{ field.label }}</label>
+        <div *ngIf="field.type !== 'select'" class="input-group">
+          <input
+            *ngIf="field.type !== 'date'"
+            [type]="field.type"
+            [id]="field.name"
+            [formControlName]="field.name"
+            class="form-control"
+            [placeholder]="field.placeholder"
+          />
+          <div *ngIf="field.type === 'date'" class="input-group">
+            <input
+              class="form-control"
+              [placeholder]="field.placeholder"
+              [formControlName]="field.name"
+              ngbDatepicker
+              #d="ngbDatepicker"
+              readonly
+            />
+            <button
+              class="input-group-text"
+              type="button"
+              (click)="d.toggle()"
+            >
+              <i class="feather icon-calendar icon-md text-muted"></i>
+            </button>
+          </div>
+        </div>
+        <select
+          *ngIf="field.type === 'select'"
+          [id]="field.name"
+          [formControlName]="field.name"
+          class="form-select"
+        >
+          <option *ngFor="let option of field.options" [value]="option.value">{{ option.label }}</option>
+        </select>
+        <div *ngIf="form.controls[field.name].touched && form.controls[field.name].invalid" class="text-danger">
+          <div *ngIf="form.controls[field.name].errors?.required">{{ field.label }} es requerido.</div>
+          <div *ngIf="form.controls[field.name].errors?.pattern">{{ field.label }} no es válido.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-12 d-flex align-items-end justify-content-start flex-wrap">
+      <!-- Botón principal de envío -->
+      <button type="submit" class="btn mb-3 me-2" [ngClass]="submitClass">
+        <i *ngIf="submitIcon" class="{{ submitIcon }} me-1"></i> {{ submitLabel }}
+      </button>
+
+      <!-- Botón de búsqueda avanzada -->
+      <button
+        *ngIf="showAdvancedButton"
+        type="button"
+        class="btn btn-link mb-3 me-2"
+        (click)="toggleAdvancedFilters()"
+        data-bs-toggle="tooltip"
+        data-bs-placement="top"
+        title="Búsqueda avanzada">
+        <i class="feather icon-sliders"></i>
+      </button>
+
+      <!-- Botones adicionales en fila -->
+      <ng-container *ngFor="let button of additionalButtons">
+        <button
+          type="button"
+          class="btn mb-3 me-2"
+          [ngClass]="button.class || 'btn-secondary'" 
+          (click)="button.action()"
+          [title]="button.label"
+          data-bs-toggle="tooltip"
+          data-bs-placement="top">
+          <i *ngIf="button.icon" class="{{ button.icon }}"></i> {{ button.label }}
+        </button>
+      </ng-container>
+  
+      <!-- Dropdown existente -->
+      <div *ngIf="showDropdown" class="dropdown mb-3 me-2" ngbDropdown>
+        <button
+          class="btn btn-link p-0"
+          type="button"
+          id="dropdownMenuButton"
+          ngbDropdownToggle
+        >
+          <i data-feather="more-vertical" appFeatherIcon></i>
+        </button>
+        <div ngbDropdownMenu class="px-0" aria-labelledby="dropdownMenuButton">
+          <div class="px-3 py-2 d-flex align-items-center justify-content-between border-bottom">
+            <p>Opciones</p>
+          </div>
+          <div class="p-1">
+            <button ngbDropdownItem class="dropdown-item d-flex align-items-center py-2" (click)="onExportClick()">
+              <div class="wd-30 ht-30 d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
+                <i class="feather icon-download icon-sm text-white"></i>
+              </div>
+              <div class="flex-grow-1 me-2">
+                <p>Exportar</p>
+              </div>
+            </button>
+            <button ngbDropdownItem class="dropdown-item d-flex align-items-center py-2" (click)="onUploadClick()">
+              <div class="wd-30 ht-30 d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
+                <i class="feather icon-upload icon-sm text-white"></i>
+              </div>
+              <div class="flex-grow-1 me-2">
+                <p>Cargar</p>
+              </div>
+            </button>
+            <button ngbDropdownItem class="dropdown-item d-flex align-items-center py-2 disabled">
+              <div class="wd-30 ht-30 d-flex align-items-center justify-content-center bg-primary rounded-circle me-3">
+                <i class="feather icon-x-circle icon-sm text-white"></i>
+              </div>
+              <div class="flex-grow-1 me-2">
+                <p>Anular</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ng-content></ng-content>
+  </div>
+</form>

@@ -1,0 +1,140 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-title">Configuración/Servicios Web BCV</h6>
+          <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                  <thead>
+                      <tr>
+                          <th>Eliminar</th>
+                          <th>Editar</th>
+                          <th>Sistema</th>
+                          <th>Usuario</th>
+                          <th>Clave</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let registro of registros">
+                            <td>
+                                <button class="btn btn-sm btn-danger" (click)="openEliminarModal(registro, eliminarModal)">
+                                    <i class="mdi mdi-delete"></i>
+                                </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" (click)="openEditarModal(registro, editarModal)">
+                                    <i class="mdi mdi-pencil"></i>
+                                </button>
+                            </td>
+                            <td>{{ registro.sistema }}</td>
+                            <td>{{ registro.usuario }}</td>
+                            <td style="min-width: 140px;">
+                              <span style="font-family: monospace; letter-spacing: 2px; display: inline-block; min-width: 100px;">
+                                <ng-container *ngIf="!registro.verClave; else claveReal">
+                                  {{ getClaveOculta(registro.claveReal) }}
+                                </ng-container>
+                                <ng-template #claveReal>
+                                  {{ registro.claveReal }}
+                                </ng-template>
+                              </span>
+                              <button class="btn btn-link btn-sm p-0 ms-2" (click)="toggleVerClave(registro)">
+                                <i class="mdi" [ngClass]="registro.verClave ? 'mdi-eye-off' : 'mdi-eye'"></i>
+                              </button>
+                            </td>                        
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="d-flex justify-content-start gap-3 mb-3">
+  <button class="btn btn-success" (click)="openAddModal(addModal)">
+    <i class="mdi mdi-plus"></i> Añadir Registro
+  </button>
+  <button class="btn btn-danger" (click)="salir()">
+    <i class="mdi mdi-arrow-left"></i> Salir
+  </button>
+</div>
+
+  <!-- Modal para añadir/editar registro -->
+  <ng-template #addModal let-modal>
+    <div class="modal-header">
+      <h5 class="modal-title">Añadir Registro</h5>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+    </div>
+    <form #registroForm="ngForm">
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="sistema" class="form-label">Sistema:</label>
+          <input type="text" class="form-control" id="sistema" [(ngModel)]="nuevoRegistro.sistema" name="sistema" required>
+        </div>
+        <div class="mb-3">
+          <label for="usuario" class="form-label">Usuario:</label>
+          <input type="text" class="form-control" id="usuario" [(ngModel)]="nuevoRegistro.usuario" name="usuario" required>
+        </div>
+        <div class="mb-3">
+          <label for="clave" class="form-label">Clave:</label>
+          <input type="password" class="form-control" id="clave" [(ngModel)]="nuevoRegistro.clave" name="clave" required>
+        </div>
+        <div class="mb-3">
+          <label for="repetirClave" class="form-label">Repita su clave:</label>
+          <input type="password" class="form-control" id="repetirClave" [(ngModel)]="nuevoRegistro.repetirClave" name="repetirClave" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" (click)="guardarRegistro(modal)" [disabled]="!registroForm.form.valid">Guardar</button>
+        <button type="button" class="btn btn-secondary" (click)="modal.close()">Salir</button>
+      </div>
+    </form>
+  </ng-template>
+</div>
+
+<!-- Modal para editar registro -->
+<ng-template #editarModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Editar Registro</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <form #editarForm="ngForm">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="editarSistema" class="form-label">Sistema:</label>
+        <input type="text" class="form-control" id="editarSistema" [(ngModel)]="editarRegistroSeleccionado.sistema" name="editarSistema" disabled>
+      </div>
+      <div class="mb-3">
+        <label for="editarUsuario" class="form-label">Usuario:</label>
+        <input type="text" class="form-control" id="editarUsuario" [(ngModel)]="editarRegistroSeleccionado.usuario" name="editarUsuario" required>
+      </div>
+      <div class="mb-3">
+        <label for="editarClave" class="form-label">Clave:</label>
+        <input type="password" class="form-control" id="editarClave" [(ngModel)]="editarRegistroSeleccionado.clave" name="editarClave">
+      </div>
+      <div class="mb-3">
+        <label for="editarRepetirClave" class="form-label">Repita su clave:</label>
+        <input type="password" class="form-control" id="editarRepetirClave" [(ngModel)]="editarRegistroSeleccionado.repetirClave" name="editarRepetirClave">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-success" (click)="guardarEdicionRegistro(modal)">Guardar</button>
+      <button type="button" class="btn btn-secondary" (click)="modal.close()">Salir</button>
+    </div>
+  </form>
+</ng-template>
+
+<ng-template #eliminarModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Confirmar Eliminación</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body text-center">
+    <p>¿Está seguro que desea eliminar el registro del sistema <strong>{{ registroSeleccionado?.sistema }}</strong>?</p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-danger" (click)="eliminarRegistroConfirmado(modal)">Eliminar</button>
+    <button class="btn btn-secondary" (click)="modal.close()">Cancelar</button>
+  </div>
+</ng-template>

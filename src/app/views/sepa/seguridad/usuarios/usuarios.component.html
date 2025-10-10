@@ -1,0 +1,283 @@
+<!-- <div class="container-fluid"> -->
+  <div class="row">
+    <div class="col-md-4 col-lg-4">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-title">Seguridad/Usuarios</h6>
+          <form>
+            <div class="row">
+              <div class="col-6">
+                <div class="mb-3">
+                  <label for="usuarioId" class="form-label">Usuario ID</label>
+                  <input type="text" class="form-control" id="usuarioId" [(ngModel)]="usuarioId" name="usuarioId" (ngModelChange)="filtrarUsuarios()" placeholder="ID de usuario">
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="mb-3">
+                  <label for="estatus" class="form-label">Estatus</label>
+                  <select class="form-select" id="estatus" [(ngModel)]="userStatus" name="estatus" (ngModelChange)="filtrarUsuarios()">
+                    <option value="" selected>Todos</option>
+                    <option value="1">Activo</option>
+                    <option value="0">Inactivo</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="mb-3">
+                  <label for="aplicacion" class="form-label">Aplicación</label>
+                  <select class="form-select" id="aplicacion" [(ngModel)]="aplicacion" name="aplicacion" (ngModelChange)="filtrarUsuarios()">
+                    <option value="" selected>Todas</option>
+                    <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="mb-3">
+                  <label for="listaTodos" class="form-label">Rol</label>
+                  <select class="form-select" id="listaTodos" [(ngModel)]="listaTodos" name="listaTodos" (ngModelChange)="filtrarUsuarios()">
+                    <option value="todos">Todos</option>
+                    <!-- Puedes agregar más opciones de roles aquí -->
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+          <div class="d-flex justify-content-start gap-3 mt-3">
+            <button type="button" class="btn btn-info" (click)="consultar()">
+              <i class="mdi mdi-magnify"></i> Consultar
+            </button>
+            <button type="button" class="btn btn-success" (click)="openAddUserModal(addUserModal)">
+              <i class="mdi mdi-plus"></i> Añadir Registro
+            </button>
+            <button type="button" class="btn btn-danger" (click)="salir()">
+              <i class="mdi mdi-arrow-left"></i> Salir
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-8 col-lg-8">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-title">Usuarios</h6>
+          <div class="table-responsive">
+            <table id="rolesConsultaTable" class="table">
+              <thead>
+                <tr>
+                  <th>Eliminar</th>
+                  <th>Editar</th>
+                  <th>Editar Roles</th>
+                  <th>Asociar Roles</th>
+                  <th>User ID</th>
+                  <th>Nombre y Apellido</th>
+                  <th>E-mail</th>
+                  <th>Estatus</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let usuario of usuariosPaginados">
+                  <td>
+                    <button class="btn btn-sm btn-danger" (click)="openEliminarModal(usuario, eliminarModal)">
+                      <i class="mdi mdi-delete"></i>
+                    </button>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-primary" (click)="openEditarModal(usuario, editarModal)">
+                      <i class="mdi mdi-pencil"></i>
+                    </button>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-info" (click)="openEditarRolesModal(usuario, editarRolesModal)">
+                      <i class="mdi mdi-account-multiple"></i>
+                    </button>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-success" (click)="openAsociarRolesModal(usuario, asociarRolesModal)">
+                      <i class="mdi mdi-account-plus"></i>
+                    </button>
+                  </td>
+                  <td>{{ usuario.userId }}</td>
+                  <td>{{ usuario.fullName }}</td>
+                  <td>{{ usuario.email }}</td>
+                  <td>
+                    <span class="badge"
+                      [ngClass]="usuario.userStatus == 1 ? 'bg-success text-white' : 'bg-danger text-white'">
+                      {{ usuario.userStatus == 1 ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+            <div>
+              <nav>
+                <ul class="pagination pagination-sm mb-0">
+                  <li class="page-item" [class.disabled]="paginaActual === 1">
+                    <button class="page-link" (click)="cambiarPagina(paginaActual - 1)" [disabled]="paginaActual === 1">&laquo;</button>
+                  </li>
+                  <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
+                    <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+                  </li>
+                  <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+                    <button class="page-link" (click)="cambiarPagina(paginaActual + 1)" [disabled]="paginaActual === totalPaginas">&raquo;</button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+<!-- Modal 1: Confirmar eliminación -->
+<ng-template #eliminarModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Confirmar Eliminación</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body text-center">
+    <p>¿Está seguro que desea eliminar el usuario <strong>{{ usuarioSeleccionado?.userId }}</strong>?</p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-danger" (click)="eliminarUsuario(usuarioSeleccionado!, eliminarModal)">Eliminar</button>
+    <button class="btn btn-secondary" (click)="modal.close()">Cancelar</button>
+  </div>
+</ng-template>
+
+<!-- Modal 2: Editar usuario -->
+<ng-template #editarModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Editar Usuario</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+<form *ngIf="usuarioSeleccionado" (ngSubmit)="guardarEdicionUsuario(modal)">
+  <div class="modal-body">
+    <div class="mb-3">
+      <label for="editUserId" class="form-label">User ID</label>
+      <input id="editUserId" class="form-control" [(ngModel)]="usuarioSeleccionado.userId" name="editUserId" required readonly>
+    </div>
+    <div class="mb-3">
+      <label for="editEstatus" class="form-label">Estatus</label>
+      <select id="editEstatus" class="form-select" [(ngModel)]="usuarioSeleccionado.userStatus" name="editEstatus" required>
+        <option value="1">Activo</option>
+        <option value="0">Inactivo</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-success" type="button" (click)="procesarStatus(modal)">Guardar</button>
+    <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
+  </div>
+</form>
+</ng-template>
+
+<!-- Modal 3: Editar roles asociados -->
+<ng-template #editarRolesModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Roles Asociados al Usuario: {{ usuarioSeleccionado?.fullName }}</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Rol (Alias corto)</th>
+            <th>Descripción</th>
+            <th>Tipo</th>
+            <th>Aplicación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rol of usuarioSeleccionado?.roles">
+            <td>{{ rol.id }}</td>
+            <td>{{ rol.alias }}</td>
+            <td>{{ rol.descripcion }}</td>
+            <td>{{ rol.tipo }}</td>
+            <td>{{ rol.aplicacion }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" (click)="modal.close()">Salir</button>
+  </div>
+</ng-template>
+
+<!-- Modal 4: Asociar roles -->
+<ng-template #asociarRolesModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Asociar Roles a {{ usuarioSeleccionado?.fullName }}</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3">
+      <strong>Usuario:</strong> {{ usuarioSeleccionado?.fullName }}
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Seleccionar</th>
+            <th>Rol (Alias corto)</th>
+            <th>Descripción</th>
+            <th>Aplicación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rol of rolesDisponibles; let i = index">
+            <td>
+              <div class="form-check">
+                <input class="form-check-input"
+                       type="checkbox"
+                       [(ngModel)]="rol.seleccionado"
+                       [name]="'rolSeleccionado' + i"
+                       [id]="'rolSeleccionado' + i">
+                <label class="form-check-label" [for]="'rolSeleccionado' + i"></label>
+              </div>
+            </td>
+            <td>{{ rol.alias }}</td>
+            <td>{{ rol.descripcion }}</td>
+            <td>{{ rol.aplicacion }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-success" (click)="guardarAsociacionRoles(usuarioSeleccionado!, modal)">Guardar</button>
+    <button class="btn btn-secondary" (click)="modal.close()">Salir</button>
+  </div>
+</ng-template>
+
+<!-- Modal para añadir usuario -->
+<ng-template #addUserModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Añadir Usuario</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <form (ngSubmit)="addUser(modal)">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="nuevoUsuarioId" class="form-label">Usuario ID</label>
+        <input id="nuevoUsuarioId" name="nuevoUsuarioId" class="form-control" [(ngModel)]="nuevoUsuarioId" required>
+      </div>
+      <div class="mb-3">
+        <label for="nuevoEstatus" class="form-label">Estatus</label>
+        <select id="nuevoEstatus" name="nuevoEstatus" class="form-select" [(ngModel)]="nuevoEstatus" required>
+          <option value="1">Activo</option>
+          <option value="0">Inactivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-success">Añadir</button>
+      <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+    </div>
+  </form>
+</ng-template>

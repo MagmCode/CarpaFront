@@ -1,0 +1,90 @@
+<nav class="page-breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a routerLink="/configuracion/empleados">Configuracion</a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">Empleados</li>
+    </ol>
+  </nav>
+  
+  <div class="d-flex justify-content-center">
+    <div class="col-md-12 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <app-generic-form
+            [fields]="fields"
+            [layout]="layoutCrear"
+            [submitLabel]="'Buscar'"
+            [submitClass]="'btn-primary'"
+            [submitIcon]="'feather icon-search'"
+            [additionalButtons]="additionalButtons"
+            [showDropdown]="false"
+            [showAdvancedButton]="false"
+            (formSubmit)="onSubmit($event)">
+          </app-generic-form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div *ngIf="showTables"> 
+    <app-generic-table
+      [headers]="['Id', 'Nombre', 'Apellido', 'Cedula', 'Telefono', 'Email', 'Salario', 'Cargo', 'Fecha Ingreso', 'Fecha Nacimiento', 'Estatus', 'Acciones']"
+      [data]="empleados"
+      [keys]="['id', 'nombre', 'apellido', 'cedRif', 'nroTelefono', 'email', 'salario', 'cargo', 'fechaIngreso', 'fechaNac', 'estatusNombre']"
+      [actions]="[
+        { icon: 'feather icon-edit', class: 'btn btn-sm btn-primary me-2', handler: edit.bind(this) },
+        { icon: 'feather icon-eye', class: 'btn btn-sm btn-success me-2', handler: mostrarComision.bind(this) },
+        { icon: 'feather icon-trash', class: 'btn btn-sm btn-danger', handler: eliminar.bind(this) }
+      ]"
+      [loading]="loading">
+    </app-generic-table>
+  </div>
+  
+  <!-- Modal para crear empleado -->
+  <ng-template #createEmpleadoModal let-modal>
+    <app-generic-modal
+      [title]="'Crear Empleado'"
+      [actions]="[
+        { label: 'Cancelar', class: 'btn-secondary', handler: closecreateEmpleadoModal.bind(this, modal) }
+      ]"
+      (closeModal)="closecreateEmpleadoModal($event)">
+      <div class="card">
+        <div class="card-body">
+          <app-generic-form
+            [fields]="fieldsCrear"
+            [layout]="layoutCrear"
+            [submitLabel]="'Crear Empleado'"
+            [submitClass]="'btn-success'"
+            [submitIcon]="'feather icon-check-circle'"
+            [showDropdown]="false"
+            [showAdvancedButton]="false"
+            (formSubmit)="savecreateEmpleadoModal($event)">
+          </app-generic-form>
+        </div>
+      </div>
+    </app-generic-modal>
+  </ng-template>
+  
+  <!-- Modal para editar empleado -->
+  <ng-template #editEmpleadoModal let-modal>
+    <app-generic-modal
+      [title]="'Editar Empleado'"
+      [actions]="[
+        { label: 'Cancelar', class: 'btn-secondary', handler: closeeditEmpleadoModal.bind(this, modal) }
+      ]"
+      (closeModal)="closeeditEmpleadoModal($event)">
+      <div class="card">
+        <div class="card-body">
+          <app-generic-form
+            [fields]="fieldsEditar"
+            [layout]="layoutEditar"
+            submitLabel="Guardar Cambios"
+            [showDropdown]="false"
+            [showAdvancedButton]="false"
+            (formSubmit)="saveeditEmpleadoModal($event)">
+          </app-generic-form>
+        </div>
+      </div>
+    </app-generic-modal>
+  </ng-template>

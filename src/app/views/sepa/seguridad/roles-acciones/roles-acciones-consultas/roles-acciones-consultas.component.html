@@ -1,0 +1,87 @@
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Seguridad/Roles-Acciones</h6>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Seleccionar</th>
+                <th>Rol (Alias corto)</th>
+                <th>Descripción</th>
+                <th>Aplicación</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let registro of registros">
+                <td>
+                  <button class="btn btn-sm btn-primary" (click)="verDetalles(registro, detalleModal)">
+                    <i class="mdi mdi-eye"></i>
+                  </button>
+                </td>
+                <td>{{ registro.alias }}</td>
+                <td>{{ registro.descripcion }}</td>
+                <td>{{ registro.aplicacion }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="d-flex justify-content-start gap-3 mt-4">
+            <button class="btn btn-danger" (click)="regresar()">
+              <i class="mdi mdi-arrow-left"></i> Regresar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de detalles -->
+<ng-template #detalleModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Detalles del Registro</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3">
+      <strong>Rol (Alias corto):</strong> {{ registroSeleccionado?.alias }}
+    </div>
+    <div class="mb-3">
+      <strong>Aplicación:</strong> {{ registroSeleccionado?.aplicacion }}
+    </div>
+    <div class="mb-3">
+      <strong>Acciones disponibles:</strong>
+      <div class="table-responsive">
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Seleccionar</th>
+              <th>URL</th>
+              <th>Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let accion of acciones; let i = index">
+              <td>
+                <div class="form-check">
+                  <input class="form-check-input"
+                         type="checkbox"
+                         [id]="'accionCheck' + i"
+                         [(ngModel)]="accion.seleccionado"
+                         name="accionSeleccionada{{i}}">
+                  <label class="form-check-label" [for]="'accionCheck' + i"></label>
+                </div>
+              </td>
+              <td>{{ accion.url }}</td>
+              <td>{{ accion.descripcion }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+  </div>
+</ng-template>

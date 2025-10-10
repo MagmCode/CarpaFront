@@ -1,0 +1,105 @@
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Seguridad/Opciones de Menú</h6>
+        <div class="table-responsive">
+          <table #tablaOpcionesMenu id="opcionesMenuTable" class="table">
+            <thead>
+              <tr>
+                <th>Editar</th>
+                <th>Eliminar</th>
+                <th>Seleccionar</th>
+                <th>Nombre de menú</th>
+                <th>URL</th>
+                <th>Padre</th>
+                <th>Nivel</th>
+                <th>Orden</th>
+                <th>Aplicaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+  <tr *ngFor="let opcion of opciones">
+    <td>
+      <button class="btn btn-sm btn-primary" title="Editar">
+        <i class="mdi mdi-pencil"></i>
+      </button>
+    </td>
+    <td>
+      <button class="btn btn-sm btn-danger" title="Eliminar">
+        <i class="mdi mdi-delete"></i>
+      </button>
+    </td>
+    <td>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" [(ngModel)]="opcion.checked" title="Seleccionar" id="check-{{opcion.nombreMenu}}-{{opcion.orden}}">
+        <label class="form-check-label" for="check-{{opcion.nombreMenu}}-{{opcion.orden}}"></label>
+      </div>
+    </td>
+    <td>{{ opcion.nombreMenu }}</td>
+    <td>{{ opcion.url }}</td>
+    <td>{{ opcion.padre }}</td>
+    <td>{{ opcion.nivel }}</td>
+    <td>{{ opcion.orden }}</td>
+    <td>{{ opcion.aplicaciones }}</td>
+  </tr>
+</tbody>
+          </table>
+          <div class="actionButtons d-flex justify-content-start gap-3 mt-5">
+            <button class="btn btn-success" (click)="openAddApplicationModal(addApplicationModal)">
+              <i class="mdi mdi-plus"></i> Agregar Aplicación
+            </button>
+            <button class="btn btn-danger" (click)="exitMenu()">
+              <i class="mdi mdi-arrow-left"></i>
+              Salir 
+            </button>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal para añadir aplicación -->
+<ng-template #addApplicationModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Añadir Aplicación</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <form (ngSubmit)="addApplication(modal)">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="nombreMenu" class="form-label">Nombre del Menú</label>
+        <input id="nombreMenu" name="nombreMenu" class="form-control" [(ngModel)]="newApp.nombreMenu" required>
+      </div>
+      <div class="mb-3">
+        <label for="url" class="form-label">URL</label>
+        <input id="url" name="url" class="form-control" [(ngModel)]="newApp.url" required>
+      </div>
+      <div class="mb-3">
+        <label for="padre" class="form-label">Padre</label>
+        <textarea id="padre" name="padre" class="form-control" [(ngModel)]="newApp.padre"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="nivel" class="form-label">Nivel</label>
+        <textarea id="nivel" name="nivel" class="form-control" [(ngModel)]="newApp.nivel"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="orden" class="form-label">Orden</label>
+        <textarea id="orden" name="orden" class="form-control" [(ngModel)]="newApp.orden"></textarea>
+      </div>
+      <div class="mb-3">
+      <label for="aplicaciones" class="form-label">Nombre de la Aplicación</label>
+      <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="newApp.aplicaciones" required>
+        <option value="" disabled selected>Seleccione una aplicación</option>
+        <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+      </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-success">Añadir</button>
+      <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+    </div>
+  </form>
+</ng-template>

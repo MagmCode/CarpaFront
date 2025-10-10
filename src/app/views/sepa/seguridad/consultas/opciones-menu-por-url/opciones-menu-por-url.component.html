@@ -1,0 +1,60 @@
+<div class="row">
+  <div class="col-md-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Seguridad/Consultas/Opciones de Menú por URL</h6>
+        <form class="mb-4">
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <label for="filtroAplicacion" class="form-label">Aplicación</label>
+              <select id="filtroAplicacion" class="form-select" [(ngModel)]="aplicacionSeleccionada" name="filtroAplicacion" (change)="filtrarDatos()">
+                <option value="">Todas</option>
+                <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+              </select>
+            </div>
+          </div>
+        </form>
+<div class="table-responsive">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Opción/Subopción</th>
+        <th>URL</th>
+        <th>Aplicación</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of paginatedRows">
+        <td>
+          <ng-container *ngIf="row.tipo === 'opcion'">
+            <strong>Opción:</strong> {{ row.nombre }}
+          </ng-container>
+          <ng-container *ngIf="row.tipo === 'subopcion'">
+            <span class="ps-4 text-muted">Subopción:</span> {{ row.nombre }}
+          </ng-container>
+        </td>
+        <td>{{ row.url }}</td>
+        <td>{{ row.aplicacion }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav *ngIf="totalRows > pageSize" class="mt-3">
+  <ul class="pagination justify-content-end">
+    <li class="page-item" [class.disabled]="currentPage === 1">
+      <button class="page-link" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">&laquo;</button>
+    </li>
+    <li class="page-item" *ngFor="let page of pagesArray"
+        [class.active]="currentPage === page">
+      <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
+    </li>
+    <li class="page-item" [class.disabled]="currentPage === totalPages">
+      <button class="page-link" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">&raquo;</button>
+    </li>
+  </ul>
+</nav>

@@ -1,0 +1,71 @@
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #cb1136 0%, #fc2542 100%);
+  color: white;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+::ng-deep .modal-content {
+    max-width: 200%;
+    width: 150%;
+  }
+  
+.modal-body {
+  padding: 1rem;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1rem;
+  color: #333;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem;
+  border-top: 1px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.btn-close:hover {
+  color: #ccc;
+}
+
+.btn {
+  font-family: 'Roboto', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+}
+
+.btn-primary {
+  background-color: #2575fc;
+  border-color: #2575fc;
+}
+
+.btn-primary:hover {
+  background-color: #1a5bb8;
+  border-color: #1a5bb8;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
