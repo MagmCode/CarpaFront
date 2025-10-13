@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import Swal from 'sweetalert2';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
 import { Router } from '@angular/router';
 
@@ -36,6 +37,16 @@ export class AgregarUsuariosComponent implements OnInit {
     console.log('Aplicación:', this.aplicacionSeleccionada);
     console.log('Rol:', this.rolSeleccionado);
     console.log('Usuarios:', this.usuariosLote.split('\n'));
+    // Mostrar toast de confirmación tipo snackbar
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Usuarios agregados correctamente',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
   }
 
   salir () {

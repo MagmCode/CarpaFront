@@ -2,9 +2,9 @@
   <div class="col-md-8 grid-margin stretch-card mx-auto">
     <div class="card">
       <div class="card-body">
-        <h6 class="card-title">Seguridad/Usuarios</h6>
+        <h6 class="card-title fw-semibold">Seguridad / Usuarios</h6>
         <form>
-          <div class="mb-3">
+          <div class="mb-3 mt-5">
             <label for="aplicacion" class="form-label">Aplicación</label>
             <select id="aplicacion" class="form-select" [(ngModel)]="aplicacionSeleccionada" name="aplicacion" (change)="onAplicacionChange()" required>
               <option value="" disabled selected>Seleccione una aplicación</option>
@@ -20,16 +20,16 @@
           </div>
           <div class="mb-3">
             <label for="usuariosLote" class="form-label">Usuarios en lote</label>
-            <textarea id="usuariosLote" class="form-control" [(ngModel)]="usuariosLote" name="usuariosLote" rows="5" placeholder="Ingrese los usuarios, uno por línea"></textarea>
-            <small class="text-muted">Ejemplo:<br>juan.perez<br>ana.garcia<br>carlos.lopez</small>
+            <textarea id="usuariosLote" class="form-control" [(ngModel)]="usuariosLote" name="usuariosLote" rows="5" placeholder="Ingrese los usuarios a agregar"></textarea>
+            <small class="text-muted">Ejemplo:<br>NM1234; NM1234; NM1234</small>
           </div>
-          <div class="d-flex gap-3 mt-4">
+          <div class="d-flex gap-3 mt-4 justify-content-center">
             <button type="button" class="btn btn-success" (click)="guardar()">
-              <i class="mdi mdi-content-save"></i> Guardar
+              <i class="mdi mdi-content-save"></i> Agregar Usuarios
             </button>
-            <button type="button" class="btn btn-danger" (click)="salir()">
+            <!-- <button type="button" class="btn btn-danger" (click)="salir()">
               <i class="mdi mdi-arrow-left"></i> Salir
-            </button>
+            </button> -->
           </div>
         </form>
       </div>
