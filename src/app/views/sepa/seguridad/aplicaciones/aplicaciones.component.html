@@ -31,8 +31,8 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Editar</th>
             <th>Eliminar</th>
+            <th>Editar</th>
             <th (click)="ordenarPor('nombre')" style="cursor:pointer">
               Nombre de Aplicación
               <span *ngIf="sortColumn === 'nombre'">
@@ -59,13 +59,13 @@
         <tbody>
           <tr *ngFor="let app of aplicacionesPaginadas">
             <td>
-              <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditApplicationModal(appModal, app)">
-                <i class="feather icon-edit"></i>
-              </button>
-            </td>
-            <td>
               <button class="btn btn-danger btn-sm" title="Eliminar" (click)="deleteApplication(app)">
                 <i class="feather icon-trash-2"></i>
+              </button>
+            </td>
+                        <td>
+              <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditApplicationModal(appModal, app)">
+                <i class="feather icon-edit"></i>
               </button>
             </td>
             <td>{{ app.nombre }}</td>

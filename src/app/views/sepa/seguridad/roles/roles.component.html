@@ -1,91 +1,11 @@
-<div class="row">
-  <div class="col-md-4 col-lg-4">
-    <div class="card mb-3">
-      <div class="card-body">
-        <h6 class="card-title">Seguridad/Roles</h6>
-        <form>
-            <div class="mb-3">
-                <label for="alias" class="form-label">Alias (Rol)</label>
-                <input type="text" class="form-control" id="alias" placeholder="Ingrese el alias del rol" required>
-            </div>
-            <div class="mb-3">
-                <label for="uso" class="form-label">Uso</label>
-                <select class="form-select" id="uso" required>
-                    <option value="" disabled selected>Seleccione el uso</option>
-                    <option value="todos">Todos</option>
-                    <option value="red comercial">Red Comercial</option>
-                    <option value="interno">Interno</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="aplicacion" class="form-label">Aplicación</label>
-                <select class="form-select" id="aplicacion" required>
-                    <option value="" disabled selected>Seleccione una aplicación</option>
-                    <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
-                </select>
-            </div>
-            <div class="actionButtons d-flex justify-content-start gap-3 mt-5">
-            <button class="btn btn-success mb-3" (click)="openAddRoleModal(addRoleModal)">
-                <i class="mdi mdi-plus"></i> Añadir registro
-            </button>
-            <button class="btn btn-info mb-3" routerLink="/seguridad/roles/consultas">
-                <i class="mdi mdi-table"></i> Consultar Roles
-            </button>
-            </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Tabla de roles -->
-  <div class="col-md-8 col-lg-8">
-    <div class="card mb-3">
-      <div class="card-body">
-        <h6 class="card-title">Seguridad/Roles</h6>
-        <div class="table-responsive">
-            <table id="rolesConsultaTable" class="table">
-                <thead>
-                    <tr>
-                        <th>Editar</th>
-                        <th>Eliminar</th>
-                        <th>Rol</th>
-                        <th>Descripción</th>
-                        <th>Tipo</th>
-                        <th>Aplicación</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let rol of roles">
-                        <td>
-                            <button class="btn btn-sm btn-primary" title="Editar">
-                                <i class="mdi mdi-pencil"></i>
-                            </button>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-danger" title="Eliminar">
-                        <i class="mdi mdi-delete"></i>
-                    </button>
-                </td>
-                <td>{{ rol.rol }}</td>
-                <td>{{ rol.descripcion }}</td>
-                <td>{{ rol.tipo }}</td>
-                <td>{{ rol.aplicacion }}</td>
-            </tr>
-        </tbody>
-    </table>
-    </div>
-      </div>
-    </div>
-  </div>
-</div>
-  
-<!-- Modal para añadir rol -->
+
+<!-- Modal para agregar/editar rol -->
 <ng-template #addRoleModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Añadir Registro</h5>
+    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Agregar Registro' : 'Editar Registro' }}</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-  <form (ngSubmit)="addRole(modal)">
+  <form (ngSubmit)="saveRole(modal)">
     <div class="modal-body">
       <div class="mb-3">
         <label for="rol" class="form-label">Rol (alias corto)</label>
@@ -112,8 +32,124 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button type="submit" class="btn btn-success">Añadir</button>
+      <button type="submit" class="btn btn-success">{{ modalModo === 'agregar' ? 'agregar' : 'Guardar' }}</button>
       <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
     </div>
   </form>
 </ng-template>
+
+<div class="card">
+  <div class="card-header">
+    <h6 class="card-title fw-semibold">Seguridad / Roles</h6>
+  </div>
+  <div class="card-body" style="position: relative;">
+    <div class="row mb-4 align-items-end">
+      <div class="fw-bold d-flex justify-content-end">
+        <span class="fw-semibold">Total de registros: </span> {{ rolesFiltrados.length }}
+      </div>
+    </div>
+    <div class="d-flex justify-content-between mb-4">
+      <div class="d-flex gap-3">
+        <button class="btn btn-success" (click)="openAddRoleModal(addRoleModal)">
+          <i class="mdi mdi-plus"></i> Agregar
+        </button>
+      </div>
+      <div>
+        <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
+          [(ngModel)]="searchTerm" (input)="filtrarRoles()">
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Eliminar</th>
+            <th>Editar</th>
+            <th (click)="ordenarPor('rol')" style="cursor:pointer">
+              Rol
+              <span *ngIf="sortColumn === 'rol'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+            <th (click)="ordenarPor('descripcion')" style="cursor:pointer">
+              Descripción
+              <span *ngIf="sortColumn === 'descripcion'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+            <th (click)="ordenarPor('tipo')" style="cursor:pointer">
+              Tipo
+              <span *ngIf="sortColumn === 'tipo'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+            <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">
+              Aplicación
+              <span *ngIf="sortColumn === 'aplicacion'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rol of rolesPaginados">
+            <td>
+              <button class="btn btn-danger btn-sm" title="Eliminar" (click)="deleteRole(rol)">
+                <i class="feather icon-trash-2"></i>
+              </button>
+            </td>
+            <td>
+              <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditRoleModal(addRoleModal, rol)">
+                <i class="feather icon-edit"></i>
+              </button>
+            </td>
+            <td>{{ rol.rol }}</td>
+            <td>{{ rol.descripcion }}</td>
+            <td>{{ rol.tipo }}</td>
+            <td>{{ rol.aplicacion }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- Paginación NobleUI/Bootstrap -->
+      <nav>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="d-flex align-items-center gap-2">
+            <select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize"
+              (change)="cambiarPageSize(pageSize)">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+            <label class="me-2 mb-0">registros por página</label>
+          </div>
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="page === 1">
+              <button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button>
+            </li>
+            <li class="page-item" [class.active]="page === 1">
+              <button class="page-link" (click)="cambiarPagina(1)">1</button>
+            </li>
+            <li class="page-item disabled" *ngIf="page > 4">
+              <span class="page-link">...</span>
+            </li>
+            <ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
+              <li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p">
+                <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+              </li>
+            </ng-container>
+            <li class="page-item disabled" *ngIf="page < totalPages - 3">
+              <span class="page-link">...</span>
+            </li>
+            <li class="page-item" *ngIf="totalPages > 1" [class.active]="page === totalPages">
+              <button class="page-link" (click)="cambiarPagina(totalPages)">{{ totalPages }}</button>
+            </li>
+            <li class="page-item" [class.disabled]="page === totalPages">
+              <button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+  </div>
+</div>

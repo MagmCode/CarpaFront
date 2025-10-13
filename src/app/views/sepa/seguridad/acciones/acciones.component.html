@@ -1,62 +1,10 @@
-<div class="row">
-  <div class="col-md-6 grid-margin stretch-card">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="card-title">Seguridad/Acciones</h6>
-        <form>
-          <div class="mb-3">
-            <label for="url" class="form-label">URL (opcional)</label>
-            <input type="text" class="form-control" id="url" placeholder="Ingrese la URL">
-          </div>
-          <div class="mb-3">
-            <label for="descripcion" class="form-label">Descripción (opcional)</label>
-            <textarea class="form-control" id="descripcion" rows="2" placeholder="Ingrese una descripción"></textarea>
-          </div>
-         <div class="mb-3">
-        <label for="aplicacion" class="form-label">Aplicación</label>
-        <select class="form-select" id="aplicacion" required>
-            <option value="" disabled selected>Seleccione una aplicación</option>
-            <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
-        </select>
-        </div>
-          <div class="mb-3">
-            <label class="form-label">Seguridad</label>
-            <div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="seguridad" id="seguridadSi" value="true" required>
-                <label class="form-check-label" for="seguridadSi">Sí</label>
-              </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="seguridad" id="seguridadNo" value="false">
-                <label class="form-check-label" for="seguridadNo">No</label>
-              </div>
-            </div>
-          </div>
-          <div class="actionButtons d-flex justify-content-start gap-3 mt-5">
-            <button class="btn btn-success" (click)="openAddActionModal(addActionModal)">
-              <i class="mdi mdi-plus"></i> Añadir Registro
-            </button>
-            <button class="btn btn-info" routerLink="/seguridad/acciones/buscar">
-              <i class="mdi mdi-magnify"></i> Buscar
-            </button>
-          <button class="btn btn-danger" (click)="exitMenu()">
-            <i class="mdi mdi-arrow-left"></i> 
-            Salir
-          </button>
-          </div>  
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal para añadir acción -->
+<!-- Modal para Agregar/editar acción -->
 <ng-template #addActionModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Nuevo Registro</h5>
+    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Nuevo Registro' : 'Editar Registro' }}</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-  <form (ngSubmit)="addAction(modal)">
+  <form (ngSubmit)="saveAction(modal)">
     <div class="modal-body">
       <div class="mb-3">
         <label for="url" class="form-label">URL</label>
@@ -73,23 +21,123 @@
           <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
         </select>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Seguridad</label>
-        <div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="seguridad" id="seguridadSi" [(ngModel)]="newAction.seguridad" [value]="true" required>
-            <label class="form-check-label" for="seguridadSi">Sí</label>
-          </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="seguridad" id="seguridadNo" [(ngModel)]="newAction.seguridad" [value]="false">
-            <label class="form-check-label" for="seguridadNo">No</label>
-          </div>
-        </div>
-      </div>
     </div>
     <div class="modal-footer">
-      <button type="submit" class="btn btn-success">Añadir</button>
+      <button type="submit" class="btn btn-success">{{ modalModo === 'agregar' ? 'Agregar' : 'Guardar' }}</button>
       <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
     </div>
   </form>
 </ng-template>
+
+
+<div class="card">
+  <div class="card-header">
+    <h6 class="card-title fw-semibold">Seguridad / Acciones</h6>
+  </div>
+  <div class="card-body" style="position: relative;">
+    <div class="row mb-4 align-items-end">
+      <div class="fw-bold d-flex justify-content-end">
+  <span class="fw-semibold">Total de registros: </span> {{ accionesFiltradas.length || 0 }}
+      </div>
+    </div>
+    <div class="d-flex justify-content-between mb-4">
+      <div class="d-flex gap-3">
+        <button class="btn btn-success" (click)="openAddActionModal(addActionModal)">
+          <i class="mdi mdi-plus"></i> Agregar
+        </button>
+        <!-- <button class="btn btn-danger" (click)="exitMenu()">
+          <i class="mdi mdi-arrow-left"></i> Salir
+        </button> -->
+      </div>
+      <div>
+        <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
+          [(ngModel)]="searchTerm" (input)="filtrarAcciones()">
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Eliminar</th>
+            <th>Editar</th>
+            <th (click)="ordenarPor('url')" style="cursor:pointer">
+              URL
+              <span *ngIf="sortColumn === 'url'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+            <th (click)="ordenarPor('descripcion')" style="cursor:pointer">
+              Descripción
+              <span *ngIf="sortColumn === 'descripcion'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+            <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">
+              Aplicación
+              <span *ngIf="sortColumn === 'aplicacion'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let accion of accionesPaginadas">
+            <td>
+              <button class="btn btn-danger btn-sm" title="Eliminar" (click)="deleteAccion(accion)">
+                <i class="feather icon-trash-2"></i>
+              </button>
+            </td>
+            <td>
+              <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditActionModal(addActionModal, accion)">
+                <i class="feather icon-edit"></i>
+              </button>
+            </td>
+            <td>{{ accion.url }}</td>
+            <td>{{ accion.descripcion }}</td>
+            <td>{{ accion.aplicacion }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- Paginación NobleUI/Bootstrap -->
+      <nav>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="d-flex align-items-center gap-2">
+            <select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize"
+              (change)="cambiarPageSize(pageSize)">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+            <label class="me-2 mb-0">registros por página</label>
+          </div>
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="page === 1">
+              <button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button>
+            </li>
+            <li class="page-item" [class.active]="page === 1">
+              <button class="page-link" (click)="cambiarPagina(1)">1</button>
+            </li>
+            <li class="page-item disabled" *ngIf="page > 4">
+              <span class="page-link">...</span>
+            </li>
+            <ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
+              <li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p">
+                <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+              </li>
+            </ng-container>
+            <li class="page-item disabled" *ngIf="page < totalPages - 3">
+              <span class="page-link">...</span>
+            </li>
+            <li class="page-item" *ngIf="totalPages > 1" [class.active]="page === totalPages">
+              <button class="page-link" (click)="cambiarPagina(totalPages)">{{ totalPages }}</button>
+            </li>
+            <li class="page-item" [class.disabled]="page === totalPages">
+              <button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+  </div>
+</div>
