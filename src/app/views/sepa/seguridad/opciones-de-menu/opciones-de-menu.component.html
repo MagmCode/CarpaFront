@@ -2,103 +2,171 @@
   <div class="col-md-12 stretch-card">
     <div class="card">
       <div class="card-body">
-        <h6 class="card-title">Seguridad/Opciones de Menú</h6>
+        <h6 class="card-title fw-semibold">Seguridad / Opciones de Menú</h6>
+        <div class="row mb-4 align-items-end">
+          <div class="fw-bold d-flex justify-content-end">
+            <span class="fw-semibold">Total de registros: </span> {{ opcionesFiltradas.length }}
+          </div>
+        </div>
+        <div class="d-flex justify-content-between mb-4">
+          <div class="d-flex gap-3">
+            <button class="btn btn-success" (click)="openAddOpcionModal(opcionModal)">
+              <i class="mdi mdi-plus"></i> Agregar
+            </button>
+            <!-- <button class="btn btn-danger" (click)="exitMenu()">
+              <i class="mdi mdi-arrow-left"></i>
+              Salir
+            </button> -->
+          </div>
+          <div class="d-flex gap-3">
+            <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..." [(ngModel)]="searchTerm" (input)="filtrarOpciones()">
+          </div>
+        </div>
+        <!-- Tabla tipo árbol NobleUI -->
         <div class="table-responsive">
-          <table #tablaOpcionesMenu id="opcionesMenuTable" class="table">
-            <thead>
+          <table class="table table-bordered align-middle">
+            <thead class="table-light">
               <tr>
-                <th>Editar</th>
-                <th>Eliminar</th>
-                <th>Seleccionar</th>
-                <th>Nombre de menú</th>
+                <th class="text-center">Editar</th>
+                <th class="text-center">Eliminar</th>
+                <th class="text-center">Submenú</th>
+                <th class="text-center">Ver Submenú</th>
+                <th>Nombre</th>
                 <th>URL</th>
                 <th>Padre</th>
                 <th>Nivel</th>
                 <th>Orden</th>
-                <th>Aplicaciones</th>
+                <th style="cursor:pointer" (click)="ordenarPor('aplicaciones')">
+                  Aplicación
+                  <span *ngIf="sortColumn === 'aplicaciones'">
+                    <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
-  <tr *ngFor="let opcion of opciones">
-    <td>
-      <button class="btn btn-sm btn-primary" title="Editar">
-        <i class="mdi mdi-pencil"></i>
-      </button>
-    </td>
-    <td>
-      <button class="btn btn-sm btn-danger" title="Eliminar">
-        <i class="mdi mdi-delete"></i>
-      </button>
-    </td>
-    <td>
-      <div class="form-check">
-        <input type="checkbox" class="form-check-input" [(ngModel)]="opcion.checked" title="Seleccionar" id="check-{{opcion.nombreMenu}}-{{opcion.orden}}">
-        <label class="form-check-label" for="check-{{opcion.nombreMenu}}-{{opcion.orden}}"></label>
-      </div>
-    </td>
-    <td>{{ opcion.nombreMenu }}</td>
-    <td>{{ opcion.url }}</td>
-    <td>{{ opcion.padre }}</td>
-    <td>{{ opcion.nivel }}</td>
-    <td>{{ opcion.orden }}</td>
-    <td>{{ opcion.aplicaciones }}</td>
-  </tr>
-</tbody>
+              <ng-template #treeTable let-nodes let-nivel="nivel" let-parent="parent">
+                <ng-container *ngFor="let menu of nodes; let i = index">
+                  <tr>
+                    <td class="text-center">
+                      <button class="btn btn-warning btn-sm mx-auto" title="Editar" (click)="openEditOpcionModal(opcionModal, menu, parent, i)"><i class="feather icon-edit"></i></button>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn btn-danger btn-sm mx-auto" title="Eliminar" (click)="deleteOpcion(menu, parent, i)"><i class="feather icon-trash-2"></i></button>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn btn-primary btn-sm mx-auto" title="Añadir submenú" (click)="openAddOpcionModal(opcionModal, menu)"><i class="mdi mdi-plus"></i></button>
+                    </td>
+                    <td style="width:32px" class="text-center">
+                      <button *ngIf="menu.hijos && menu.hijos.length" class="btn btn-info btn-sm mx-auto" (click)="menu._expandido = !menu._expandido" title="Ver submenús">
+                        <i class="mdi mdi-eye"></i>
+                      </button>
+                    </td>
+                    <td>
+                      <span [style.padding-left.px]="(nivel || 0) * 24">
+                        {{ menu.nombreMenu }}
+                      </span>
+                    </td>
+                    <td>{{ menu.url }}</td>
+                    <td>{{ parent?.nombreMenu || '-' }}</td>
+                    <td>{{ nivel || 0 }}</td>
+                    <td>{{ menu.orden }}</td>
+                    <td>{{ menu.aplicaciones }}</td>
+                  </tr>
+                  <ng-container *ngIf="menu.hijos && menu.hijos.length && menu._expandido">
+                    <ng-container *ngTemplateOutlet="treeTable; context: { $implicit: menu.hijos, nivel: (nivel || 0) + 1, parent: menu }"></ng-container>
+                  </ng-container>
+                </ng-container>
+              </ng-template>
+              <ng-container *ngTemplateOutlet="treeTable; context: { $implicit: opcionesFiltradas, nivel: 0, parent: null }"></ng-container>
+            </tbody>
           </table>
-          <div class="actionButtons d-flex justify-content-start gap-3 mt-5">
-            <button class="btn btn-success" (click)="openAddApplicationModal(addApplicationModal)">
-              <i class="mdi mdi-plus"></i> Agregar Aplicación
-            </button>
-            <button class="btn btn-danger" (click)="exitMenu()">
-              <i class="mdi mdi-arrow-left"></i>
-              Salir 
-            </button>
         </div>
+          <!-- Paginación NobleUI/Bootstrap -->
+          <nav>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <div class="d-flex align-items-center gap-2">
+                <select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize"
+                  (change)="cambiarPageSize(pageSize)">
+                  <option [ngValue]="5">5</option>
+                  <option [ngValue]="10">10</option>
+                  <option [ngValue]="25">25</option>
+                  <option [ngValue]="50">50</option>
+                </select>
+                <label class="me-2 mb-0">registros por página</label>
+              </div>
+              <ul class="pagination mb-0">
+                <li class="page-item" [class.disabled]="page === 1">
+                  <button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button>
+                </li>
+                <li class="page-item" [class.active]="page === 1">
+                  <button class="page-link" (click)="cambiarPagina(1)">1</button>
+                </li>
+                <li class="page-item disabled" *ngIf="page > 4">
+                  <span class="page-link">...</span>
+                </li>
+                <ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
+                  <li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p">
+                    <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+                  </li>
+                </ng-container>
+                <li class="page-item disabled" *ngIf="page < totalPages - 3">
+                  <span class="page-link">...</span>
+                </li>
+                <li class="page-item" *ngIf="totalPages > 1" [class.active]="page === totalPages">
+                  <button class="page-link" (click)="cambiarPagina(totalPages)">{{ totalPages }}</button>
+                </li>
+                <li class="page-item" [class.disabled]="page === totalPages">
+                  <button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button>
+                </li>
+              </ul>
+            </div>
+          </nav>
         </div>
       </div>
     </div>
   </div>
-</div>
 
 
-<!-- Modal para añadir aplicación -->
-<ng-template #addApplicationModal let-modal>
+
+
+<!-- Modal para Agregar/Editar opción de menú -->
+<ng-template #opcionModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Añadir Aplicación</h5>
+    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Agregar Opción de Menú' : 'Editar Opción de Menú' }}</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-  <form (ngSubmit)="addApplication(modal)">
+  <form (ngSubmit)="saveOpcion(modal)">
     <div class="modal-body">
       <div class="mb-3">
-        <label for="nombreMenu" class="form-label">Nombre del Menú</label>
-        <input id="nombreMenu" name="nombreMenu" class="form-control" [(ngModel)]="newApp.nombreMenu" required>
+        <label for="nombreMenu" class="form-label">Nombre</label>
+        <input id="nombreMenu" name="nombreMenu" class="form-control" [(ngModel)]="opcionSeleccionada.nombreMenu" required>
       </div>
       <div class="mb-3">
         <label for="url" class="form-label">URL</label>
-        <input id="url" name="url" class="form-control" [(ngModel)]="newApp.url" required>
+        <input id="url" name="url" class="form-control" [(ngModel)]="opcionSeleccionada.url" required>
       </div>
       <div class="mb-3">
-        <label for="padre" class="form-label">Padre</label>
-        <textarea id="padre" name="padre" class="form-control" [(ngModel)]="newApp.padre"></textarea>
-      </div>
-      <div class="mb-3">
-        <label for="nivel" class="form-label">Nivel</label>
-        <textarea id="nivel" name="nivel" class="form-control" [(ngModel)]="newApp.nivel"></textarea>
+        <label for="aplicaciones" class="form-label">Aplicación</label>
+        <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="opcionSeleccionada.aplicaciones" required>
+          <option value="" disabled selected>Seleccione una aplicación</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+        </select>
       </div>
       <div class="mb-3">
         <label for="orden" class="form-label">Orden</label>
-        <textarea id="orden" name="orden" class="form-control" [(ngModel)]="newApp.orden"></textarea>
+        <input id="orden" name="orden" type="number" class="form-control" [(ngModel)]="opcionSeleccionada.orden" required>
       </div>
       <div class="mb-3">
-      <label for="aplicaciones" class="form-label">Nombre de la Aplicación</label>
-      <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="newApp.aplicaciones" required>
-        <option value="" disabled selected>Seleccione una aplicación</option>
-        <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
-      </select>
+        <label for="habilitar" class="form-label">Habilitar</label>
+        <select id="habilitar" name="habilitar" class="form-select" [(ngModel)]="opcionSeleccionada.checked">
+          <option [ngValue]="true">Sí</option>
+          <option [ngValue]="false">No</option>
+        </select>
       </div>
     </div>
     <div class="modal-footer">
-      <button type="submit" class="btn btn-success">Añadir</button>
+      <button type="submit" class="btn btn-success">{{ modalModo === 'agregar' ? 'Agregar' : 'Guardar' }}</button>
       <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
     </div>
   </form>
