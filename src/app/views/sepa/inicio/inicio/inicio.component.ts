@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { MENU } from '../../../layout/sidebar/menu';
 import { Router } from '@angular/router';
 import * as feather from 'feather-icons';
 
@@ -10,37 +11,38 @@ import * as feather from 'feather-icons';
 export class InicioComponent implements OnInit, AfterViewInit {
   showConsultas = false;
   showSeguridad = false;
-  showOperaciones = false;
+  showreportes = false;
   showConfiguracion = false;
-  usuario = 'Gabriel Terán'
+  usuario: string | null = null;
 
-seguridadItems = [
-    { label: 'Aplicaciones', route: '/seguridad/aplicaciones' },
-    { label: 'Opciones del Menú', route: '/seguridad/opciones-de-menu' },
-    { label: 'Acciones', route: '/seguridad/acciones' },
-    { label: 'Roles', route: '/seguridad/roles' },
-    { label: 'Roles - Acciones', route: '/seguridad/roles-acciones' },
-    { label: 'Roles - Menú', route: '/seguridad/roles-menu' },
-    { label: 'Usuarios', route: '/seguridad/usuarios' },
-    { label: 'Parámetros', route: '/seguridad/parametros-sistema' },
-    { label: 'Agregar Usuarios en lote', route: '/seguridad/agregar-usuarios' },
-    { label: 'Eliminar Usuarios en lote', route: '/seguridad/eliminar-usuarios' },
-    { label: 'Programador de Tareas (SHEDULER)', route: '/seguridad/programador-tareas' }
-  ];
 
-    operacionesItems = [
-    { label: 'Consultas Hilos Abiertos', route: '/operaciones/consultas-hilos-abiertos' }
-    // Agrega más componentes de operaciones aquí
-  ];
 
-  configuracionItems = [
-    { label: 'Servicios Web BCV', route: '/configuracion/servicios-web-bcv' }
-    // Agrega más componentes de configuración aquí
-  ];
+seguridadItems: any[] = [];
+reportesItems: any[] = [];
+configuracionItems: any[] = [];
+
+// Recursivo: convierte subItems a hijos planos o anidados según se requiera
+private extractMenuItems(menu: any, label: string): any[] {
+  const found = menu.find((item: any) => item.label === label);
+  if (!found) return [];
+  if (found.subItems) {
+    return found.subItems.map((sub: any) => {
+      if (sub.subItems) {
+        return { ...sub, children: this.extractMenuItems([sub], sub.label) };
+      }
+      return { label: sub.label, route: sub.link };
+    });
+  }
+  return [];
+}
 
   constructor(private router: Router) { }
 
   ngOnInit(): void {
+    this.usuario = localStorage.getItem('usuarioActual');
+    this.seguridadItems = this.extractMenuItems(MENU, 'Seguridad');
+    this.configuracionItems = this.extractMenuItems(MENU, 'Configuración');
+    this.reportesItems = this.extractMenuItems(MENU, 'Reportes');
   }
 
   ngAfterViewInit(): void {
@@ -61,8 +63,8 @@ seguridadItems = [
     this.router.navigate([route]);
   }
 
-    navigateAndCloseOperaciones(route:string): void {
-    this.showOperaciones = false;
+    navigateAndClosereportes(route:string): void {
+    this.showreportes = false;
     this.router.navigate([route]);
   }
 

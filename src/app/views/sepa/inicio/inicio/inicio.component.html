@@ -6,7 +6,7 @@
       <div class="card mb-4 w-100 rounded-4 position-relative shadow" style="max-width: 400px; min-height: 200px;">
         <div class="card-body text-center position-relative" style="height: 200px;">
           <div class="mb-3">
-            <i data-feather="user" class="feather-icon" style="width: 48px; height: 48px; color: #6571ff;"></i>
+            <i class="icon-bdv-icon-profileround-l text-primary"></i>
           </div>
           <div class="position-absolute start-50 translate-middle-x" style="bottom: 30px;">
             <h4 class="card-title fs-5">Bienvenido:</h4>
@@ -16,124 +16,97 @@
       </div>
       <!-- Botón Seguridad (Dropleft) -->
       <div class="dropdown w-100 mt-auto position-relative" style="max-width: 400px;">
-        <div 
-          (mouseenter)="showSeguridad = true" 
-          (mouseleave)="showSeguridad = false"
-          style="width: 100%;">
+        <div (mouseenter)="showSeguridad = true" (mouseleave)="showSeguridad = false" style="width: 100%;">
           <button
-            class="btn btn-lg btn-primary border-primary py-5 px-5 fs-2 w-100 rounded-4 d-flex flex-column align-items-center justify-content-end shadow"
+            class="btn btn-lg btn-primary border-primary py-5 px-5 fs-2 w-100 rounded-4 d-flex flex-column align-items-center justify-content-center shadow"
             style="min-height: 500px;">
             <span class="mb-3">Seguridad</span>
-            <i data-feather="arrow-left-circle" class="feather-icon" style="width: 48px; height: 48px; color: white;"></i>
+            <i  class="icon-bdv-icon-handmenu-m text-white"></i>
           </button>
-          <div
-            class="bg-white border position-absolute shadow rounded-4"
+          <div class="bg-white border position-absolute shadow rounded-4"
             style="min-width: 250px; right: 100%; top: 50%; transform: translateY(-50%); z-index: 1050;"
-            *ngIf="showSeguridad"
-            (mouseenter)="showSeguridad = true"
-            (mouseleave)="showSeguridad = false">
-            <button
-              class="dropdown-item fs-6 py-3 rounded-4"
-              *ngFor="let item of seguridadItems"
-              (click)="navigateAndCloseSeguridad(item.route)">
-              {{ item.label }}
-            </button>
-            <!-- Botón Consultas dentro de Seguridad -->
-            <div class="position-relative d-inline-block" style="width: 100%;"
-            (mouseenter)="showConsultas = true"
-            (mouseleave)="showConsultas = false">
-              <button
-              class="dropdown-item fs-6 py-3 w-100 d-flex justify-content-between align-items-center rounded-4"
-              style="cursor: pointer;">
-                Consultas
-                <i class="mdi mdi-chevron-right"></i>
-              </button>
-              <div
-                class="bg-white border position-absolute shadow rounded-4"
-                style="min-width: 250px; left: 100%; bottom: 5%; z-index: 1050;"
-                *ngIf="showConsultas"
-                (mouseenter)="showConsultas = true"
-                (mouseleave)="showConsultas = false">
-                <button class="dropdown-item fs-6 py-3 rounded-4"
-                        (click)="navigateAndClose('/seguridad/consultas/opciones-menu-por-rol')">
-                  Opciones de Menú por Rol
-                </button>
-                <button class="dropdown-item fs-6 py-3 rounded-4"
-                        (click)="navigateAndClose('/seguridad/consultas/opciones-menu-por-url')">
-                  Opciones de Menú por URL
-                </button>
-              </div>
-            </div>
+            *ngIf="showSeguridad" (mouseenter)="showSeguridad = true" (mouseleave)="showSeguridad = false">
+            <ng-template #recursiveMenu let-items>
+              <ng-container *ngFor="let item of items">
+                <ng-container *ngIf="!item.children; else hasChildren">
+                  <button class="dropdown-item fs-6 py-3 rounded-4" (click)="navigateAndCloseSeguridad(item.route)">
+                    {{ item.label }}
+                  </button>
+                </ng-container>
+                <ng-template #hasChildren>
+                  <div class="position-relative d-inline-block w-100" (mouseenter)="item._open = true"
+                    (mouseleave)="item._open = false">
+                    <button
+                      class="dropdown-item fs-6 py-3 w-100 d-flex justify-content-between align-items-center rounded-4"
+                      style="cursor: pointer;">
+                      {{ item.label }}
+                      <i class="mdi mdi-chevron-right"></i>
+                    </button>
+                    <div class="bg-white border position-absolute shadow rounded-4"
+                      style="min-width: 250px; left: 100%; top: 0; z-index: 1050;" *ngIf="item._open">
+                      <ng-container
+                        *ngTemplateOutlet="recursiveMenu; context: { $implicit: item.children }"></ng-container>
+                    </div>
+                  </div>
+                </ng-template>
+              </ng-container>
+            </ng-template>
+            <ng-container *ngTemplateOutlet="recursiveMenu; context: { $implicit: seguridadItems }"></ng-container>
           </div>
         </div>
       </div>
     </div>
-    <!-- Columna derecha: Operaciones y Configuración -->
+    <!-- Columna derecha: reportes y Configuración -->
     <div class="col-md-4 d-flex flex-column align-items-start">
-      <!-- Botón Operaciones (Dropright) -->
-      <div class="dropdown w-100 mb-4 position-relative" style="max-width: 400px;">
-        <div 
-          (mouseenter)="showOperaciones = true" 
-          (mouseleave)="showOperaciones = false"
-          style="width: 100%;">
+      <!-- Botón Configuración (Dropright) -->
+      <div class="dropdown w-100 mb-4  position-relative" style="max-width: 400px;">
+        <div (mouseenter)="showConfiguracion = true" (mouseleave)="showConfiguracion = false" style="width: 100%;">
           <button
-            class="btn btn-lg btn-primary border-primary py-5 px-5 fs-2 w-100 rounded-4 d-flex flex-column align-items-center justify-content-end shadow"
-            style="min-height: 400px; max-width: 400px;">
-            <span class="mb-3">Operaciones</span>
-            <i data-feather="arrow-right-circle" class="feather-icon" style="width: 48px; height: 48px; color: white;"></i>
-          </button>
-          <div
-            class="bg-white border position-absolute shadow rounded-4"
-            style="min-width: 250px; left: 100%; top: 80%; transform: translateY(-50%); z-index: 1050;"
-            *ngIf="showOperaciones"
-            (mouseenter)="showOperaciones = true"
-            (mouseleave)="showOperaciones = false">
-            <button
-              class="dropdown-item fs-6 py-3 rounded-4"
-              *ngFor="let item of operacionesItems"
-              (click)="navigateAndCloseOperaciones(item.route)">
-              {{ item.label }}
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- Botón Configuración (Dropright) debajo de Operaciones -->
-      <div class="dropdown w-100 position-relative" style="max-width: 400px;">
-        <div 
-          (mouseenter)="showConfiguracion = true" 
-          (mouseleave)="showConfiguracion = false"
-          style="width: 100%;">
-          <button
-            class="btn btn-lg btn-white border py-5 px-5 fs-2 w-100 rounded-4 shadow d-flex flex-column align-items-center justify-content-end"
+            class="btn btn-lg btn-warning border-warning py-5 px-5 fs-2 w-100 rounded-4 shadow d-flex flex-column align-items-center justify-content-center"
             style="min-height: 302px;">
-            <span class="mb-3">Configuración</span>
-            <i data-feather="arrow-right-circle" class="feather-icon" style="width: 48px; height: 48px; color: #6571ff;"></i>
+            <span class="mb-3 text-white">Configuración</span>
+            <i  class="icon-bdv-icon-handmenu-m text-white"></i>
           </button>
-          <div
-            class="bg-white border position-absolute shadow rounded-4"
-            style="min-width: 250px; left: 100%; top: 75%; transform: translateY(-50%); z-index: 1050;"
-            *ngIf="showConfiguracion"
-            (mouseenter)="showConfiguracion = true"
-            (mouseleave)="showConfiguracion = false">
-            <button
-              class="dropdown-item fs-6 py-3 rounded-4"
-              *ngFor="let item of configuracionItems"
+          <div class="bg-white border position-absolute shadow rounded-4"
+            style="min-width: 250px; left: 100%; top: 50%; transform: translateY(-50%); z-index: 1050;"
+            *ngIf="showConfiguracion" (mouseenter)="showConfiguracion = true" (mouseleave)="showConfiguracion = false">
+            <button class="dropdown-item fs-6 py-3 rounded-4" *ngFor="let item of configuracionItems"
               (click)="navigateAndCloseConfiguracion(item.route)">
               {{ item.label }}
             </button>
           </div>
         </div>
       </div>
+      <!-- Botón reportes (Dropright) -->
+      <div class="dropdown w-100 position-relative" style="max-width: 400px;">
+        <div (mouseenter)="showreportes = true" (mouseleave)="showreportes = false" style="width: 100%;">
+          <button
+            class="btn btn-lg btn-danger border-danger py-5 px-5 fs-2 w-100 rounded-4 d-flex flex-column align-items-center justify-content-center shadow"
+            style="min-height: 400px; max-width: 400px;">
+            <span class="mb-3 text-white">Reportes</span>
+            <i class="icon-bdv-icon-handmenu-m text-white"></i>
+          </button>
+          <div class="bg-white border position-absolute shadow rounded-4"
+            style="min-width: 250px; left: 100%; top: 50%; transform: translateY(-50%); z-index: 1050;"
+            *ngIf="showreportes" (mouseenter)="showreportes = true" (mouseleave)="showreportes = false">
+            <button class="dropdown-item fs-6 py-3 rounded-4" *ngFor="let item of reportesItems"
+              (click)="navigateAndClosereportes(item.route)">
+              {{ item.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
 <!-- <div class="container">
   <div class="row justify-content-center align-items-start" style="min-height: 600px;"> -->
-    <!-- Columna izquierda: Card usuario y Seguridad -->
-    <!-- <div class="col-md-5 d-flex flex-column align-items-start"> -->
-      <!-- Card usuario -->
-      <!-- <div class="card mb-4 w-100 rounded-4 position-relative" style="max-width: 400px; min-height: 200px;">
+<!-- Columna izquierda: Card usuario y Seguridad -->
+<!-- <div class="col-md-5 d-flex flex-column align-items-start"> -->
+<!-- Card usuario -->
+<!-- <div class="card mb-4 w-100 rounded-4 position-relative" style="max-width: 400px; min-height: 200px;">
         <div class="card-body text-center position-relative" style= "height: 200px;">
           <div class="mb-3">
             <i data-feather="user" class="feather-icon" style="width: 48px; height: 48px; color: #6571ff;"></i>
@@ -144,8 +117,8 @@
           </div>
         </div>
       </div> -->
-      <!-- Botón Seguridad (Dropleft) -->
-      <!-- <div class="dropdown w-100 mt-auto position-relative">
+<!-- Botón Seguridad (Dropleft) -->
+<!-- <div class="dropdown w-100 mt-auto position-relative">
         <button
           class="btn btn-lg btn-primary border-primary py-5 px-5 fs-3 w-100 rounded-4"
           style="max-width: 400px; min-height: 500px;"
@@ -168,8 +141,8 @@
         </div>
       </div>
     </div> -->
-          <!-- Simulación de Dropright para Consultas -->
-          <!-- <div class="position-relative d-inline-block"
+<!-- Simulación de Dropright para Consultas -->
+<!-- <div class="position-relative d-inline-block"
                (mouseenter)="showConsultas = true">
             <button
               class="dropdown-item fs-6 py-3 w-100 d-flex justify-content-between align-items-center rounded-4"
@@ -194,33 +167,33 @@
           </div>
         </div>
       </div> -->
-    <!-- Columna derecha: Operaciones y Configuración -->
-    <!-- <div class="col-md-5 d-flex flex-column align-items-center"> -->
-      <!-- Botón Operaciones (Dropright) -->
-      <!-- <div class="dropdown w-100 mb-4 position-relative">
+<!-- Columna derecha: reportes y Configuración -->
+<!-- <div class="col-md-5 d-flex flex-column align-items-center"> -->
+<!-- Botón reportes (Dropright) -->
+<!-- <div class="dropdown w-100 mb-4 position-relative">
         <button
           class="btn btn-lg btn-primary border-primary py-4 px-5 fs-3 w-100 rounded-4"
           style="min-height: 400px; max-width: 400px;"
-          (mouseenter)="showOperaciones = true"
-          (mouseleave)="showOperaciones = false">
-          Operaciones
+          (mouseenter)="showreportes = true"
+          (mouseleave)="showreportes = false">
+          reportes
         </button>
         <div
           class="bg-white border position-absolute shadow rounded-4"
           style="min-width: 250px; left: 100%; top: 50%; transform: translateY(-50%); z-index: 1050;"
-          *ngIf="showOperaciones"
-          (mouseenter)="showOperaciones = true"
-          (mouseleave)="showOperaciones = false">
+          *ngIf="showreportes"
+          (mouseenter)="showreportes = true"
+          (mouseleave)="showreportes = false">
           <button
             class="dropdown-item fs-6 py-3 rounded-4"
-            *ngFor="let item of operacionesItems"
-            (click)="navigateAndCloseOperaciones(item.route)">
+            *ngFor="let item of reportesItems"
+            (click)="navigateAndClosereportes(item.route)">
             {{ item.label }}
           </button>
         </div>
       </div> -->
-      <!-- Botón Configuración (Dropright) debajo de Operaciones -->
-      <!-- <div class="dropdown w-100 position-relative">
+<!-- Botón Configuración (Dropright) debajo de reportes -->
+<!-- <div class="dropdown w-100 position-relative">
         <button
           class="btn btn-lg btn-primary border-primary py-4 px-5 fs-3 w-100 rounded-4"
           style="min-height: 300px; max-width: 400px;"
