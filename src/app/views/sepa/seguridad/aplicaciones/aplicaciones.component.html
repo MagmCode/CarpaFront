@@ -1,76 +1,149 @@
-<div class="row">
-  <div class="col-md-12 stretch-card">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="card-title">Seguridad/Aplicaciones</h6>
-        <div class="table-responsive">
-          <table id="aplicacionesTable" class="table">
-            <thead>
-              <tr>
-                <th>Editar</th>
-                <th>Eliminar</th>
-                <th>Nombre de Aplicación</th>
-                <th>Siglas</th>
-                <th>Comentarios</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let app of aplicaciones">
-                <td>
-                  <button class="btn btn-sm btn-primary" title="Editar">
-                    <i class="mdi mdi-pencil"></i>
-                  </button>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-danger" title="Eliminar">
-                    <i class="mdi mdi-delete"></i>
-                  </button>
-                </td>
-                <td>{{ app.nombre }}</td>
-                <td>{{ app.siglas }}</td>
-                <td>{{ app.comentarios }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="actionButtons d-flex justify-content-start gap-3 mt-5">
-            <button class="btn btn-success" (click)="openAddApplicationModal(addApplicationModal)">
-              <i class="mdi mdi-plus"></i> Agregar Aplicación
-            </button>
-            <button class="btn btn-danger" (click)="exitMenu()">
-              <i class="mdi mdi-arrow-left"></i>
-              Salir 
-            </button>
-        </div>
-        </div>
+<div class="card">
+  <div class="card-header">
+    <h6 class="card-title fw-semibold">Seguridad / Aplicaciones</h6>
+  </div>
+  <div class="card-body" style="position: relative;">
+    <div class="row mb-4 align-items-end">
+      <div class="fw-bold d-flex justify-content-end">
+        <span class="fw-semibold">Total de registros: </span> {{ aplicacionesFiltradas.length}}
       </div>
+    </div>
+    <div class="d-flex justify-content-between mb-4">
+      <div class="d-flex gap-3">
+        <button class="btn btn-success" (click)="openAddApplicationModal(appModal)">
+          <i class="mdi mdi-plus"></i> Agregar
+        </button>
+        <!-- <button class="btn btn-danger" (click)="exitMenu()">
+          <i class="mdi mdi-arrow-left"></i>
+          Salir
+        </button> -->
+      </div>
+      <div>
+        <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
+          [(ngModel)]="searchTerm" (input)="filtrarAplicaciones()">
+      </div>
+    </div>
+
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Editar</th>
+            <th>Eliminar</th>
+            <th (click)="ordenarPor('nombre')" style="cursor:pointer">
+              Nombre de Aplicación
+              <span *ngIf="sortColumn === 'nombre'">
+                <i class="feather"
+                  [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+              </span>
+            </th>
+            <th (click)="ordenarPor('siglas')" style="cursor:pointer">
+              Siglas
+              <span *ngIf="sortColumn === 'siglas'">
+                <i class="feather"
+                  [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+              </span>
+            </th>
+            <th (click)="ordenarPor('comentarios')" style="cursor:pointer">
+              Comentarios
+              <span *ngIf="sortColumn === 'comentarios'">
+                <i class="feather"
+                  [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let app of aplicacionesPaginadas">
+            <td>
+              <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditApplicationModal(appModal, app)">
+                <i class="feather icon-edit"></i>
+              </button>
+            </td>
+            <td>
+              <button class="btn btn-danger btn-sm" title="Eliminar" (click)="deleteApplication(app)">
+                <i class="feather icon-trash-2"></i>
+              </button>
+            </td>
+            <td>{{ app.nombre }}</td>
+            <td>{{ app.siglas }}</td>
+            <td>{{ app.comentarios }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- Paginación NobleUI/Bootstrap -->
+      <nav>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="d-flex align-items-center gap-2">
+            <select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize"
+              (change)="cambiarPageSize(pageSize)">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+            <label class="me-2 mb-0">registros por página</label>
+          </div>
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="page === 1">
+              <button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button>
+            </li>
+            <li class="page-item" [class.active]="page === 1">
+              <button class="page-link" (click)="cambiarPagina(1)">1</button>
+            </li>
+            <li class="page-item disabled" *ngIf="page > 4">
+              <span class="page-link">...</span>
+            </li>
+            <ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
+              <li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p">
+                <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+              </li>
+            </ng-container>
+            <li class="page-item disabled" *ngIf="page < totalPages - 3">
+              <span class="page-link">...</span>
+            </li>
+            <li class="page-item" *ngIf="totalPages > 1" [class.active]="page === totalPages">
+              <button class="page-link" (click)="cambiarPagina(totalPages)">{{ totalPages }}</button>
+            </li>
+            <li class="page-item" [class.disabled]="page === totalPages">
+              <button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button>
+            </li>
+          </ul>
+        </div>
+      </nav>
     </div>
   </div>
 </div>
 
 
-<!-- Modal para añadir aplicación -->
-<ng-template #addApplicationModal let-modal>
+
+
+<!-- Modal para Agregar/Editar aplicación -->
+<ng-template #appModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Añadir Aplicación</h5>
+    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Agregar Aplicación' : 'Editar Aplicación' }}</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-  <form (ngSubmit)="addApplication(modal)">
+  <form (ngSubmit)="saveApplication(modal)">
     <div class="modal-body">
       <div class="mb-3">
         <label for="nombre" class="form-label">Nombre</label>
-        <input id="nombre" name="nombre" class="form-control" [(ngModel)]="newApp.nombre" required>
+        <input id="nombre" name="nombre" class="form-control" [(ngModel)]="appSeleccionada.nombre" required>
       </div>
       <div class="mb-3">
         <label for="siglas" class="form-label">Siglas</label>
-        <input id="siglas" name="siglas" class="form-control" [(ngModel)]="newApp.siglas" required>
+        <input id="siglas" name="siglas" class="form-control" [(ngModel)]="appSeleccionada.siglas" required>
       </div>
       <div class="mb-3">
         <label for="comentarios" class="form-label">Comentarios</label>
-        <textarea id="comentarios" name="comentarios" class="form-control" [(ngModel)]="newApp.comentarios"></textarea>
+        <textarea id="comentarios" name="comentarios" class="form-control" [(ngModel)]="appSeleccionada.comentarios"></textarea>
       </div>
     </div>
     <div class="modal-footer">
-      <button type="submit" class="btn btn-success">Añadir</button>
+      <button type="submit" class="btn btn-success">{{ modalModo === 'agregar' ? 'Añadir' : 'Guardar' }}</button>
       <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
     </div>
   </form>
