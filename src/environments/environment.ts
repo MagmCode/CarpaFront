@@ -17,7 +17,9 @@ export const environment = {
   Url: 'http://180.183.67.228:8086/api',
 
   API: '/api/',
-  Hash: ':c521f27fb1b3311d686d511b668e5bd4'
+  Hash: ':c521f27fb1b3311d686d511b668e5bd4',
+  nombreAmbiente: 'LOCAL'
+
 };
 
 // export const environment = {

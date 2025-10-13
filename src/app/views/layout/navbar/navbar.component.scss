@@ -1,0 +1,21 @@
+.badge {
+    font-size: 10px;
+}
+
+.bell-icon:before {
+    font-size: 23px;
+}
+
+.user-icon:before {
+    font-size: 25px;
+}
+
+.logout-icon {
+    display: inline-block;
+    transform: rotate(180deg);
+    font-size: 18px;
+
+    &:hover {
+        cursor: pointer;
+    }
+}
