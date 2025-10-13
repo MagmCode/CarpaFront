@@ -1,0 +1,22 @@
+
+.sidebar-logo-flex {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sidebar-logo-img {
+    height: 32px;
+    width: auto;
+    display: block;
+}
+
+.sidebar-logo-text {
+    font-size: 1.5rem;
+    font-weight: bolder;
+    letter-spacing: 1px;
+}
+.icon:before {
+    font-size: 18px;
+    margin-right: -20px;
+}

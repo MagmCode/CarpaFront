@@ -2,17 +2,17 @@ import { MenuItem } from './menu.model';
 
 export const MENU: MenuItem[] = [
   {
-    label: 'Main',
+    label: 'Menu',
     isTitle: true
   },
   {
     label: 'Inicio',
-    icon: 'home',
+    icon: 'icon-bdv-icon-bank-l',
     link: '/inicio',
   },
   {
-    label:'seguridad',
-    icon: 'shield',
+    label:'Seguridad',
+    icon: 'icon-bdv-icon-handcube-l',
     subItems: [
       {
         label: 'Aplicaciones',
@@ -43,12 +43,17 @@ export const MENU: MenuItem[] = [
         link: '/seguridad/usuarios',
       },
       {
-        label: 'Parámetros',
-        link: '/seguridad/parametros-sistema',
-      },
-      {
-        label: 'Agregar Usuarios en lote',
-        link: '/seguridad/agregar-usuarios',
+        label: 'Usuarios en Lote',
+        subItems: [
+          {
+            label: 'Agregar',
+            link: '/seguridad/agregar-usuarios',
+          },
+          {
+            label: 'Eliminar',
+            link: '/seguridad/eliminar-usuarios',
+          },
+        ],
       },
       {
         label: 'Consultas',
@@ -63,36 +68,32 @@ export const MENU: MenuItem[] = [
           link: '/seguridad/consultas/opciones-menu-por-url',
         },
         ]
-      },
-      {
-        label: 'Eliminar Usuarios en lote',
-        link: '/seguridad/eliminar-usuarios',
-      },
-      {
-        label: 'Programador de Tareas (SHEDULER)',
-        link: '/seguridad/programador-tareas',
-      },
-      
-    ]
-  },
-  {
-    label: 'Operaciones',
-    icon: 'inbox',
-    subItems: [
-      {
-        label: 'Consultas de Hilos Abiertos',
-        link: '/operaciones/consultas-hilos-abiertos',
-      },
+      }      
     ]
   },
   {
     label: 'Configuración',
-    icon: 'settings',
+    icon: 'icon-bdv-icon-config-m',
     subItems: [
       {
         label: 'Servicios Web BCV',
         link: '/configuracion/servicios-web-bcv',
-      }
+      },
+      {
+        label: 'Parámetros',
+        link: '/seguridad/parametros-sistema',
+      },
+    ]
+  },
+  {
+    label: 'Reportes',
+    icon: 'icon-bdv-icon-file-l',
+    subItems: [
+      {
+        label: 'Por Aplicacion',
+        link: '/reportes/por-aplicacion',
+      },
+
     ]
   },
 ]

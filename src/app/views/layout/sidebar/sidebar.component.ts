@@ -15,17 +15,14 @@ import { Router, NavigationEnd } from '@angular/router';
   styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent implements OnInit, AfterViewInit {
+sidebarMenuClass: string = 'sidebar-nav metismenu mm-collapse-show';
 
   @ViewChild('sidebarToggler') sidebarToggler: ElementRef;
 
   menuItems: MenuItem[] = [];
   @ViewChild('sidebarMenu') sidebarMenu: ElementRef;
 
-  constructor(@Inject(DOCUMENT) private document: Document, private renderer: Renderer2, router: Router,
-  private usuariosService: UsuariosService,
-  private rolesService: RolesService
-
-) { 
+  constructor(@Inject(DOCUMENT) private document: Document, private renderer: Renderer2, router: Router  ) { 
     router.events.forEach((event) => {
       if (event instanceof NavigationEnd) {
 
@@ -45,45 +42,11 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     });
   }
 
-  consultarUsuariosSidebar() {
-  this.usuariosService.consultarUsuarios().subscribe({
-    next: (data) => {
-      const usuarios = Array.isArray(data.data) ? data.data : [];
-      if (usuarios.length > 0) {
-        this.usuariosService.setUsuarios(usuarios);
-        localStorage.setItem('usuariosConsultados', JSON.stringify(usuarios));
-      }
-      console.log('Usuarios:', data);
-    },
-      error: (err) => {
-        console.error('Error al consultar usuarios:', err);
-      }
-  });
-}
-
-  consultarRolesSidebar() {
-  this.rolesService.consultarRoles().subscribe({
-    next: (data) => {
-      const roles = Array.isArray(data.data) ? data.data : [];
-        if (roles.length > 0) {
-      this.rolesService.setRoles(roles);
-      localStorage.setItem('rolesConsultados', JSON.stringify(roles));
-        }
-      console.log('Roles:', data);
-    },
-    error: (err) => {
-      console.error('Error al consultar roles:', err);
-    }
-  });
-}
   nombreUsuarioActual: string = '';
 
   ngOnInit(): void {
     this.menuItems = MENU;
-    const usuarioActual = localStorage.getItem('usuarioActual');
-    if (usuarioActual) {
-      this.nombreUsuarioActual = JSON.parse(usuarioActual).fullName;
-    }
+
 
     /**
      * Sidebar-folded on desktop (min-width:992px and max-width: 1199px)
@@ -93,23 +56,24 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       this.iconSidebar;
     });
     this.iconSidebar(desktopMedium);
-    this.consultarUsuariosSidebar();
-    this.consultarRolesSidebar();
+
   }
 
   ngAfterViewInit() {
     // activate menu item
     if (this.sidebarMenu) {
-      new MetisMenu(this.sidebarMenu.nativeElement); 
-      this._activateMenuDropdown();
+      new MetisMenu(this.sidebarMenu.nativeElement);
+      // Espera a que MetisMenu y el DOM estén listos antes de activar el menú
+      setTimeout(() => {
+        this._activateMenuDropdown();
+        // Elimina la clase mm-collapse si está presente tras recarga
+        const sidebarMenu = document.getElementById('sidebar-menu');
+        if (sidebarMenu && sidebarMenu.classList.contains('mm-collapse')) {
+          sidebarMenu.classList.remove('mm-collapse');
+        }
+      }, 200);
     }
   }
-
-  logout() {
-    localStorage.removeItem('usuarioActual');
-    window.location.href = '/auth/login';
-  }
-
   /**
    * Toggle sidebar on hamburger button click
    */
@@ -245,58 +209,41 @@ export class SidebarComponent implements OnInit, AfterViewInit {
    * Toggles the menu items
    */
   activateMenuItems() {
-
     const links: any = document.getElementsByClassName('nav-link-ref');
 
     let menuItemEl = null;
-    
     for (let i = 0; i < links.length; i++) {
-      // tslint:disable-next-line: no-string-literal
-        if (window.location.pathname === links[i]['pathname']) {
-          
-            menuItemEl = links[i];
-            
-            break;
-        }
+      if (window.location.pathname === links[i]['pathname']) {
+        menuItemEl = links[i];
+        break;
+      }
     }
 
     if (menuItemEl) {
-        menuItemEl.classList.add('mm-active');
-        const parentEl = menuItemEl.parentElement;
-
-        if (parentEl) {
-            parentEl.classList.add('mm-active');
-
-            const parent2El = parentEl.parentElement;
-            if (parent2El) {
-                parent2El.classList.add('mm-show');
-            }
-
-            const parent3El = parent2El.parentElement;
-            if (parent3El) {
-                parent3El.classList.add('mm-active');
-
-                if (parent3El.classList.contains('side-nav-item')) {
-                    const firstAnchor = parent3El.querySelector('.side-nav-link-a-ref');
-
-                    if (firstAnchor) {
-                        firstAnchor.classList.add('mm-active');
-                    }
-                }
-
-                const parent4El = parent3El.parentElement;
-                if (parent4El) {
-                    parent4El.classList.add('mm-show');
-
-                    const parent5El = parent4El.parentElement;
-                    if (parent5El) {
-                        parent5El.classList.add('mm-active');
-                    }
-                }
-            }
+      menuItemEl.classList.add('mm-active');
+      let parent = menuItemEl.parentElement;
+      let level = 0;
+      // Sube por los padres y agrega mm-active y mm-show hasta el ul#sidebar-menu
+      while (parent && parent.id !== 'sidebar-menu' && level < 10) {
+        if (parent.classList.contains('nav-item') || parent.classList.contains('side-nav-item')) {
+          parent.classList.add('mm-active');
         }
+        if (parent.classList.contains('sub-menu') || parent.classList.contains('sidebar-nav')) {
+          parent.classList.add('mm-show');
+        }
+        parent = parent.parentElement;
+        level++;
+      }
+      // Forzar la clase para evitar colapso del menú
+      setTimeout(() => {
+        const sidebarMenu = document.getElementById('sidebar-menu');
+        if (sidebarMenu) {
+          sidebarMenu.classList.add('mm-collapse-show');
+          sidebarMenu.classList.remove('mm-collapse');
+        }
+      }, 100);
     }
-  };
+  }
 
 
 }

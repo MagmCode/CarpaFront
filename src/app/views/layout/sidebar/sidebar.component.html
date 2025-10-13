@@ -1,19 +1,13 @@
 <nav class="sidebar">
   <div class="sidebar-header">
 
+
     <!--- Logo -->
-    <a routerLink="/" class="sidebar-brand nobleui-logo">
-      CAR<span>PA</span>
+    <a [routerLink]="['/inicio']" class="sidebar-brand nobleui-logo sidebar-logo-flex">
+      <img src="/assets/images/bdv-logo-logo.png" alt="Logo" class="sidebar-logo-img" />
+      <span class="sidebar-logo-text mt-2">CARPA</span>
     </a>
 
-    <!-- <a routerLink="/" class="sidebar-brand nobleui-logo">
-      <img src="assets/images/logo.png" alt="logo">
-    </a> -->
-
-    <!-- Nombre de Usuario -->
-     <div *ngIf="nombreUsuarioActual" class="mt-2 mb-2 text-center fw-bold text-primary" style="font-size: 1rem;">
-       Bienvenido "{{ nombreUsuarioActual }}"
-     </div>
 
     <!--- Toggler -->
     <div class="sidebar-toggler not-active" #sidebarToggler (click)="toggleSidebar($event)">
@@ -27,21 +21,21 @@
 
     <!--- Sidemenu start -->
 
-    <ul class="sidebar-nav metismenu" id="sidebar-menu" #sideb#arMenu>
+  <ul id="sidebar-menu" #sidebarMenu [ngClass]="sidebarMenuClass">
       <ng-container *ngFor="let item of menuItems">
         <li class="nav-item nav-category" *ngIf="item.isTitle">{{ item.label }}</li>
     
         <li class="nav-item" *ngIf="!item.isTitle" >
     
           <a class="nav-link" *ngIf="hasItems(item)" href="javascript:void(0);">
-            <i class="link-icon" [attr.data-feather]="item.icon" appFeatherIcon *ngIf="item.icon"></i>
+            <i class="icon {{item.icon}}" *ngIf="item.icon"></i>
             <span class="link-title"> {{ item.label }}</span>
             <span class="link-arrow" data-feather="chevron-down" appFeatherIcon></span>
           </a>
     
           <a class="nav-link nav-link-ref" [routerLink]="item.link" *ngIf="!hasItems(item)"
             [attr.data-parent]="item.parentId">
-            <i class="link-icon" [attr.data-feather]="item.icon" appFeatherIcon *ngIf="item.icon"></i>
+            <i class="icon {{item.icon}}"   *ngIf="item.icon"></i>
             <span class="link-title"> {{ item.label }}</span>
             <span class="badge bg-{{item.badge.variant}}" *ngIf="item.badge">{{item.badge.text}}</span>
           </a>
@@ -56,7 +50,7 @@
               </a>
     
               <a class="nav-link nav-link-ref" [routerLink]="subitem.link" *ngIf="!hasItems(subitem)"
-                [attr.data-parent]="subitem.parentId" (click)="subitem.label === 'Usuarios' ? consultarUsuariosSidebar() : (subitem.label === 'Roles' ? consultarRolesSidebar() : null)">
+                [attr.data-parent]="subitem.parentId">
                 <i class="link-icon" [attr.data-feather]="subitem.icon" appFeatherIcon *ngIf="subitem.icon"></i>
                 {{ subitem.label }}
               </a>
@@ -83,8 +77,5 @@
     </ul>
 
     <!--- Sidemenu end -->
-    <div class="d-flex justify-content-center">
-      <button class="btn btn-outline-danger btn-sm mt-2" (click)="logout()">Cerrar Sesión</button>
-    </div>
   </div>
 </nav>
