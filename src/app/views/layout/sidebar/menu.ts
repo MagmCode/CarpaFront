@@ -12,7 +12,7 @@ export const MENU: MenuItem[] = [
   },
   {
     label:'Seguridad',
-    icon: 'icon-bdv-icon-handcube-l',
+    icon: 'icon-bdv-icon-cypher-l',
     subItems: [
       {
         label: 'Aplicaciones',
@@ -42,33 +42,20 @@ export const MENU: MenuItem[] = [
         label: 'Usuarios',
         link: '/seguridad/usuarios',
       },
-      {
-        label: 'Usuarios en Lote',
-        subItems: [
-          {
-            label: 'Agregar',
-            link: '/seguridad/agregar-usuarios',
-          },
-          {
-            label: 'Eliminar',
-            link: '/seguridad/eliminar-usuarios',
-          },
-        ],
-      },
-      {
-        label: 'Consultas',
-        link: '/seguridad/consultas',
-        subItems: [
-        {
-          label: 'Opciones de Menú por Rol',
-          link: '/seguridad/consultas/opciones-menu-por-rol',
-        },
-        {
-          label: 'Opciones de Menú por URL',
-          link: '/seguridad/consultas/opciones-menu-por-url',
-        },
-        ]
-      }      
+      // {
+      //   label: 'Consultas',
+      //   link: '/seguridad/consultas',
+      //   subItems: [
+      //   {
+      //     label: 'Opciones de Menú por Rol',
+      //     link: '/seguridad/consultas/opciones-menu-por-rol',
+      //   },
+      //   {
+      //     label: 'Opciones de Menú por URL',
+      //     link: '/seguridad/consultas/opciones-menu-por-url',
+      //   },
+      //   ]
+      // }      
     ]
   },
   {
@@ -91,7 +78,22 @@ export const MENU: MenuItem[] = [
     subItems: [
       {
         label: 'Por Aplicacion',
-        link: '/reportes/por-aplicacion',
+        link: '/reportes/aplicaciones',
+      },
+
+    ]
+  },
+  {
+    label: 'Auditoría',
+    icon: 'icon-bdv-icon-filewarning2-m',
+    subItems: [
+      {
+        label: 'Trazas',
+        link: '/auditoria/trazas',
+      },
+      {
+        label: 'Seguimiento',
+        link: '/auditoria/seguimiento',
       },
 
     ]

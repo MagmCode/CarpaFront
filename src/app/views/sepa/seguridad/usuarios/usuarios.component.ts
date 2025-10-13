@@ -34,8 +34,10 @@ export class UsuariosComponent implements OnInit {
   usuarioSeleccionado: Usuario | null = null;
   
   nuevoUsuarioId: string = '';
-  nuevoEstatus: boolean | null;
+  nuevoEstatus: number | null = 1;
   nuevoAplicacion: string = '';
+  nuevoFullName: string = '';
+  nuevoEmail: string = '';
   
   constructor(
     private aplicacionesService: AplicacionesService,
@@ -74,6 +76,96 @@ export class UsuariosComponent implements OnInit {
   // }
   // });
 
+  }
+
+  // --- Batch file handling state ---
+  archivoLoteSeleccionado: File | null = null;
+  archivoEliminarSeleccionado: File | null = null;
+
+  // Abrir modal de agregar en lote
+  openAgregarEnLote(template: TemplateRef<any>) {
+    this.archivoLoteSeleccionado = null;
+    this.modalService.open(template, { centered: true });
+  }
+
+  // Abrir modal de eliminar en lote
+  openEliminarEnLote(template: TemplateRef<any>) {
+    this.archivoEliminarSeleccionado = null;
+    this.modalService.open(template, { centered: true });
+  }
+
+  // Selección de archivo para agregar en lote
+  onFileSelected(event: any) {
+    const file: File = event.target.files && event.target.files[0];
+    if (file) this.archivoLoteSeleccionado = file;
+  }
+
+  // Selección de archivo para eliminar en lote
+  onFileSelectedToDelete(event: any) {
+    const file: File = event.target.files && event.target.files[0];
+    if (file) this.archivoEliminarSeleccionado = file;
+  }
+
+  // Procesar subida (placeholder)
+  procesarAgregarLote(modal: any) {
+    if (!this.archivoLoteSeleccionado) {
+      Swal.fire({ title: 'Sin archivo', text: 'Seleccione un archivo Excel para procesar.', icon: 'info' });
+      return;
+    }
+    this.showSuccessToast('Procesando archivo', `Archivo: ${this.archivoLoteSeleccionado.name}`);
+    modal.close();
+    // TODO: implementar parsing y creación de usuarios
+  }
+
+  // Invocado por el modal para eliminar filtrados (usa el método existente confirmarEliminarEnLote)
+  confirmarEliminarEnLoteModal(modal: any) {
+    this.confirmarEliminarEnLote();
+    modal.close();
+  }
+
+  // Procesar eliminación desde archivo (placeholder)
+  procesarEliminarDesdeArchivo(modal: any) {
+    if (!this.archivoEliminarSeleccionado) {
+      Swal.fire({ title: 'Sin archivo', text: 'Seleccione un archivo con IDs para eliminar.', icon: 'info' });
+      return;
+    }
+    this.showSuccessToast('Procesando archivo de eliminación', `Archivo: ${this.archivoEliminarSeleccionado.name}`);
+    modal.close();
+    // TODO: implementar lectura del archivo y eliminación por IDs
+  }
+
+  // Mostrar confirmación antes de procesar eliminación desde archivo
+  confirmarProcesarEliminarArchivo(modal: any) {
+    if (!this.archivoEliminarSeleccionado) {
+      Swal.fire({ title: 'Sin archivo', text: 'Seleccione un archivo con IDs para eliminar.', icon: 'info' });
+      return;
+    }
+    Swal.fire({
+      title: '¿Está seguro?',
+      text: `Se eliminarán los usuarios indicados en el archivo: ${this.archivoEliminarSeleccionado.name}`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.procesarEliminarDesdeArchivo(modal);
+      }
+    });
+  }
+
+  // Helper: mostrar un toast success en la esquina superior derecha
+  showSuccessToast(title: string, text?: string) {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title,
+      text,
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
   }
 
   usuariosAll() {
@@ -214,7 +306,9 @@ export class UsuariosComponent implements OnInit {
   
   openAddUserModal(content: any) {
     this.nuevoUsuarioId = '';
-    this.nuevoEstatus = null;
+    this.nuevoEstatus = 1; // por defecto Activo
+    this.nuevoFullName = '';
+    this.nuevoEmail = '';
     this.nuevoAplicacion = '';
     this.modalService.open(content, { centered: true });
   }
@@ -225,12 +319,51 @@ export class UsuariosComponent implements OnInit {
   }
   
   addUser(modal: any) {
+    // create a new user from the modal inputs
+    const newUser: Usuario = {
+      mscUserId: String(Date.now()),
+      userId: this.nuevoUsuarioId,
+      fullName: this.nuevoFullName || '',
+      email: this.nuevoEmail || '',
+      userStatus: Number(this.nuevoEstatus) || 0,
+      roles: [],
+      imported: false
+    };
+    this.usuarios = [newUser, ...this.usuarios];
+    this.filtrarUsuarios();
+    this.showSuccessToast('Usuario añadido', `User ID: ${newUser.userId}`);
     modal.close();
   }
   
   openEliminarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
     this.usuarioSeleccionado = usuario;
     this.modalService.open(TemplateRef, { centered: true });
+  }
+
+  
+
+  // Confirmar y eliminar todos los usuarios actualmente filtrados
+  confirmarEliminarEnLote() {
+    if (!this.usuariosFiltrados || this.usuariosFiltrados.length === 0) {
+      Swal.fire({ title: 'Sin registros', text: 'No hay usuarios filtrados para eliminar.', icon: 'info' });
+      return;
+    }
+    Swal.fire({
+      title: `Eliminar ${this.usuariosFiltrados.length} usuarios?`,
+      text: 'Esta acción eliminará los usuarios visibles en la lista filtrada. No se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const idsAEliminar = new Set(this.usuariosFiltrados.map(u => u.userId));
+        this.usuarios = this.usuarios.filter(u => !idsAEliminar.has(u.userId));
+        this.filtrarUsuarios();
+        this.showSuccessToast('Eliminados', `${idsAEliminar.size} usuarios eliminados.`);
+      }
+    });
   }
   
   eliminarUsuario(usuario: Usuario, modal: any) {
@@ -252,13 +385,7 @@ export class UsuariosComponent implements OnInit {
       if (result.isConfirmed) {
         this.usuarios = this.usuarios.filter(u => u.userId !== usuario.userId);
         this.filtrarUsuarios();
-        Swal.fire({
-          title: 'Eliminado',
-          text: `El usuario "${usuario.userId}" ha sido eliminado.`,
-          icon: 'success',
-          timer: 1500,
-          showConfirmButton: false
-        });
+        this.showSuccessToast('Eliminado', `El usuario "${usuario.userId}" ha sido eliminado.`);
       }
     });
   }

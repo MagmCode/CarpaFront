@@ -14,4 +14,5 @@ export interface Usuario {
   email: string;
   userStatus: number;
   roles: RolUsuario[];
+  imported?: boolean; // indica si el usuario fue importado desde un archivo
 }
