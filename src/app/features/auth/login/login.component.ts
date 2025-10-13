@@ -39,14 +39,14 @@ export class LoginComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
-  submit(event: Event): void {
-  event.preventDefault();
-  this.loading = true;
-  const { codUsuario } = this.loginForm.value;
-  const payload = {
-    codUsuario,
-    siglasApplic: 'NOTINFI'
-  };
+ submit(event: Event): void {
+    event.preventDefault();
+    this.loading = true;
+    const { codUsuario } = this.loginForm.value;
+    const payload = {
+      codUsuario,
+      siglasApplic: 'NOTINFI'
+    };
     this.loginService.validarUsuario(payload).subscribe({
       next: (response: any) => {
         if (response && response.token) {
@@ -55,12 +55,28 @@ export class LoginComponent implements OnInit {
         if (response && response.refreshToken) {
           localStorage.setItem('refreshToken', response.refreshToken);
         }
-        if (response && response.nombreCompleto) {
-          // Extraer primer nombre y primer apellido
-          const partes = response.nombreCompleto.trim().split(' ');
-          let nombre = partes[0] || '';
-          let apellido = partes.length > 1 ? partes[2] : '';
-          const usuarioNombre = `${nombre} ${apellido}`.trim();
+        // Construir nombre de usuario de forma robusta con varios fallbacks
+        let usuarioNombre = '';
+        if (response) {
+          if (response.nombreCompleto) {
+            // Extraer primer nombre y primer apellido de nombreCompleto
+            const partes = response.nombreCompleto.trim().split(/\s+/);
+            const nombre = partes[0] || '';
+            const apellido = partes.length > 1 ? partes[1] : '';
+            usuarioNombre = `${nombre} ${apellido}`.trim();
+          } else if (response.usuario) {
+            // Si el backend (o bypass) devuelve un objeto usuario
+            const nombre = response.usuario.nombre || response.usuario.firstName || '';
+            const apellido = response.usuario.apellido || response.usuario.lastName || '';
+            usuarioNombre = `${nombre} ${apellido}`.trim();
+          } else if (response.fullName) {
+            const partes = String(response.fullName).trim().split(/\s+/);
+            const nombre = partes[0] || '';
+            const apellido = partes.length > 1 ? partes[1] : '';
+            usuarioNombre = `${nombre} ${apellido}`.trim();
+          }
+        }
+        if (usuarioNombre) {
           localStorage.setItem('usuarioActual', usuarioNombre);
         }
         this.loading = false;
@@ -110,11 +126,6 @@ export class LoginComponent implements OnInit {
         }
       }
     })
-//   console.log('Payload enviado', payload);
-//   this.loginService.validarUsuario(payload).subscribe({
-//     next: (response: any) => {
-//       console.log('Respuesta del backend:', response);
-//       // Guarda el token en el localStorage
 //       if (response && response.token) {
 //         localStorage.setItem('token', response.token);
 //       }
