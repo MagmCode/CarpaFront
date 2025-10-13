@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RolUsuario, Usuario } from 'src/app/core/models/usuarios/usuario';
 import { UsuariosService } from 'src/app/services/usuarios/usuarios.service';
 import { DataTable } from 'simple-datatables';
+import Swal from 'sweetalert2';
 import { ModificarStatusService } from 'src/app/services/usuarios/modificarStatus.service';
 
 @Component({
@@ -47,8 +48,11 @@ export class UsuariosComponent implements OnInit {
   
   itemsPorPagina: number = 10;
   paginaActual: number = 1;
-
   usuariosFiltrados: Usuario[] = [];
+  // Global search and sorting
+  searchTerm: string = '';
+  sortColumn: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
   
   ngOnInit(): void {
     this.aplicaciones = this.aplicacionesService.getAplicaciones();
@@ -75,19 +79,57 @@ export class UsuariosComponent implements OnInit {
   usuariosAll() {
      this.usuariosService.consultarUsuarios().subscribe({
     next: (data) => {
-      // const usuarios = Array.isArray(data.data) ? data.data : [];
-      if (data.length > 0) {
+      // if backend returned data use it, otherwise fall back to sample data
+      const hasData = Array.isArray(data) && data.length > 0;
+      if (hasData) {
         this.usuariosService.setUsuarios(data);
         localStorage.setItem('usuariosConsultados', JSON.stringify(data));
-         this.usuariosFiltrados = this.mapBackendUsuarios(data); 
-         console.log('Usuarios All jaja:', this.usuariosFiltrados);
+        this.usuarios = this.mapBackendUsuarios(data);
+        console.log('Usuarios All (backend):', this.usuarios);
+      } else {
+        console.warn('No se recibieron usuarios desde backend, usando datos de ejemplo.');
+        const sample = this.generateSampleUsuarios(20);
+        this.usuariosService.setUsuarios(sample);
+        localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
+        this.usuarios = this.mapBackendUsuarios(sample);
+        console.log('Usuarios All (sample):', this.usuarios);
       }
-      console.log('Usuarios All:', data);
+      // apply filtering/sorting/pagination after setting usuarios
+      this.filtrarUsuarios();
     },
       error: (err) => {
-        console.error('Error al consultar usuarios:', err);
+        console.error('Error al consultar usuarios, usando datos de ejemplo:', err);
+        const sample = this.generateSampleUsuarios(20);
+        this.usuariosService.setUsuarios(sample);
+        localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
+        this.usuarios = this.mapBackendUsuarios(sample);
+        this.filtrarUsuarios();
       }
   });
+  }
+
+  // Genera usuarios de ejemplo (suficientes para pruebas)
+  private generateSampleUsuarios(count: number): any[] {
+    const samples: any[] = [];
+    for (let i = 1; i <= count; i++) {
+      samples.push({
+        mscUserId: 1000 + i,
+        userId: `user${i}`,
+        fullName: `Usuario Ejemplo ${i}`,
+        email: `user${i}@example.com`,
+        userStatus: i % 2 === 0 ? 1 : 0,
+        roles: [
+          {
+            id: i % 3 === 0 ? 1 : 2,
+            alias: i % 3 === 0 ? 'ADMIN' : 'INV',
+            descripcion: i % 3 === 0 ? 'Administrador' : 'Inventario',
+            tipo: i % 2 === 0 ? 'Usuarios de la Torre' : 'Usuarios de Red Comercial',
+            aplicacion: i % 2 === 0 ? 'Gestión Usuarios' : 'Inventario'
+          }
+        ]
+      });
+    }
+    return samples;
   }
 
   private mapBackendUsuarios(backendUsuarios: any[]): Usuario[] {
@@ -119,13 +161,51 @@ export class UsuariosComponent implements OnInit {
 }
 
   filtrarUsuarios() {
-  this.paginaActual = 1;
-  this.usuariosFiltrados = this.usuarios.filter(u =>
-    (!this.usuarioId || u.userId.toLowerCase().includes(this.usuarioId.toLowerCase())) &&
-    // (!this.userStatus || u.userStatus === this.userStatus) &&
-    (!this.aplicacion || u.roles.some(r => r.aplicacion === this.aplicacion)) &&
-    (this.listaTodos === 'todos' || u.roles.some(r => r.alias === this.listaTodos))
-  );
+    this.paginaActual = 1;
+    const term = this.searchTerm.trim().toLowerCase();
+    this.usuariosFiltrados = this.usuarios.filter(u =>
+      (!this.usuarioId || u.userId.toLowerCase().includes(this.usuarioId.toLowerCase())) &&
+      // (!this.userStatus || u.userStatus === this.userStatus) &&
+      (!this.aplicacion || u.roles.some(r => r.aplicacion === this.aplicacion)) &&
+      (this.listaTodos === 'todos' || u.roles.some(r => r.alias === this.listaTodos)) &&
+      (term === '' || u.userId.toLowerCase().includes(term) || u.fullName.toLowerCase().includes(term) || u.email.toLowerCase().includes(term))
+    );
+
+    // apply sorting if requested
+    if (this.sortColumn) {
+      const col = this.sortColumn as keyof Usuario;
+      this.usuariosFiltrados.sort((a, b) => {
+        let valA: any = a[col] as any;
+        let valB: any = b[col] as any;
+        if (valA === undefined || valA === null) valA = '';
+        if (valB === undefined || valB === null) valB = '';
+        // numeric compare for userStatus
+        if (col === 'userStatus') {
+          return this.sortDirection === 'asc' ? (valA - valB) : (valB - valA);
+        }
+        valA = valA.toString().toLowerCase();
+        valB = valB.toString().toLowerCase();
+        if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+  }
+
+  ordenarPor(col: string): void {
+    if (this.sortColumn === col) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = col;
+      this.sortDirection = 'asc';
+    }
+    this.filtrarUsuarios();
+  }
+
+  // Compatibility wrappers used by the template (some HTML was copied from aplicaciones)
+  filtrarAplicaciones(): void {
+    // delegate to the actual usuarios filter
+    this.filtrarUsuarios();
   }
   
   consultar() {
@@ -137,6 +217,11 @@ export class UsuariosComponent implements OnInit {
     this.nuevoEstatus = null;
     this.nuevoAplicacion = '';
     this.modalService.open(content, { centered: true });
+  }
+
+  // Template in some views calls openAddApplicationModal — provide a wrapper
+  openAddApplicationModal(content: any) {
+    this.openAddUserModal(content);
   }
   
   addUser(modal: any) {
@@ -152,8 +237,33 @@ export class UsuariosComponent implements OnInit {
     this.usuarios = this.usuarios.filter(u => u.userId !== usuario.userId);
     modal.close();
   }
+
+  // Use SweetAlert confirmation similar to Aplicaciones component
+  confirmarEliminarUsuario(usuario: Usuario) {
+    Swal.fire({
+      title: `¿Desea eliminar el usuario "${usuario.userId}"?`,
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.usuarios = this.usuarios.filter(u => u.userId !== usuario.userId);
+        this.filtrarUsuarios();
+        Swal.fire({
+          title: 'Eliminado',
+          text: `El usuario "${usuario.userId}" ha sido eliminado.`,
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+    });
+  }
   
-  openEditarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
+    openEditarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
     this.usuarioSeleccionado = { ...usuario };
     this.modalService.open(TemplateRef, { centered: true });
   }
@@ -190,9 +300,10 @@ export class UsuariosComponent implements OnInit {
     modal.close();
   }
   
-  openEditarRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
+  openVerRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
     this.usuarioSeleccionado = usuario;
-    this.modalService.open(TemplateRef, { centered: true });
+    this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
+
   }
   
   openAsociarRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
@@ -200,7 +311,7 @@ export class UsuariosComponent implements OnInit {
     this.rolesDisponibles.forEach(r => {
       r.seleccionado = !!usuario.roles.find(ur => ur.id === r.id);
     });
-    this.modalService.open(TemplateRef, { centered: true });
+    this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
   }
   
   guardarAsociacionRoles(usuario: Usuario, modal: any) {
@@ -235,6 +346,12 @@ export class UsuariosComponent implements OnInit {
     if (pagina >= 1 && pagina <= this.totalPaginas) {
       this.paginaActual = pagina;
     }
+  }
+
+  cambiarPageSize(nuevoSize: number) {
+    this.itemsPorPagina = Number(nuevoSize) || 10;
+    this.paginaActual = 1;
+    this.filtrarUsuarios();
   }
 
   salir() {

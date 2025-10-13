@@ -1,38 +1,187 @@
-<div class="row">
-  <div class="col-md-6 grid-margin stretch-card">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="card-title">Seguridad/Roles-Acciones</h6>
-        <form>
-          <div class="mb-3">
-            <label for="alias" class="form-label">Alias (Rol)</label>
-            <input type="text" class="form-control" id="alias" [(ngModel)]="alias" name="alias" placeholder="Ingrese el alias del rol">
-          </div>
-          <div class="mb-3">
-            <label for="uso" class="form-label">Uso (Rol)</label>
-            <select class="form-select" id="uso" [(ngModel)]="uso" name="uso" required>
-              <option value="" disabled selected>Seleccione el uso</option>
-              <option value="red comercial">Red Comercial</option>
-              <option value="interno">Interno</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="aplicacion" class="form-label">Aplicación</label>
-            <select class="form-select" id="aplicacion" [(ngModel)]="aplicacion" name="aplicacion" required>
-              <option value="" disabled selected>Seleccione una aplicación</option>
-              <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
-            </select>
-          </div>
-          <div class="d-flex gap-3 mt-4">
-            <button type="button" class="btn btn-info" (click)="consultar()">
-              <i class="mdi mdi-magnify"></i> Consultar
-            </button>
-            <button type="button" class="btn btn-danger" (click)="salir()">
-              <i class="mdi mdi-arrow-left"></i> Salir
-            </button>
-          </div>
-        </form>
+<div *ngIf="!asociando" class="card">
+  <div class="card-header">
+    <h6 class="card-title fw-semibold">Seguridad / Roles-Acciones</h6>
+  </div>
+  <div class="card-body" style="position: relative;">
+    <div class="row mb-4 align-items-end">
+      <div class="fw-bold d-flex justify-content-end">
+        <span class="fw-semibold">Total de registros: </span> {{ rolesFiltrados.length }}
       </div>
+    </div>
+    <div class="d-flex justify-content-between mb-4">
+      <div class="d-flex gap-3"></div>
+      <div>
+        <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
+          [(ngModel)]="searchTerm" (input)="filtrarRoles()">
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Asociar</th>
+            <th (click)="ordenarPor('rol')" style="cursor:pointer">
+              Rol
+              <span *ngIf="sortColumn === 'rol'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+            <th (click)="ordenarPor('descripcion')" style="cursor:pointer">
+              Descripción
+              <span *ngIf="sortColumn === 'descripcion'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+            <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">
+              Aplicación
+              <span *ngIf="sortColumn === 'aplicacion'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rol of rolesPaginados">
+            <td>
+              <button class="btn btn-primary btn-sm" title="Asociar acciones" (click)="asociarAcciones(rol)">
+                <i class="mdi mdi-link-variant"></i>
+              </button>
+            </td>
+            <td>{{ rol.rol }}</td>
+            <td>{{ rol.descripcion }}</td>
+            <td>{{ rol.aplicacion }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- Paginación NobleUI/Bootstrap -->
+      <nav>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="d-flex align-items-center gap-2">
+            <select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize"
+              (change)="cambiarPageSize(pageSize)">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+            <label class="me-2 mb-0">registros por página</label>
+          </div>
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="page === 1">
+              <button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button>
+            </li>
+            <li class="page-item" [class.active]="page === 1">
+              <button class="page-link" (click)="cambiarPagina(1)">1</button>
+            </li>
+            <li class="page-item disabled" *ngIf="page > 4">
+              <span class="page-link">...</span>
+            </li>
+            <ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
+              <li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p">
+                <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+              </li>
+            </ng-container>
+            <li class="page-item disabled" *ngIf="page < totalPages - 3">
+              <span class="page-link">...</span>
+            </li>
+            <li class="page-item" *ngIf="totalPages > 1" [class.active]="page === totalPages">
+              <button class="page-link" (click)="cambiarPagina(totalPages)">{{ totalPages }}</button>
+            </li>
+            <li class="page-item" [class.disabled]="page === totalPages">
+              <button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Vista de asociación de acciones -->
+<div *ngIf="asociando" class="card">
+  <div class="card-header d-flex justify-content-between">
+    <h6 class="card-title fw-semibold">Asociar Acciones a Rol</h6>
+            <button class="btn btn-outline-secondary btn-sm" (click)="cancelarAsociacion()">Cancelar</button>
+
+  </div>
+  <div class="card-body">
+    <div class="mb-3">
+      <strong>Rol:</strong> {{ rolSeleccionado?.rol }}<br>
+      <strong>Aplicación:</strong> {{ rolSeleccionado?.aplicacion }}
+    </div>
+
+    <div class="d-flex justify-content-between mb-3">
+      <div class="d-flex gap-2">
+        <button class="btn btn-success" (click)="guardarAsociacion()">Guardar</button>
+      </div>
+      <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
+        [(ngModel)]="accionesSearchTerm" (input)="filtrarAcciones()">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Checklist</th>
+            <th>URL</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let accion of accionesPaginadas; let i = index">
+            <td class="text-center align-middle">
+              <div class="form-check form-check-success d-flex justify-content-center align-items-center m-0">
+                <input class="form-check-input" type="checkbox" id="accionCheck{{i}}" [(ngModel)]="accion.checked"
+                  name="accionCheck{{i}}">
+                <label class="form-check-label" for="accionCheck{{i}}"></label>
+              </div>
+            </td>
+            <td>{{ accion.url }}</td>
+            <td>{{ accion.descripcion }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- Paginación para acciones -->
+      <nav>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="d-flex align-items-center gap-2">
+            <select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="accionesPageSize"
+              (change)="cambiarAccionesPageSize(accionesPageSize)">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+            <label class="me-2 mb-0">registros por página</label>
+          </div>
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="accionesPage === 1">
+              <button class="page-link" (click)="cambiarAccionesPagina(accionesPage - 1)">Anterior</button>
+            </li>
+            <li class="page-item" [class.active]="accionesPage === 1">
+              <button class="page-link" (click)="cambiarAccionesPagina(1)">1</button>
+            </li>
+            <li class="page-item disabled" *ngIf="accionesPage > 4">
+              <span class="page-link">...</span>
+            </li>
+            <ng-container
+              *ngFor="let p of [accionesPage-2, accionesPage-1, accionesPage, accionesPage+1, accionesPage+2]">
+              <li class="page-item" *ngIf="p > 1 && p < accionesTotalPages" [class.active]="accionesPage === p">
+                <button class="page-link" (click)="cambiarAccionesPagina(p)">{{ p }}</button>
+              </li>
+            </ng-container>
+            <li class="page-item disabled" *ngIf="accionesPage < accionesTotalPages - 3">
+              <span class="page-link">...</span>
+            </li>
+            <li class="page-item" *ngIf="accionesTotalPages > 1" [class.active]="accionesPage === accionesTotalPages">
+              <button class="page-link" (click)="cambiarAccionesPagina(accionesTotalPages)">{{ accionesTotalPages
+                }}</button>
+            </li>
+            <li class="page-item" [class.disabled]="accionesPage === accionesTotalPages">
+              <button class="page-link" (click)="cambiarAccionesPagina(accionesPage + 1)">Siguiente</button>
+            </li>
+          </ul>
+        </div>
+      </nav>
     </div>
   </div>
 </div>

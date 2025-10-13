@@ -1,99 +1,72 @@
 <!-- <div class="container-fluid"> -->
-  <div class="row">
-    <div class="col-md-4 col-lg-4">
-      <div class="card mb-3">
-        <div class="card-body">
-          <h6 class="card-title">Seguridad/Usuarios</h6>
-          <form>
-            <div class="row">
-              <div class="col-6">
-                <div class="mb-3">
-                  <label for="usuarioId" class="form-label">Usuario ID</label>
-                  <input type="text" class="form-control" id="usuarioId" [(ngModel)]="usuarioId" name="usuarioId" (ngModelChange)="filtrarUsuarios()" placeholder="ID de usuario">
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="mb-3">
-                  <label for="estatus" class="form-label">Estatus</label>
-                  <select class="form-select" id="estatus" [(ngModel)]="userStatus" name="estatus" (ngModelChange)="filtrarUsuarios()">
-                    <option value="" selected>Todos</option>
-                    <option value="1">Activo</option>
-                    <option value="0">Inactivo</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="mb-3">
-                  <label for="aplicacion" class="form-label">Aplicación</label>
-                  <select class="form-select" id="aplicacion" [(ngModel)]="aplicacion" name="aplicacion" (ngModelChange)="filtrarUsuarios()">
-                    <option value="" selected>Todas</option>
-                    <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="mb-3">
-                  <label for="listaTodos" class="form-label">Rol</label>
-                  <select class="form-select" id="listaTodos" [(ngModel)]="listaTodos" name="listaTodos" (ngModelChange)="filtrarUsuarios()">
-                    <option value="todos">Todos</option>
-                    <!-- Puedes agregar más opciones de roles aquí -->
-                  </select>
-                </div>
-              </div>
-            </div>
-          </form>
-          <div class="d-flex justify-content-start gap-3 mt-3">
-            <button type="button" class="btn btn-info" (click)="consultar()">
-              <i class="mdi mdi-magnify"></i> Consultar
-            </button>
-            <button type="button" class="btn btn-success" (click)="openAddUserModal(addUserModal)">
-              <i class="mdi mdi-plus"></i> Añadir Registro
-            </button>
-            <button type="button" class="btn btn-danger" (click)="salir()">
-              <i class="mdi mdi-arrow-left"></i> Salir
-            </button>
-          </div>
-        </div>
+<div class="card">
+  <div class="card-header">
+          <h6 class="card-title fw-semibold">Seguridad / Usuarios</h6>
+
+           <div class="card-body" style="position: relative;">
+    <div class="row mb-4 align-items-end">
+      <div class="fw-bold d-flex justify-content-end">
+        <span class="fw-semibold">Total de registros: </span> {{ usuariosFiltrados.length}}
       </div>
     </div>
-    <div class="col-md-8 col-lg-8">
-      <div class="card mb-3">
-        <div class="card-body">
-          <h6 class="card-title">Usuarios</h6>
+    <div class="d-flex justify-content-between mb-4">
+      <div class="d-flex gap-3">
+        <button class="btn btn-success" (click)="openAddApplicationModal(addUserModal)">
+          <i class="mdi mdi-plus"></i> Agregar
+        </button>
+        <!-- <button class="btn btn-danger" (click)="exitMenu()">
+          <i class="mdi mdi-arrow-left"></i>
+          Salir
+        </button> -->
+      </div>
+      <div>
+        <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
+          [(ngModel)]="searchTerm" (input)="filtrarAplicaciones()">
+      </div>
+    </div>
+
           <div class="table-responsive">
-            <table id="rolesConsultaTable" class="table">
-              <thead>
+            <table id="rolesConsultaTable" class="table table-bordered text-center align-middle">
+              <thead class="table-light">
                 <tr>
-                  <th>Eliminar</th>
-                  <th>Editar</th>
-                  <th>Editar Roles</th>
-                  <th>Asociar Roles</th>
-                  <th>User ID</th>
-                  <th>Nombre y Apellido</th>
-                  <th>E-mail</th>
-                  <th>Estatus</th>
+                  <th class="text-center">Eliminar</th>
+                  <th class="text-center">Editar</th>
+                  <th class="text-center">Ver Roles</th>
+                  <th class="text-center">Asociar Roles</th>
+                  <th (click)="ordenarPor('userId')" style="cursor:pointer">User ID
+                    <i class="mdi" *ngIf="sortColumn === 'userId'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+                  </th>
+                  <th (click)="ordenarPor('fullName')" style="cursor:pointer">Nombre y Apellido
+                    <i class="mdi" *ngIf="sortColumn === 'fullName'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+                  </th>
+                  <th (click)="ordenarPor('email')" style="cursor:pointer">E-mail
+                    <i class="mdi" *ngIf="sortColumn === 'email'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+                  </th>
+                  <th (click)="ordenarPor('userStatus')" style="cursor:pointer">Estatus
+                    <i class="mdi" *ngIf="sortColumn === 'userStatus'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let usuario of usuariosPaginados">
-                  <td>
-                    <button class="btn btn-sm btn-danger" (click)="openEliminarModal(usuario, eliminarModal)">
+                  <td class="text-center align-middle">
+                    <button class="btn btn-sm btn-danger" (click)="confirmarEliminarUsuario(usuario)">
                       <i class="mdi mdi-delete"></i>
                     </button>
                   </td>
-                  <td>
-                    <button class="btn btn-sm btn-primary" (click)="openEditarModal(usuario, editarModal)">
+                  <td class="text-center align-middle">
+                    <button class="btn btn-sm btn-warning" (click)="openEditarModal(usuario, editarModal)">
                       <i class="mdi mdi-pencil"></i>
                     </button>
                   </td>
-                  <td>
-                    <button class="btn btn-sm btn-info" (click)="openEditarRolesModal(usuario, editarRolesModal)">
-                      <i class="mdi mdi-account-multiple"></i>
+                  <td class="text-center align-middle">
+                    <button class="btn btn-sm btn-info" (click)="openVerRolesModal(usuario, verRolesModal)">
+                      <i class="mdi mdi-eye"></i>
                     </button>
                   </td>
-                  <td>
-                    <button class="btn btn-sm btn-success" (click)="openAsociarRolesModal(usuario, asociarRolesModal)">
-                      <i class="mdi mdi-account-plus"></i>
+                  <td class="text-center align-middle">
+                    <button class="btn btn-sm btn-primary" (click)="openAsociarRolesModal(usuario, asociarRolesModal)">
+                      <i class="mdi mdi-link-variant"></i>
                     </button>
                   </td>
                   <td>{{ usuario.userId }}</td>
@@ -109,27 +82,47 @@
               </tbody>
             </table>
           </div>
-          <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-            <div>
-              <nav>
-                <ul class="pagination pagination-sm mb-0">
-                  <li class="page-item" [class.disabled]="paginaActual === 1">
-                    <button class="page-link" (click)="cambiarPagina(paginaActual - 1)" [disabled]="paginaActual === 1">&laquo;</button>
-                  </li>
-                  <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
-                    <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
-                  </li>
-                  <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
-                    <button class="page-link" (click)="cambiarPagina(paginaActual + 1)" [disabled]="paginaActual === totalPaginas">&raquo;</button>
-                  </li>
-                </ul>
-              </nav>
-            </div>
+      <!-- Paginación estilo Aplicaciones -->
+      <nav>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="d-flex align-items-center gap-2">
+            <select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="itemsPorPagina" (change)="cambiarPageSize(itemsPorPagina)">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+            <label class="me-2 mb-0">registros por página</label>
           </div>
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="paginaActual === 1">
+              <button class="page-link" (click)="cambiarPagina(paginaActual - 1)">Anterior</button>
+            </li>
+            <li class="page-item" [class.active]="paginaActual === 1">
+              <button class="page-link" (click)="cambiarPagina(1)">1</button>
+            </li>
+            <li class="page-item disabled" *ngIf="paginaActual > 4">
+              <span class="page-link">...</span>
+            </li>
+            <ng-container *ngFor="let p of [paginaActual-2, paginaActual-1, paginaActual, paginaActual+1, paginaActual+2]">
+              <li class="page-item" *ngIf="p > 1 && p < totalPaginas" [class.active]="paginaActual === p">
+                <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+              </li>
+            </ng-container>
+            <li class="page-item disabled" *ngIf="paginaActual < totalPaginas - 3">
+              <span class="page-link">...</span>
+            </li>
+            <li class="page-item" *ngIf="totalPaginas > 1" [class.active]="paginaActual === totalPaginas">
+              <button class="page-link" (click)="cambiarPagina(totalPaginas)">{{ totalPaginas }}</button>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+              <button class="page-link" (click)="cambiarPagina(paginaActual + 1)">Siguiente</button>
+            </li>
+          </ul>
+        </div>
+      </nav>
         </div>
       </div>
-    </div>
-  </div>
 
 
 <!-- Modal 1: Confirmar eliminación -->
@@ -174,8 +167,8 @@
 </form>
 </ng-template>
 
-<!-- Modal 3: Editar roles asociados -->
-<ng-template #editarRolesModal let-modal>
+<!-- Modal 3: Ver roles asociados -->
+<ng-template #verRolesModal let-modal>
   <div class="modal-header">
     <h5 class="modal-title">Roles Asociados al Usuario: {{ usuarioSeleccionado?.fullName }}</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
@@ -183,7 +176,7 @@
   <div class="modal-body">
     <div class="table-responsive">
       <table class="table table-bordered">
-        <thead>
+        <thead class="table-light">
           <tr>
             <th>ID</th>
             <th>Rol (Alias corto)</th>
@@ -216,12 +209,10 @@
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
   <div class="modal-body">
-    <div class="mb-3">
-      <strong>Usuario:</strong> {{ usuarioSeleccionado?.fullName }}
-    </div>
+
     <div class="table-responsive">
       <table class="table table-bordered">
-        <thead>
+        <thead class="table-light">
           <tr>
             <th>Seleccionar</th>
             <th>Rol (Alias corto)</th>
