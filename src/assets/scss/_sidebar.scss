@@ -290,14 +290,14 @@
     background: $card-bg;   
     .sidebar-nav {
       list-style: none;
-      padding: 25px 25px 50px 25px;
+      padding: 25px 25px 50px 30px;
       .nav-item {
         position: relative;
         > .nav-link {
           display: flex;
           align-items: center;
           padding: 0;
-          height: 32px;
+          height: 30px;
           white-space: nowrap;
           color: $body-color;
           .link-icon {

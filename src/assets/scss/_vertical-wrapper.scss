@@ -3,7 +3,6 @@
   // overflow: hidden; // commented for fixing content-nav sticky position
   .page-wrapper {
     min-height: 100vh;
-    background: $body-bg;
     width: calc(100% - #{$sidebar-width-lg});
     margin-left: $sidebar-width-lg;
     display: flex;

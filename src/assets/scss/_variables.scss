@@ -31,17 +31,27 @@ $cyan:    #0dcaf0 !default;
 
 
 
-// --- Bootstrap Theme Colors --- //
+// // --- Bootstrap Theme Colors --- //
+// //
+// $primary:         #6571ff !default;
+// $secondary:       $gray-600 !default;
+// $success:         #05a34a !default;
+// $info:            #66d1d1 !default;
+// $warning:         #fbbc06 !default;
+// $danger:          #ff3366 !default;
+// $light:           $gray-200 !default;
+// $dark:            $gray-900 !default;
 //
-$primary:         #6571ff !default;
-$secondary:       $gray-600 !default;
-$success:         #05a34a !default;
-$info:            #66d1d1 !default;
-$warning:         #fbbc06 !default;
-$danger:          #ff3366 !default;
+
+// --- BDV Brand Palette --- //  
+$primary:         #0167B1 !default;
+$secondary:       #3C3C3C !default;
+$success:         #009582 !default;
+$info:            #622D87 !default;
+$warning:         #FDC800 !default;
+$danger:          #DA0032 !default;
 $light:           $gray-200 !default;
 $dark:            $gray-900 !default;
-//
 // --- Bootstrap Theme Colors --- //
 
 
@@ -157,7 +167,7 @@ $action-transition-timing-function: ease;
 // Font, line-height, and color for body text, headings, and more.
 
 // Font family
-$font-family-sans-serif:           "Roboto", Helvetica, sans-serif !default;
+$font-family-sans-serif:           "Nunito", Helvetica, sans-serif !default;
 
 $font-size-base:              		 0.875rem !default;   // 14px
 $font-size-lg:               	 		 1rem !default;       // 16px

@@ -51,7 +51,7 @@
   --bs-black-rgb: 0, 0, 0;
   --bs-body-color-rgb: 0, 0, 0;
   --bs-body-bg-rgb: 249, 250, 251;
-  --bs-font-sans-serif: "Roboto", Helvetica, sans-serif;
+  --bs-font-sans-serif: "Nunito", Helvetica, sans-serif;
   --bs-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --bs-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
   --bs-body-font-family: var(--bs-font-sans-serif);
@@ -18787,7 +18787,7 @@ pre {
 
 code {
   padding: 5px;
-  font-family: "Roboto", Helvetica, sans-serif;
+  font-family: "Nunito", Helvetica, sans-serif;
   font-weight: 400;
   font-size: 0.875rem;
   border-radius: 4px;
@@ -19172,13 +19172,13 @@ body {
 .main-content .highlight pre {
   padding: 15px;
   font-size: 0.875rem;
-  font-family: "Roboto", Helvetica, sans-serif;
+  font-family: "Nunito", Helvetica, sans-serif;
   background: transparent;
   line-height: 1.4;
   margin: 0;
 }
 .main-content .highlight pre code {
-  font-family: "Roboto", Helvetica, sans-serif;
+  font-family: "Nunito", Helvetica, sans-serif;
   padding: 0;
   tab-size: 6;
   color: #000;
@@ -22144,7 +22144,7 @@ div.apexcharts-canvas .apexcharts-tooltip .apexcharts-tooltip-title {
   background-color: #fff;
 }
 div.apexcharts-canvas .apexcharts-tooltip * {
-  font-family: "Roboto", Helvetica, sans-serif !important;
+  font-family: "Nunito", Helvetica, sans-serif !important;
 }
 div.apexcharts-canvas .apexcharts-tooltip-series-group.apexcharts-active,
 div.apexcharts-canvas .apexcharts-tooltip-series-group:last-child {
