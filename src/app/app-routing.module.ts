@@ -44,6 +44,10 @@ const routes: Routes = [
         path: 'auditoria',
         loadChildren: () => import ('./views/sepa/auditoria/auditoria.module').then(m => m.AuditoriaModule)
       },
+      {
+        path: 'administrador',
+        loadChildren: () => import ('./views/sepa/administrador/administrador.module').then(m => m.AdministradorModule)
+      },
       
       { path: '', redirectTo: '/auth/login', pathMatch: 'full' }, 
 

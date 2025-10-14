@@ -3,7 +3,7 @@ import { MenuItem } from './menu.model';
 export const MENU: MenuItem[] = [
   {
     label: 'Menu',
-    isTitle: true
+    isTitle: true,
   },
   {
     label: 'Inicio',
@@ -11,7 +11,7 @@ export const MENU: MenuItem[] = [
     link: '/inicio',
   },
   {
-    label:'Seguridad',
+    label: 'Seguridad',
     icon: 'icon-bdv-icon-cypher-l',
     subItems: [
       {
@@ -55,8 +55,8 @@ export const MENU: MenuItem[] = [
       //     link: '/seguridad/consultas/opciones-menu-por-url',
       //   },
       //   ]
-      // }      
-    ]
+      // }
+    ],
   },
   {
     label: 'Configuración',
@@ -70,7 +70,7 @@ export const MENU: MenuItem[] = [
         label: 'Parámetros',
         link: '/seguridad/parametros-sistema',
       },
-    ]
+    ],
   },
   {
     label: 'Reportes',
@@ -80,8 +80,7 @@ export const MENU: MenuItem[] = [
         label: 'Aplicación',
         link: '/reportes/aplicaciones',
       },
-
-    ]
+    ],
   },
   {
     label: 'Auditoría',
@@ -95,7 +94,25 @@ export const MENU: MenuItem[] = [
         label: 'Seguimiento',
         link: '/auditoria/seguimiento',
       },
-
-    ]
+    ],
   },
-]
+  {
+    label: 'Administrador',
+    icon: 'icon-bdv-icon-configclient-m',
+    subItems: [
+      {
+        label: 'Conexiones',
+        subItems: [
+          {
+            label: 'Equipos',
+            link: '/administrador/conexiones/equipos',
+          },
+          {
+            label: 'Drivers',
+            link: '/administrador/conexiones/drivers',
+          },
+        ],
+      },
+    ],
+  },
+];
