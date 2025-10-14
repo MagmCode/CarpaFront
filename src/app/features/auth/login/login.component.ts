@@ -126,43 +126,12 @@ export class LoginComponent implements OnInit {
         }
       }
     })
-//       if (response && response.token) {
-//         localStorage.setItem('token', response.token);
-//       }
-//       // Guarda el usuario en localStorage para el sidebar
-//       if (response && response.fullName) {
-//         localStorage.setItem('usuarioActual', JSON.stringify(response));
-//       }
-//       this.router.navigate(['/dashboard']);
-//     },
-//     error: (error: any) => {
-//       console.error('Error en login', error);
-//       // Manejo de error
-//     }
-//   });
+
 }
 
-  // submit(event:Event):void {
-  //   const {codUsuario: codUsuario} = this.loginForm.value
-  //   const payload = {
-  //     codUsuario, 
-  //     siglasApplic: 'NOTINFI'
-  //   }
-  // console.log('datos', payload)    
-  //   this.loginService.validarUsuario(payload).subscribe({
-  //     next: (response: any) => {
-  //       console.log(response)
-  //       this.router.navigate(['/dashboard']);
-
-  //     },
-  //     error:(error: any) => {
-  //       // let errorMessage = this.extraerMensajeError(error);
-  //     }
-  //   })
-    
-  // }
-
-  
+  get currentYear(): number {
+    return new Date().getFullYear();
+  }
 }
   
   

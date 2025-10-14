@@ -1,46 +1,31 @@
 <div class="login-bg">
   <div class="login-card">
     <div class="login-logo mb-2">
-    <img src="/assets/images/bdv-logo.png" alt="Logo" style="height:100%; width: 100%;"></div>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
-
-    <div class="login-title mb-3">Credenciales</div>
+      <img src="/assets/images/bdv-logo.png" alt="Logo">
+    </div>
+    <div class="login-title mb-3">CARPA</div>
     <form (ngSubmit)="submit($event)" [formGroup]="loginForm" class="forms-sample">
       <div class="mb-3">
-        <input
-          type="text"
-          class="form-control"
-          id="exampleInputEmail1"
-          placeholder="Usuario (NM, CT, TP)"
-          formControlName = "codUsuario"
-        >
+        <input type="text" class="form-control" id="exampleInputEmail1" placeholder="Usuario (NM, CT, TP)"
+          formControlName="codUsuario">
       </div>
-        <div class="mb-3 position-relative">
-          <input
-            [type]="showPassword ? 'text' : 'password'"
-            class="form-control"
-            id="exampleInputPassword1"
-            autocomplete="current-password"
-            placeholder="Contraseña"
-            formControlName="password"
-          >
-          <button type="button"
-          class="btn btn-link btn-sm p-0 eye-btn"
-          tabindex="-1"
-          (click)="togglePassword()"
-          style="position:absolute;top:50%;right:1rem;transform:translateY(-50%);">
-            <i [ngClass]="showPassword ? 'icon-bdv-icon-hide-l' : 'icon-bdv-icon-show-l'" style="font-size: large;"></i>
-          </button>
-        </div>
-        <div>
-          <button type="submit" class="btn btn-primary login-btn d-flex align-items-center justify-content-center" [disabled]="loading" style="min-width:120px;position:relative;">
-            <ng-container *ngIf="!loading">Ingresar</ng-container>
-            <ng-container *ngIf="loading">
-              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Ingresando...
-            </ng-container>
-          </button>
-        </div>
+      <div class="mb-3 position-relative">
+        <input [type]="showPassword ? 'text' : 'password'" class="form-control" id="exampleInputPassword1"
+          autocomplete="current-password" placeholder="Contraseña" formControlName="password">
+        <button type="button" class="btn btn-link btn-sm p-0 eye-btn" tabindex="-1" (click)="togglePassword()">
+          <i [ngClass]="showPassword ? 'icon-bdv-icon-hide-l' : 'icon-bdv-icon-show-l'"></i>
+        </button>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary login-btn d-flex align-items-center justify-content-center mt-5"
+          [disabled]="loading">
+          <ng-container *ngIf="!loading">Ingresar</ng-container>
+          <ng-container *ngIf="loading">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Ingresando...
+          </ng-container>
+        </button>
+      </div>
       <div class="login-footer mt-4">
         <hr>
         <div class="text-center">
@@ -53,7 +38,15 @@
     <div class="cuadro cuadro-rojo"></div>
     <div class="cuadro cuadro-amarillo"></div>
     <div class="cuadro cuadro-azul">
-      
+      <!-- EMAC logo name positioned at the bottom center of the blue square -->
+      <div class="footer-content">
+        <span class="text-white small mb-0">Copyright &copy; {{ currentYear }}</span>
+        <a href="https://gitlab.com/emac3/srd-front/" target="_blank" rel="noopener noreferrer"
+          class="d-flex align-items-center gap-2">
+          <span class="text-white small mb-0">EMAC Tech Solutions</span>
+          <img src="assets/images/EMAC/LogoEMAC_white.png" alt="Logo EMAC" class="mb-2">
+        </a>
+      </div>
     </div>
   </div>
 </div>
