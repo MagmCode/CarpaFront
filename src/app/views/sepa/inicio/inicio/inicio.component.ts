@@ -11,6 +11,7 @@ import * as feather from 'feather-icons';
 export class InicioComponent implements OnInit, AfterViewInit {
   showConsultas = false;
   showSeguridad = false;
+  showAuditoria = false;
   showreportes = false;
   showConfiguracion = false;
   usuario: string | null = null;
@@ -20,6 +21,7 @@ export class InicioComponent implements OnInit, AfterViewInit {
 seguridadItems: any[] = [];
 reportesItems: any[] = [];
 configuracionItems: any[] = [];
+  auditoriaItems: any[] = [];
 
 // Recursivo: convierte subItems a hijos planos o anidados según se requiera
 private extractMenuItems(menu: any, label: string): any[] {
@@ -43,6 +45,11 @@ private extractMenuItems(menu: any, label: string): any[] {
     this.seguridadItems = this.extractMenuItems(MENU, 'Seguridad');
     this.configuracionItems = this.extractMenuItems(MENU, 'Configuración');
     this.reportesItems = this.extractMenuItems(MENU, 'Reportes');
+    // intentar extraer la sección Auditoría (soporta 'Auditoría' y 'Auditoria')
+    this.auditoriaItems = this.extractMenuItems(MENU, 'Auditoría');
+    if (!this.auditoriaItems || this.auditoriaItems.length === 0) {
+      this.auditoriaItems = this.extractMenuItems(MENU, 'Auditoria');
+    }
   }
 
   ngAfterViewInit(): void {
@@ -61,6 +68,23 @@ private extractMenuItems(menu: any, label: string): any[] {
   navigateAndCloseSeguridad(route:string): void {
     this.showSeguridad = false;
     this.router.navigate([route]);
+  }
+
+  navigateAndCloseAuditoria(route: string): void {
+    this.showAuditoria = false;
+    this.router.navigate([route]);
+  }
+
+  navigateToAuditoria(): void {
+    // Si sólo hay una opción, navega directamente a ella; si no, abre el menú
+    if (this.auditoriaItems && this.auditoriaItems.length === 1) {
+      this.router.navigate([this.auditoriaItems[0].route]);
+    } else if (this.auditoriaItems && this.auditoriaItems.length > 1) {
+      this.showAuditoria = true;
+    } else {
+      // fallback: ruta genérica
+      this.router.navigate(['/auditoria']);
+    }
   }
 
     navigateAndClosereportes(route:string): void {

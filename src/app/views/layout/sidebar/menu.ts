@@ -77,7 +77,7 @@ export const MENU: MenuItem[] = [
     icon: 'icon-bdv-icon-file-l',
     subItems: [
       {
-        label: 'Por Aplicacion',
+        label: 'Aplicación',
         link: '/reportes/aplicaciones',
       },
 
