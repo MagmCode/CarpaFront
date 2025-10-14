@@ -1,1 +1,96 @@
-<p>seguimiento works!</p>
+<div class="card">
+	<div class="card-header">
+		<h6 class="card-title fw-semibold">Auditoría / Seguimiento</h6>
+	</div>
+	<div class="card-body">
+		<div class="d-flex justify-content-between mb-3">
+			<div class="d-flex align-items-center gap-3">
+				<strong>Total:&nbsp;</strong> {{ logsFiltrados.length }}
+			</div>
+			<div>
+				<input class="form-control" style="width:260px; display:inline-block" placeholder="Buscar..." [(ngModel)]="searchTerm" (input)="filtrarLogs()">
+			</div>
+		</div>
+
+		<div class="table-responsive">
+			<table class="table table-bordered align-middle text-center">
+				<thead class="table-light">
+					<tr>
+						<th>Eliminar</th>
+						<th>Ver</th>
+						<th>Fecha</th>
+						<th>Origen</th>
+						<th>Mensaje</th>
+						<th>Estado</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr *ngFor="let l of logsPaginados">
+						<td>
+							<button class="btn btn-danger btn-sm" (click)="deleteLog(l)"><i class="feather icon-trash-2"></i></button>
+						</td>
+						<td>
+							<button class="btn btn-primary btn-sm" (click)="openViewModal(viewModal, l)"><i class="feather icon-eye"></i></button>
+						</td>
+						<td>{{ l.timestamp }}</td>
+						<td>{{ l.source }}</td>
+						<td class="text-start text-truncate" style="max-width:300px">{{ l.message }}</td>
+						<td>
+							<span class="badge" [ngClass]="l.status === 'completed' ? 'bg-success' : (l.status === 'error' ? 'bg-danger' : 'bg-info')">{{ l.status }}</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Paginación -->
+		<div class="d-flex justify-content-between align-items-center mt-3">
+			<div class="d-flex align-items-center gap-2">
+				<select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize" (change)="cambiarPageSize(pageSize)">
+					<option [ngValue]="5">5</option>
+					<option [ngValue]="10">10</option>
+					<option [ngValue]="25">25</option>
+				</select>
+				<label class="me-2 mb-0">registros por página</label>
+			</div>
+			<ul class="pagination mb-0">
+				<li class="page-item" [class.disabled]="page === 1">
+					<button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button>
+				</li>
+				<li class="page-item" [class.active]="page === 1">
+					<button class="page-link" (click)="cambiarPagina(1)">1</button>
+				</li>
+				<ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
+					<li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p">
+						<button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+					</li>
+				</ng-container>
+				<li class="page-item" [class.disabled]="page === totalPages">
+					<button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<!-- Modal de detalle -->
+<ng-template #viewModal let-modal>
+	<div class="modal-header">
+		<h5 class="modal-title">Detalle del log</h5>
+		<button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+	</div>
+	<div class="modal-body">
+		<div *ngIf="selectedLog">
+			<p><strong>ID:</strong> {{ selectedLog.id }}</p>
+			<p><strong>Fecha:</strong> {{ selectedLog.timestamp }}</p>
+			<p><strong>Origen:</strong> {{ selectedLog.source }}</p>
+			<p><strong>Mensaje:</strong> {{ selectedLog.message }}</p>
+			<p><strong>Estado:</strong> {{ selectedLog.status }}</p>
+			<hr>
+			<pre style="white-space:pre-wrap">{{ selectedLog.details }}</pre>
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+	</div>
+</ng-template>
