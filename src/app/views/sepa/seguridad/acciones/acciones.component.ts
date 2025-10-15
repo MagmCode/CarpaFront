@@ -154,5 +154,77 @@ export class AccionesComponent implements OnInit {
       }
     });
   }
+  
+  // --- Batch file handling state ---
+  archivoLoteSeleccionado: File | null = null;
+  archivoEliminarSeleccionado: File | null = null;
+
+  // Abrir modal de agregar en lote
+  openAgregarEnLote(template: TemplateRef<any>) {
+    this.archivoLoteSeleccionado = null;
+    this.modalService.open(template, { centered: true });
+  }
+
+  // Abrir modal de eliminar en lote
+  openEliminarEnLote(template: TemplateRef<any>) {
+    this.archivoEliminarSeleccionado = null;
+    this.modalService.open(template, { centered: true });
+  }
+
+  // Selección de archivo para agregar en lote
+  onFileSelected(event: any) {
+    const file: File = event.target.files && event.target.files[0];
+    if (file) this.archivoLoteSeleccionado = file;
+  }
+
+  // Selección de archivo para eliminar en lote
+  onFileSelectedToDelete(event: any) {
+    const file: File = event.target.files && event.target.files[0];
+    if (file) this.archivoEliminarSeleccionado = file;
+  }
+
+  // Procesar subida (placeholder)
+  procesarAgregarLote(modal: any) {
+    if (!this.archivoLoteSeleccionado) {
+      Swal.fire({ title: 'Sin archivo', text: 'Seleccione un archivo Excel para procesar.', icon: 'info' });
+      return;
+    }
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Procesando archivo', text: `Archivo: ${this.archivoLoteSeleccionado.name}`, showConfirmButton: false, timer: 2000 });
+    modal.close();
+    // TODO: implementar parsing y creación de acciones
+  }
+
+  // Procesar eliminación desde archivo (placeholder)
+  procesarEliminarDesdeArchivo(modal: any) {
+    if (!this.archivoEliminarSeleccionado) {
+      Swal.fire({ title: 'Sin archivo', text: 'Seleccione un archivo con URLs para eliminar.', icon: 'info' });
+      return;
+    }
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Procesando archivo de eliminación', text: `Archivo: ${this.archivoEliminarSeleccionado.name}`, showConfirmButton: false, timer: 2000 });
+    modal.close();
+    // TODO: implementar lectura del archivo y eliminación por URLs
+  }
+
+  // Mostrar confirmación antes de procesar eliminación desde archivo
+  confirmarProcesarEliminarArchivo(modal: any) {
+    if (!this.archivoEliminarSeleccionado) {
+      Swal.fire({ title: 'Sin archivo', text: 'Seleccione un archivo con URLs para eliminar.', icon: 'info' });
+      return;
+    }
+    Swal.fire({
+      title: '¿Está seguro? Puede eliminar varias acciones',
+      text: `Se eliminarán las acciones indicadas en el archivo: ${this.archivoEliminarSeleccionado.name}`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.procesarEliminarDesdeArchivo(modal);
+      }
+    });
+  }
 }
+
 

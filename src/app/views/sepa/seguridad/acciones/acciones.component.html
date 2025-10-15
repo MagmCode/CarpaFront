@@ -42,13 +42,16 @@
     </div>
     <div class="d-flex justify-content-between mb-4">
       <div class="d-flex gap-3">
-        <button class="btn btn-success" (click)="openAddActionModal(addActionModal)">
-          <i class="mdi mdi-plus"></i> Agregar
-        </button>
-        <!-- <button class="btn btn-danger" (click)="exitMenu()">
-          <i class="mdi mdi-arrow-left"></i> Salir
-        </button> -->
-      </div>
+          <button class="btn btn-success" (click)="openAddActionModal(addActionModal)">
+            <i class="mdi mdi-plus"></i> Agregar
+          </button>
+          <button class="btn btn-primary" (click)="openAgregarEnLote(agregarLoteModal)">
+            <i class="mdi mdi-file-upload"></i> Agregar en lote
+          </button>
+          <button class="btn btn-danger" (click)="openEliminarEnLote(eliminarLoteModal)">
+            <i class="mdi mdi-delete"></i> Eliminar en lote
+          </button>
+        </div>
       <div>
         <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
           [(ngModel)]="searchTerm" (input)="filtrarAcciones()">
@@ -141,3 +144,41 @@
     </div>
   </div>
 </div>
+    <!-- Modal: Agregar en lote (subir Excel) -->
+    <ng-template #agregarLoteModal let-modal>
+      <div class="modal-header">
+        <h5 class="modal-title">Agregar acciones en lote</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <form (ngSubmit)="procesarAgregarLote(modal)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="archivoLoteAcc" class="form-label">Seleccionar archivo Excel (.xlsx)</label>
+            <input id="archivoLoteAcc" type="file" accept=".xls,.xlsx" class="form-control" (change)="onFileSelected($event)">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Procesar</button>
+          <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <!-- Modal: Eliminar en lote -->
+    <ng-template #eliminarLoteModal let-modal>
+      <div class="modal-header">
+        <h5 class="modal-title">Eliminar acciones en lote</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <div class="modal-body">
+
+        <div class="mb-3">
+          <label for="archivoEliminarAcc" class="form-label">Archivo Excel (.xlsx) con URLs a eliminar</label>
+          <input id="archivoEliminarAcc" type="file" accept=".csv,.xls,.xlsx" class="form-control" (change)="onFileSelectedToDelete($event)">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" (click)="confirmarProcesarEliminarArchivo(modal)">Eliminar</button>
+        <button class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+      </div>
+    </ng-template>
