@@ -14,9 +14,9 @@ import { HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
 
 import { SharedModule } from './shared/shared.module';
 import { HttpClientModule } from '@angular/common/http';
-import { OperacionesComponent } from './views/sepa/operaciones/operaciones.component';
+import { OperacionesComponent } from './views/CARPA/operaciones/operaciones.component';
 import { NgbTimepickerModule } from '@ng-bootstrap/ng-bootstrap';
-import { ConfiguracionModule } from './views/sepa/configuracion/configuracion.module';
+import { ConfiguracionModule } from './views/CARPA/configuracion/configuracion.module';
 
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 // import { AuthInterceptor } from './core/interceptors/auth.interceptor';
