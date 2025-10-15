@@ -56,6 +56,10 @@
             display: none;
           }
         }
+         // hide footer when folded
+        .sidebar-footer {
+          display: none;
+        }
       }
     }
   }

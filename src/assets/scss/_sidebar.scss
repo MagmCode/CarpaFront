@@ -288,6 +288,9 @@
     -webkit-box-shadow: 0 8px 10px 0 rgba(183,192,206,.2);
             box-shadow: 0 8px 10px 0 rgba(183,192,206,.2); 
     background: $card-bg;   
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     .sidebar-nav {
       list-style: none;
       padding: 25px 25px 50px 30px;
