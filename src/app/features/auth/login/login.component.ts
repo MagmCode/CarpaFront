@@ -31,8 +31,8 @@ export class LoginComponent implements OnInit {
       password: ['', [Validators.required]]
 
     })
-    // get return url from route parameters or default to '/'
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+  // get return url from route parameters or default to '/inicio'
+  this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/inicio';
   }
   
   togglePassword() {
@@ -47,6 +47,19 @@ export class LoginComponent implements OnInit {
       codUsuario,
       siglasApplic: 'NOTINFI'
     };
+
+    // Clear any stale session flags before attempting login. This prevents old 'isLoggedin' values
+    // (from earlier bypass/test runs) from allowing access when backend currently fails.
+    try {
+      console.log('Clearing previous session flags prior to login attempt');
+      localStorage.removeItem('isLoggedin');
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('usuarioActual');
+    } catch (e) {
+      // ignore storage errors
+    }
+
     this.loginService.validarUsuario(payload).subscribe({
       next: (response: any) => {
         if (response && response.token) {
@@ -112,11 +125,42 @@ export class LoginComponent implements OnInit {
         if (usuarioNombre) {
           localStorage.setItem('usuarioActual', usuarioNombre);
         }
-        // mark session active so AuthGuard permits access
-        localStorage.setItem('isLoggedin', 'true');
-        this.loading = false;
-        const target = this.returnUrl || '/inicio';
-        this.router.navigate([target]);
+
+        // Don't set isLoggedin here; LoginService is responsible for marking session (bypass or backend).
+        // Only navigate if the service actually marked the session or the response includes a token.
+        const serviceMarked = localStorage.getItem('isLoggedin') === 'true';
+        const hasToken = !!(response && response.token);
+        if (serviceMarked || hasToken) {
+          this.loading = false;
+          const target = this.returnUrl || '/inicio';
+          console.log('Login successful, navigating to:', target, 'serviceMarked:', serviceMarked, 'hasToken:', hasToken);
+          this.router.navigate([target]).then(navigated => {
+            console.log('router.navigate result:', navigated, 'current url:', this.router.url);
+            setTimeout(() => {
+              const stillAtLogin = this.router.url && this.router.url.includes('/auth/login');
+              if (!navigated || stillAtLogin) {
+                console.warn('Router navigation did not redirect — forcing full page redirect to', target);
+                try { window.location.assign(target); } catch (e) { /* ignore */ }
+              }
+            }, 150);
+          }).catch(err => {
+            console.error('router.navigate threw:', err);
+            try { window.location.assign(target); } catch (e) { /* ignore */ }
+          });
+        } else {
+          this.loading = false;
+          console.warn('Login response did not include token and service did not mark session. Staying on login. Response:', response);
+          Swal.fire({
+            icon: 'error',
+            title: 'No autorizado',
+            text: 'Ocurrió un error al iniciar sesión.',
+            toast: true,
+            position: 'top-start',
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true,
+          });
+        }
       },
       error: (error: any) => {
         // Manejo robusto de sesión activa

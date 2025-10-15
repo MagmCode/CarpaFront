@@ -15,12 +15,16 @@ export class LoginService {
     codUsuario: string;
     siglasApplic: string;
   }): Observable<any> {
-    const BYPASS = false; // Cambiar a 'true' para activar el bypass de login
+    // Cambiar a 'true' para activar el bypass de login
+    // const BYPASS = false; 
+    const BYPASS = true; 
+    // console.log('LoginService: validarUsuario called. BYPASS=', BYPASS);
     if (BYPASS) {
       // BYPASS LOGIN: Retorna usuario simulado
       return new Observable<any>((observer) => {
         const nombre = 'Usuario';
         const apellido = 'Demo';
+        // console.log('LoginService: BYPASS active - setting isLoggedin and returning demo user');
         localStorage.setItem('isLoggedin', 'true');
         observer.next({
           // marcar sesión activa para que AuthGuard permita el acceso
@@ -38,8 +42,18 @@ export class LoginService {
       });
     } else {
       return this.http.post<any>(`${this.apiUrl}/auth/login`, data).pipe(
-        tap((response: any) => {}),
+        tap((response: any) => {
+          // If backend returns a token, mark session active here (service centralizes session handling)
+          try {
+            if (response && response.token) {
+              localStorage.setItem('isLoggedin', 'true');
+            }
+          } catch (e) {
+            // ignore storage errors
+          }
+        }),
         catchError((error: HttpErrorResponse) => {
+          // console.warn('LoginService: backend login request failed', error);
           return throwError(() => error.error);
         })
       );
