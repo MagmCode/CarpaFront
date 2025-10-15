@@ -15,20 +15,15 @@ export class LoginService {
     codUsuario: string;
     siglasApplic: string;
   }): Observable<any> {
-    const BYPASS = true; // Cambiar a 'true' para activar el bypass de login
-    if (!BYPASS) {
-      return this.http.post<any>(`${this.apiUrl}/auth/login`, data).pipe(
-        tap((response: any) => {}),
-        catchError((error: HttpErrorResponse) => {
-          return throwError(() => error.error);
-        })
-      );
-    } else {
+    const BYPASS = false; // Cambiar a 'true' para activar el bypass de login
+    if (BYPASS) {
       // BYPASS LOGIN: Retorna usuario simulado
       return new Observable<any>((observer) => {
         const nombre = 'Usuario';
         const apellido = 'Demo';
+        localStorage.setItem('isLoggedin', 'true');
         observer.next({
+          // marcar sesión activa para que AuthGuard permita el acceso
           token: 'fake-token',
           refreshToken: 'fake-refresh-token',
           usuario: {
@@ -41,6 +36,13 @@ export class LoginService {
         });
         observer.complete();
       });
+    } else {
+      return this.http.post<any>(`${this.apiUrl}/auth/login`, data).pipe(
+        tap((response: any) => {}),
+        catchError((error: HttpErrorResponse) => {
+          return throwError(() => error.error);
+        })
+      );
     }
   }
 }
