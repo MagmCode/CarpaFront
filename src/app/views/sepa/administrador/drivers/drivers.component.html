@@ -1,1 +1,120 @@
-<p>drivers works!</p>
+<!-- Drivers view: Conexiones / Drivers -->
+<div class="card">
+	<div class="card-header">
+		<h6 class="card-title fw-semibold mb-0">Concexiones / Drivers</h6>
+	</div>
+	<div class="card-body">
+		<div class="row mb-4 align-items-end">
+			<div class="fw-bold d-flex justify-content-end">
+				<strong>Total de registros:</strong> {{ driversFiltrados.length || 0 }}
+			</div>
+		</div>
+		<div class="d-flex justify-content-between mb-4">
+			<div class="d-flex gap-3">
+				<button class="btn btn-success" (click)="openAddDriverModal(addDriverModal)">
+					<i class="mdi mdi-plus"></i> Agregar
+				</button>
+			</div>
+			<div>
+				<input type="text" class="form-control" style="width: 260px; display: inline-block;" placeholder="Buscar..." [(ngModel)]="searchTerm" (input)="filtrarDrivers()">
+			</div>
+		</div>
+		<div class="table-responsive">
+			<table class="table table-bordered text-center align-middle">
+				<thead class="table-light">
+					<tr>
+						<th>Editar</th>
+						<th (click)="ordenarPor('driver')" style="cursor:pointer">Driver <i class="mdi" *ngIf="sortColumn === 'driver'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('base')" style="cursor:pointer">Base de datos <i class="mdi" *ngIf="sortColumn === 'base'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('descripcion')" style="cursor:pointer">Descripción <i class="mdi" *ngIf="sortColumn === 'descripcion'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('host')" style="cursor:pointer">Host <i class="mdi" *ngIf="sortColumn === 'host'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('puerto')" style="cursor:pointer">Puero <i class="mdi" *ngIf="sortColumn === 'puerto'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('status')" style="cursor:pointer">Status <i class="mdi" *ngIf="sortColumn === 'status'" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th>Eliminar</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr *ngFor="let d of driversPaginados">
+						<td>
+							<button class="btn btn-sm btn-warning" (click)="openEditDriverModal(addDriverModal, d)"><i class="feather icon-edit"></i></button>
+						</td>
+						<td>{{ d.driver }}</td>
+						<td>{{ d.base }}</td>
+						<td class="text-start">{{ d.descripcion }}</td>
+						<td>{{ d.host }}</td>
+						<td>{{ d.puerto }}</td>
+						<td>
+							<span class="badge" [ngClass]="d.status === 'Activo' ? 'bg-success text-white' : 'bg-danger text-white'">{{ d.status }}</span>
+						</td>
+						<td>
+							<button class="btn btn-sm btn-danger" (click)="confirmDeleteDriver(d)"><i class="feather icon-trash-2"></i></button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Paginador -->
+		<div class="d-flex justify-content-between align-items-center mt-3">
+			<div class="d-flex align-items-center gap-2">
+				<select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize" (change)="cambiarPageSize(pageSize)">
+					<option [ngValue]="5">5</option>
+					<option [ngValue]="10">10</option>
+					<option [ngValue]="25">25</option>
+				</select>
+				<label class="me-2 mb-0">registros por página</label>
+			</div>
+			<ul class="pagination mb-0">
+				<li class="page-item" [class.disabled]="page === 1"><button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button></li>
+				<li class="page-item" [class.active]="page === 1"><button class="page-link" (click)="cambiarPagina(1)">1</button></li>
+				<ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
+					<li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p"><button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button></li>
+				</ng-container>
+				<li class="page-item" [class.disabled]="page === totalPages"><button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<!-- Modal para agregar/editar driver -->
+<ng-template #addDriverModal let-modal>
+	<div class="modal-header">
+		<h5 class="modal-title">{{ modalModo === 'agregar' ? 'Nuevo Driver' : 'Editar Driver' }}</h5>
+		<button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+	</div>
+	<form (ngSubmit)="saveDriver(modal)">
+		<div class="modal-body">
+			<div class="mb-3">
+				<label class="form-label">Driver</label>
+				<input class="form-control" [(ngModel)]="newDriver.driver" name="driver" required>
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Base de datos</label>
+				<input class="form-control" [(ngModel)]="newDriver.base" name="base" required>
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Descripción</label>
+				<input class="form-control" [(ngModel)]="newDriver.descripcion" name="descripcion">
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Host</label>
+				<input class="form-control" [(ngModel)]="newDriver.host" name="host">
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Puerto</label>
+				<input class="form-control" [(ngModel)]="newDriver.puerto" name="puerto">
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Status</label>
+				<select class="form-select" [(ngModel)]="newDriver.status" name="status">
+					<option value="Activo">Activo</option>
+					<option value="Inactivo">Inactivo</option>
+				</select>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-success" type="submit">{{ modalModo === 'agregar' ? 'Agregar' : 'Guardar' }}</button>
+			<button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+		</div>
+	</form>
+</ng-template>
