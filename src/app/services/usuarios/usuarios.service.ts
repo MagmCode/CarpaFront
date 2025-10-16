@@ -8,7 +8,8 @@ import { environment } from 'src/environments/environment';
 })
 export class UsuariosService {
 
-    private apiUrl = 'http://180.183.67.228:8080/api/admin/users/all';
+    // private apiUrl = 'http://180.183.67.228:8080/api/admin/users/all';
+    private apiUrl = environment.Url;
     private usuariosSubject = new BehaviorSubject<any[]>([]);
     usuarios$ = this.usuariosSubject.asObservable();
 
@@ -18,8 +19,8 @@ export class UsuariosService {
   consultarUsuarios(): Observable<any> {
     const token = localStorage.getItem('token');
     if (token && !isTokenExpired(token)) {
-      const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-      return this.http.get<any>(this.apiUrl, { headers });
+      const headers = new HttpHeaders({ Authorization: `${token}` });
+      return this.http.get<any>(`${this.apiUrl}/admin/users/all`, { headers });
     } else {
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
@@ -28,8 +29,8 @@ export class UsuariosService {
       return this.fetchNewToken(refreshToken).pipe(
         switchMap((newToken: string) => {
           localStorage.setItem('token', newToken);
-          const headers = new HttpHeaders({  Authorization: `Bearer ${newToken}` });
-          return this.http.get<any>(this.apiUrl, { headers });
+          const headers = new HttpHeaders({ Authorization: `${newToken}` });
+          return this.http.get<any>(`${this.apiUrl}/admin/users/all`, { headers });
         })
       );
     }
@@ -37,7 +38,7 @@ export class UsuariosService {
 
   private fetchNewToken(refreshToken: string | null): Observable<string> {
     return this.http.post<{ token: string }>(
-      'http://180.183.67.228:8080/api/auth/refresh',
+      `${this.apiUrl}/auth/refresh`,
       { refreshToken }
     ).pipe(
       map(response => response.token)

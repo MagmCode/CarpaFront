@@ -16,8 +16,8 @@ export class LoginService {
     siglasApplic: string;
   }): Observable<any> {
     // Cambiar a 'true' para activar el bypass de login
-    // const BYPASS = false; 
-    const BYPASS = true; 
+    const BYPASS = false; 
+    // const BYPASS = true; 
     // console.log('LoginService: validarUsuario called. BYPASS=', BYPASS);
     if (BYPASS) {
       // BYPASS LOGIN: Retorna usuario simulado

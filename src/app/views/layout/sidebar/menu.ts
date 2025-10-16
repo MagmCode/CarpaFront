@@ -11,11 +11,11 @@ export const MENU: MenuItem[] = [
     link: '/inicio',
   },
   {
-    label: 'Seguridad',
+    label: 'Accesos',
     icon: 'icon-bdv-icon-cypher-l',
     subItems: [
       {
-        label: 'Aplicaciones',
+        label: 'Sistemas',
         link: '/seguridad/aplicaciones',
       },
       {
@@ -23,16 +23,16 @@ export const MENU: MenuItem[] = [
         link: '/seguridad/opciones-menu',
       },
       {
-        label: 'Acciones',
-        link: '/seguridad/acciones',
+        label: 'Privilegios',
+        link: '/seguridad/Privilegios',
       },
       {
         label: 'Roles',
         link: '/seguridad/roles',
       },
       {
-        label: 'Roles - Acciones',
-        link: '/seguridad/roles-acciones',
+        label: 'Roles - Privilegios',
+        link: '/seguridad/roles-privilegios',
       },
       {
         label: 'Roles - Menú',
@@ -63,11 +63,11 @@ export const MENU: MenuItem[] = [
     icon: 'icon-bdv-icon-config-m',
     subItems: [
       {
-        label: 'Servicios Web BCV',
+        label: 'Conexiones',
         link: '/configuracion/servicios-web-bcv',
       },
       {
-        label: 'Parámetros',
+        label: 'Criterios',
         link: '/seguridad/parametros-sistema',
       },
     ],
