@@ -1,6 +1,6 @@
 <div class="card">
   <div class="card-header">
-    <h6 class="card-title fw-semibold">Seguridad / Aplicaciones</h6>
+    <h6 class="card-title fw-semibold">Accesos / Sistemas </h6>
   </div>
   <div class="card-body" style="position: relative;">
     <div class="row mb-4 align-items-end">
@@ -34,7 +34,7 @@
             <th>Eliminar</th>
             <th>Editar</th>
             <th (click)="ordenarPor('nombre')" style="cursor:pointer">
-              Nombre de Aplicación
+              Nombre
               <span *ngIf="sortColumn === 'nombre'">
                 <i class="feather"
                   [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
@@ -48,7 +48,7 @@
               </span>
             </th>
             <th (click)="ordenarPor('comentarios')" style="cursor:pointer">
-              Comentarios
+              Descripción
               <span *ngIf="sortColumn === 'comentarios'">
                 <i class="feather"
                   [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>

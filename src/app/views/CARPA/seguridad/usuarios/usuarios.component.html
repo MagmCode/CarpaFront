@@ -1,7 +1,7 @@
 <!-- <div class="container-fluid"> -->
 <div class="card">
   <div class="card-header">
-          <h6 class="card-title fw-semibold">Seguridad / Usuarios</h6>
+          <h6 class="card-title fw-semibold">Accesos / Usuarios</h6>
 
            <div class="card-body" style="position: relative;">
     <div class="row mb-4 align-items-end">
@@ -14,12 +14,12 @@
         <button class="btn btn-success" (click)="openAddApplicationModal(addUserModal)">
           <i class="mdi mdi-plus"></i> Agregar
         </button>
-          <button class="btn btn-primary" (click)="openAgregarEnLote(agregarLoteModal)">
-            <i class="mdi mdi-file-upload"></i> Agregar en lote
-          </button>
-          <button class="btn btn-danger" (click)="openEliminarEnLote(eliminarLoteModal)">
-            <i class="mdi mdi-delete"></i> Eliminar en lote
-          </button>
+        <button class="btn btn-primary" (click)="openAgregarEnLote(agregarLoteModal)">
+          <i class="mdi mdi-file-upload"></i> Agregar en lote
+        </button>
+        <button class="btn btn-warning" (click)="openModificarEstatusModal(modificarEstatusModal)">
+          <i class="mdi mdi-account-switch"></i> Modificar estatus
+        </button>
       </div>
       <div>
         <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
@@ -31,7 +31,11 @@
             <table id="rolesConsultaTable" class="table table-bordered text-center align-middle">
               <thead class="table-light">
                 <tr>
-                  <th class="text-center">Eliminar</th>
+                  <th class="text-center">Seleccionar
+                    <div class="d-flex justify-content-center align-items-center">
+                      <input type="checkbox" class="form-check-input" [checked]="isAllSelected()" (change)="toggleSelectAll($event)">
+                    </div>
+                  </th>
                   <th class="text-center">Editar</th>
                   <th class="text-center">Ver Roles</th>
                   <th class="text-center">Asociar Roles</th>
@@ -52,9 +56,9 @@
               <tbody>
                 <tr *ngFor="let usuario of usuariosPaginados">
                   <td class="text-center align-middle">
-                    <button class="btn btn-sm btn-danger" (click)="confirmarEliminarUsuario(usuario)">
-                      <i class="feather icon-trash-2"></i>
-                    </button>
+                    <div class="d-flex justify-content-center align-items-center">
+                      <input class="form-check-input" type="checkbox" [(ngModel)]="usuario.seleccionado" [name]="'seleccionar'+usuario.userId">
+                    </div>
                   </td>
                   <td class="text-center align-middle">
                     <button class="btn btn-sm btn-warning" (click)="openEditarModal(usuario, editarModal)">
@@ -319,5 +323,54 @@
   <div class="modal-footer">
     <button class="btn btn-danger" (click)="confirmarProcesarEliminarArchivo(modal)">Eliminar</button>
     <button class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+  </div>
+</ng-template>
+
+<!-- Modal: Modificar estatus en lote -->
+<ng-template #modificarEstatusModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Modificar estatus de usuarios seleccionados</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body">
+    <p>Usuarios seleccionados: <strong>{{ selectedCount() }}</strong></p>
+
+    <!-- Preview list (first N) -->
+    <div *ngIf="selectedCount() > 0">
+      <ul class="mb-2 text-muted">
+        <li *ngFor="let u of selectedPreview()">{{ u.userId }} - {{ u.fullName }}</li>
+      </ul>
+
+      <!-- Show toggle and scrollable full list when there are many -->
+      <div *ngIf="selectedCount() > previewLimit" class="mb-2">
+        <button class="btn btn-link p-0" type="button" (click)="toggleShowAllSelected()">
+          {{ showAllSelected ? 'Ocultar todos' : 'Ver todos (' + selectedCount() + ')' }}
+        </button>
+      </div>
+
+      <div *ngIf="showAllSelected" style="max-height: 240px; overflow:auto; border:1px solid #e9ecef; padding:8px; border-radius:4px;">
+        <ul class="mb-0">
+          <ng-container *ngFor="let u of usuarios">
+            <li *ngIf="u.seleccionado">{{ u.userId }} - {{ u.fullName }}</li>
+          </ng-container>
+        </ul>
+      </div>
+    </div>
+
+    <div *ngIf="selectedCount() === 0">
+      <p class="text-muted">No hay usuarios seleccionados.</p>
+    </div>
+
+    <div class="mb-3 mt-3">
+      <label class="form-label">Nuevo estatus</label>
+      <select class="form-select" [(ngModel)]="nuevoEstatusMasivo">
+        <option [ngValue]="1">Activo</option>
+        <option [ngValue]="0">Inactivo</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-success" (click)="aplicarModificacionEstatus(modal)">Aplicar</button>
+    <button class="btn btn-secondary" (click)="modal.close()">Cancelar</button>
   </div>
 </ng-template>

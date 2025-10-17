@@ -22,6 +22,8 @@ export class UsuariosComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
   
   usuarios: Usuario[] = [];
+  // temporal para el modal de modificar estatus
+  nuevoEstatusMasivo: number | null = 1;
 
    private dataTable: any;
   
@@ -232,6 +234,8 @@ export class UsuariosComponent implements OnInit {
     email: u.email ?? '',
     userStatus: u.userStatus ?? 0,
     roles: Array.isArray(u.roles) ? u.roles : [],
+    // agregar flag seleccionado para la selección de filas
+    seleccionado: false as any
   }));
 }
 
@@ -479,6 +483,55 @@ export class UsuariosComponent implements OnInit {
     this.itemsPorPagina = Number(nuevoSize) || 10;
     this.paginaActual = 1;
     this.filtrarUsuarios();
+  }
+
+  toggleSelectAll(e: any) {
+    const checked = !!e.target.checked;
+    this.usuariosFiltrados.forEach(u => (u as any).seleccionado = checked);
+  }
+
+  isAllSelected(): boolean {
+    return this.usuariosFiltrados && this.usuariosFiltrados.length > 0 && this.usuariosFiltrados.every(u => !!u.seleccionado);
+  }
+
+  // UI helpers to manage large selections in the modal
+  showAllSelected: boolean = false;
+  previewLimit: number = 10;
+
+  selectedCount(): number {
+    return this.usuarios.filter(u => (u as any).seleccionado).length;
+  }
+
+  selectedPreview(limit: number = this.previewLimit): Usuario[] {
+    return this.usuarios.filter(u => (u as any).seleccionado).slice(0, limit);
+  }
+
+  toggleShowAllSelected() {
+    this.showAllSelected = !this.showAllSelected;
+  }
+
+  openModificarEstatusModal(template: TemplateRef<any>) {
+    // abrir modal mostrando resumen de seleccionados
+    const seleccionados = this.usuarios.filter(u => (u as any).seleccionado);
+    if (!seleccionados || seleccionados.length === 0) {
+      Swal.fire({ title: 'Sin selección', text: 'Debe seleccionar al menos 1 usuario.', icon: 'info' });
+      return;
+    }
+    this.nuevoEstatusMasivo = 1;
+    this.modalService.open(template, { centered: true });
+  }
+
+  aplicarModificacionEstatus(modal: any) {
+    const seleccionados = this.usuarios.filter(u => (u as any).seleccionado);
+    if (!seleccionados || seleccionados.length === 0) {
+      Swal.fire({ title: 'Sin selección', text: 'No hay usuarios seleccionados.', icon: 'info' });
+      return;
+    }
+    // aplicar estatus a los usuarios seleccionados
+    seleccionados.forEach(u => u.userStatus = Number(this.nuevoEstatusMasivo) );
+    this.filtrarUsuarios();
+    modal.close();
+    this.showSuccessToast('Estatus actualizado', `${seleccionados.length} usuario(s) actualizados.`);
   }
 
   salir() {
