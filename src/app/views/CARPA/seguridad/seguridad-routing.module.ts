@@ -27,7 +27,7 @@ const routes: Routes = [
     path: 'opciones-menu', component: OpcionesDeMenuComponent
   },
   {
-    path: 'acciones', component: AccionesComponent 
+    path: 'privilegios', component: AccionesComponent 
   },
   {
     path: 'acciones/buscar', component: AccionesBuscarComponent
@@ -39,10 +39,10 @@ const routes: Routes = [
     path: 'roles/consultas', component: RolesConsultasComponent
   },
   {
-    path: 'roles-acciones', component: RolesAccionesComponent
+    path: 'roles-privilegios', component: RolesAccionesComponent
   },
   {
-    path: 'roles-acciones/consultas', component: RolesAccionesConsultasComponent
+    path: 'roles-privilegios/consultas', component: RolesAccionesConsultasComponent
   },
   {
     path: 'roles-menu', component: RolesMenuComponent

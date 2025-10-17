@@ -1,0 +1,37 @@
+@use 'src/assets/scss/_variables' as *;
+
+.card-options {
+    /* very subtle transitions: include background-color and shorten durations */
+    transition: border-color 160ms cubic-bezier(.9, .8, .9, .1),
+        box-shadow 160ms cubic-bezier(.9, .8, .9, .1),
+        transform 160ms cubic-bezier(.9, .8, .9, .1),
+        background-color 460ms ease;
+    will-change: border-color, box-shadow, transform, background-color;
+}
+
+.card-options:focus {
+    outline: none;
+}
+
+.card-options {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.card.focused-card-usuarios {
+    border: 2px solid rgba($primary, 0.2);
+    background-color: rgba($primary, 0.03);
+}
+
+.card.focused-card-acciones {
+    border: 2px solid rgba($info, 0.2);
+    background-color: rgba($info, 0.03);
+}
+
+.card.focused-card-roles {
+    border: 2px solid rgba($warning, 0.2);
+    background-color: rgba($warning, 0.03);
+}

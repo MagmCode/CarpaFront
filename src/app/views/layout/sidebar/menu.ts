@@ -24,7 +24,7 @@ export const MENU: MenuItem[] = [
       },
       {
         label: 'Privilegios',
-        link: '/seguridad/Privilegios',
+        link: '/seguridad/privilegios',
       },
       {
         label: 'Roles',
