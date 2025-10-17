@@ -6,7 +6,7 @@
            <div class="card-body" style="position: relative;">
     <div class="row mb-4 align-items-end">
       <div class="fw-bold d-flex justify-content-end">
-        <strong>Total de registros:</strong> {{ usuariosFiltrados.length}}
+        <strong>Total de registros:&nbsp;</strong> {{ usuariosFiltrados.length}}
       </div>
     </div>
     <div class="d-flex justify-content-between mb-4">
@@ -159,15 +159,16 @@
       <input id="editUserId" class="form-control" [(ngModel)]="usuarioSeleccionado.userId" name="editUserId" required readonly>
     </div>
     <div class="mb-3">
-      <label for="editEstatus" class="form-label">Estatus</label>
-      <select id="editEstatus" class="form-select" [(ngModel)]="usuarioSeleccionado.userStatus" name="editEstatus" required>
-        <option value="1">Activo</option>
-        <option value="0">Inactivo</option>
-      </select>
+      <label for="editFullName" class="form-label">Nombres y Apellidos</label>
+      <input id="editFullName" class="form-control" [(ngModel)]="usuarioSeleccionado.fullName" name="editFullName" required>
+    </div>
+    <div class="mb-3">
+      <label for="editEmail" class="form-label">E-mail</label>
+      <input id="editEmail" name="editEmail" type="email" class="form-control" [(ngModel)]="usuarioSeleccionado.email" required>
     </div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-success" type="button" (click)="procesarStatus(modal)">Guardar</button>
+    <button class="btn btn-success" type="submit">Guardar</button>
     <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
   </div>
 </form>
@@ -272,13 +273,7 @@
         <label for="nuevoEmail" class="form-label">E-mail</label>
         <input id="nuevoEmail" name="nuevoEmail" type="email" class="form-control" [(ngModel)]="nuevoEmail" required>
       </div>
-      <div class="mb-3">
-        <label for="nuevoEstatus" class="form-label">Estatus</label>
-        <select id="nuevoEstatus" name="nuevoEstatus" class="form-select" [(ngModel)]="nuevoEstatus" required>
-          <option value="1">Activo</option>
-          <option value="0">Inactivo</option>
-        </select>
-      </div>
+
     </div>
     <div class="modal-footer">
       <button type="submit" class="btn btn-success">Añadir</button>

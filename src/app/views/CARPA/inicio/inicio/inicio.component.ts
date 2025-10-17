@@ -42,7 +42,7 @@ private extractMenuItems(menu: any, label: string): any[] {
 
   ngOnInit(): void {
     this.usuario = localStorage.getItem('usuarioActual');
-    this.seguridadItems = this.extractMenuItems(MENU, 'Seguridad');
+    this.seguridadItems = this.extractMenuItems(MENU, 'Accesos');
     this.configuracionItems = this.extractMenuItems(MENU, 'Configuración');
     this.reportesItems = this.extractMenuItems(MENU, 'Reportes');
     // intentar extraer la sección Auditoría (soporta 'Auditoría' y 'Auditoria')
