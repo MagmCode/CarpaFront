@@ -1,85 +1,48 @@
-// import { Injectable } from '@angular/core';
-// import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse, HttpClient } from '@angular/common/http';
-// import { Observable, throwError, BehaviorSubject } from 'rxjs';
-// import { catchError, switchMap, filter, take, map } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError, EMPTY } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 
-// @Injectable()
-// export class AuthInterceptor implements HttpInterceptor {
-//   private isRefreshing =  false;
-//   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+let sessionExpiredAlertShown = false;
 
-//   constructor(private http: HttpClient) {}
-
-//   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-//     const token = localStorage.getItem('token');
-//     if (token) {
-//       request = request.clone({
-//         setHeaders: {
-//           Authorization: `Bearer ${token}`
-//         }
-//       });
-//     }
-//     return next.handle(request).pipe(
-//       catchError((error: HttpErrorResponse) => {
-//         if (error.status === 401) {
-//           return this.handle401Error(request, next);
-//         }
-//         return throwError(() => error);
-//       })
-//     );
-//   }
-
-//   private fetchNewToken(refreshToken: string): Observable<string> {
-//     return this.http.post<{ token: string }>(
-//       'http://180.183.67.228:8080/api/auth/refresh',
-//       { refreshToken }
-//     ).pipe(
-//       map(response => response.token)
-//     );
-//   }
-
-//   private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-//   if (!this.isRefreshing) {
-//     this.isRefreshing = true;
-//     this.refreshTokenSubject.next(null);
-
-//     const refreshToken = localStorage.getItem('refreshToken');
-//     if (!refreshToken) {
-//       // Si no hay refresh token, redirige al login
-//       this.isRefreshing = false;
-//       window.location.href = '/auth/login';
-//       return throwError(() => new Error('No refresh token'));
-//     }
-
-//     // Aquí haz la petición al endpoint de refresh del backend
-//     return this.fetchNewToken(refreshToken).pipe(
-//       switchMap((newToken: string) => {
-//         this.isRefreshing = false;
-//         localStorage.setItem('token', newToken);
-//         this.refreshTokenSubject.next(newToken);
-//         return next.handle(request.clone({
-//           setHeaders: {
-//             Authorization: `Bearer ${newToken}`
-//           }
-//         }));
-//       }),
-//       catchError((err) => {
-//         this.isRefreshing = false;
-//         window.location.href = '/auth/login';
-//         return throwError(() => err);
-//       })
-//     );
-//   } else {
-//     return this.refreshTokenSubject.pipe(
-//       filter(token => token != null),
-//       take(1),
-//       switchMap(token => next.handle(request.clone({
-//         setHeaders: {
-//           Authorization: `Bearer ${token}`
-//         }
-//       })))
-//     );
-//   }
-// }
-
-// }
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+		const token = localStorage.getItem('token');
+		if (token) {
+			request = request.clone({
+				setHeaders: {
+					Authorization: `${token}`
+				}
+			});
+		}
+		return next.handle(request).pipe(
+			catchError((error: HttpErrorResponse) => {
+				console.warn('[AUTH-INTERCEPTOR] catchError', error);
+				if ((error.status === 401 || error.status === 403) && !sessionExpiredAlertShown) {
+					console.warn('[AUTH-INTERCEPTOR] 401/403 detectado, mostrando alerta de sesión expirada');
+					sessionExpiredAlertShown = true;
+					localStorage.removeItem('token');
+					localStorage.removeItem('refreshToken');
+					Swal.fire({
+						icon: 'warning',
+						title: 'Sesión expirada',
+						text: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+						confirmButtonText: 'OK',
+						allowOutsideClick: false
+					}).then(() => {
+						console.warn('[AUTH-INTERCEPTOR] Redirigiendo a /auth/login');
+						sessionExpiredAlertShown = false;
+						window.location.href = '/auth/login';
+					});
+					return EMPTY;
+				} else if (error.status === 401 || error.status === 403) {
+					console.warn('[AUTH-INTERCEPTOR] 401/403 detectado, alerta ya mostrada, bloqueando petición');
+					return EMPTY;
+				}
+				return throwError(() => error);
+			})
+		);
+	}
+}

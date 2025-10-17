@@ -22,6 +22,7 @@ import { NgbDatepickerModule } from '@ng-bootstrap/ng-bootstrap'; // Importa el 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    NgbDatepickerModule,
   ],
 })
 export class SharedModule {}

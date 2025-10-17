@@ -174,14 +174,14 @@ export class UsuariosComponent implements OnInit {
       // if backend returned data use it, otherwise fall back to sample data
       const hasData = Array.isArray(data) && data.length > 0;
       if (hasData) {
-        this.usuariosService.setUsuarios(data);
+        // this.usuariosService.setUsuarios(data);
         localStorage.setItem('usuariosConsultados', JSON.stringify(data));
         this.usuarios = this.mapBackendUsuarios(data);
         console.log('Usuarios All (backend):', this.usuarios);
       } else {
         console.warn('No se recibieron usuarios desde backend, usando datos de ejemplo.');
         const sample = this.generateSampleUsuarios(20);
-        this.usuariosService.setUsuarios(sample);
+        // this.usuariosService.setUsuarios(sample);
         localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
         this.usuarios = this.mapBackendUsuarios(sample);
         console.log('Usuarios All (sample):', this.usuarios);
@@ -192,7 +192,7 @@ export class UsuariosComponent implements OnInit {
       error: (err) => {
         console.error('Error al consultar usuarios, usando datos de ejemplo:', err);
         const sample = this.generateSampleUsuarios(20);
-        this.usuariosService.setUsuarios(sample);
+        // this.usuariosService.setUsuarios(sample);
         localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
         this.usuarios = this.mapBackendUsuarios(sample);
         this.filtrarUsuarios();

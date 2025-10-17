@@ -1,6 +1,9 @@
 import { Component, OnInit, TemplateRef } from '@angular/core';
+import { NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
+type SortDir = 'asc' | 'desc' | null;
 
 @Component({
   selector: 'app-seguimiento',
@@ -11,26 +14,47 @@ export class SeguimientoComponent implements OnInit {
 
   constructor(private modalService: NgbModal) { }
 
+  // aplicaciones (simuladas) para selector
+  aplicaciones = [
+    { id: 'app1', nombre: 'Aplicación A' },
+    { id: 'app2', nombre: 'Aplicación B' },
+    { id: 'app3', nombre: 'Aplicación C' }
+  ];
+
   // ejemplo de logs del sistema
   logs: any[] = [
-    { id: 1, timestamp: '2025-10-14 10:12:05', source: 'AuthService', message: 'Inicio de sesión iniciado', status: 'in-progress', details: 'Procesando autenticación del usuario...' },
-    { id: 2, timestamp: '2025-10-14 09:45:12', source: 'ReportService', message: 'Generación de reporte mensual', status: 'completed', details: 'Reporte generado correctamente y almacenado en /reports/monthly.' },
-    { id: 3, timestamp: '2025-10-13 18:23:48', source: 'SyncJob', message: 'Sincronización de productos', status: 'error', details: 'Timeout al comunicarse con /api/productos. Código: ETIMEDOUT' }
+    { id: 1, timestamp: '2025-10-14 10:12:05', source: 'AuthService', message: 'Inicio de sesión iniciado', status: 'in-progress', details: 'Procesando autenticación del usuario...', aplicacion: 'app1' },
+    { id: 2, timestamp: '2025-10-14 09:45:12', source: 'ReportService', message: 'Generación de reporte mensual', status: 'completed', details: 'Reporte generado correctamente y almacenado en /reports/monthly.', aplicacion: 'app2' },
+    { id: 3, timestamp: '2025-10-13 18:23:48', source: 'SyncJob', message: 'Sincronización de productos', status: 'error', details: 'Timeout al comunicarse con /api/productos. Código: ETIMEDOUT', aplicacion: 'app1' }
   ];
 
   // selección y modal
   selectedLog: any = null;
 
-  // búsqueda y paginación
+  // --- filtro view ---
+  viewFiltro: boolean = true; // true -> mostrar formulario de filtro; false -> mostrar tabla de resultados
+  filtro = {
+    aplicacion: null as string | null,
+    fechaDesde: null as NgbDateStruct | null,
+    fechaHasta: null as NgbDateStruct | null
+  };
+
+  // búsqueda y paginación para la vista de resultados
   searchTerm: string = '';
   page: number = 1;
   pageSize: number = 10;
   totalPages: number = 1;
   logsFiltrados: any[] = [];
   logsPaginados: any[] = [];
+  // copia inmutable del resultado de la consulta (para restaurar cuando se borra la búsqueda)
+  logsQueryResult: any[] = [];
+
+  // ordenamiento
+  sortField: string | null = 'timestamp';
+  sortDir: SortDir = 'desc';
 
   ngOnInit(): void {
-    this.filtrarLogs();
+    // inicialmente no mostrar resultados
   }
 
   openViewModal(content: TemplateRef<any>, log: any) {
@@ -38,43 +62,114 @@ export class SeguimientoComponent implements OnInit {
     this.modalService.open(content, { centered: true, size: 'lg' });
   }
 
-  deleteLog(log: any) {
-    Swal.fire({
-      title: `¿Desea eliminar este registro de seguimiento?`,
-      text: 'Esta acción no se puede deshacer.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.logs = this.logs.filter(l => l !== log);
-        this.filtrarLogs();
-        Swal.fire({
-          title: 'Eliminado',
-          text: `El registro ha sido eliminado.`,
-          icon: 'success',
-          timer: 1200,
-          showConfirmButton: false
-        });
-      }
-    });
+  // Ejecutar consulta (aplica filtros y muestra tabla)
+  consultar() {
+    // filtrar por aplicacion
+    let res = [...this.logs];
+    if (this.filtro.aplicacion) {
+      res = res.filter(l => l.aplicacion === this.filtro.aplicacion);
+    }
+
+  // filtrar por rango de fechas si están definidos (convertir NgbDateStruct a Date)
+  const desde = this.filtro.fechaDesde ? new Date(this.filtro.fechaDesde.year, (this.filtro.fechaDesde.month - 1), this.filtro.fechaDesde.day) : null;
+  const hasta = this.filtro.fechaHasta ? new Date(this.filtro.fechaHasta.year, (this.filtro.fechaHasta.month - 1), this.filtro.fechaHasta.day) : null;
+    if (desde) {
+      res = res.filter(l => new Date(l.timestamp) >= desde);
+    }
+    if (hasta) {
+      // incluir todo el día de 'hasta'
+      const hastaFin = new Date(hasta.getFullYear(), hasta.getMonth(), hasta.getDate());
+      hastaFin.setHours(23,59,59,999);
+      res = res.filter(l => new Date(l.timestamp) <= hastaFin);
+    }
+
+    // guardar copia de la consulta para búsquedas no destructivas
+    this.logsQueryResult = [...res];
+    this.logsFiltrados = [...this.logsQueryResult];
+    this.page = 1;
+    this.applySort();
+    this.actualizarPaginacion();
+    this.viewFiltro = false;
   }
 
-  // ---- Búsqueda y paginación ----
-  filtrarLogs(): void {
-    if (this.searchTerm && this.searchTerm.trim()) {
-      const term = this.searchTerm.trim().toLowerCase();
-      this.logsFiltrados = this.logs.filter(l =>
+  regresarAFiltro() {
+    this.viewFiltro = true;
+  }
+
+  // export CSV
+  exportCsv() {
+    if (!this.logsFiltrados) return;
+    const rows: string[] = [];
+    rows.push(['Fecha','Origen','Mensaje','Estado','Aplicación'].join(','));
+    this.logsFiltrados.forEach((r: any) => rows.push([r.timestamp, r.source, this.escapeCsv(r.message), r.status, r.aplicacion].map(this.escapeCsv).join(',')));
+    const csv = rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const filename = `seguimiento_${this.filtro.aplicacion || 'all'}.csv`;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private escapeCsv(val: any) {
+    if (val === null || val === undefined) return '""';
+    const s = String(val);
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+
+  // ---- Búsqueda, orden y paginación ----
+  filtrarBusqueda(): void {
+    const term = this.searchTerm ? this.searchTerm.trim().toLowerCase() : '';
+    if (term) {
+      this.logsFiltrados = this.logsQueryResult.filter(l =>
         (l.source || '').toLowerCase().includes(term) ||
         (l.message || '').toLowerCase().includes(term) ||
         (l.timestamp || '').toLowerCase().includes(term)
       );
     } else {
-      this.logsFiltrados = [...this.logs];
+      // restaurar al resultado original de la última consulta
+      this.logsFiltrados = [...this.logsQueryResult];
     }
     this.page = 1;
+    this.applySort();
+    this.actualizarPaginacion();
+  }
+
+  aplicarBusquedaComoUsuario() {
+    // helper si necesitas reiniciar la consulta antes de filtrar en el cliente
+    // ahora cada búsqueda opera sobre logsFiltrados que provienen de la consulta
+    this.page = 1;
+    this.actualizarPaginacion();
+  }
+
+  applySort() {
+    if (!this.sortField) return;
+    const f = this.sortField;
+    const dir = this.sortDir === 'asc' ? 1 : -1;
+    this.logsFiltrados.sort((a, b) => {
+      const va = (a[f] || '').toString().toLowerCase();
+      const vb = (b[f] || '').toString().toLowerCase();
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+  }
+
+  toggleSort(field: string) {
+    if (this.sortField === field) {
+      if (this.sortDir === 'asc') this.sortDir = 'desc';
+      else if (this.sortDir === 'desc') this.sortDir = null;
+      else this.sortDir = 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDir = 'asc';
+    }
+    this.applySort();
     this.actualizarPaginacion();
   }
 
