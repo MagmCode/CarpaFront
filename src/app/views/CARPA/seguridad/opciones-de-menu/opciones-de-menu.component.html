@@ -2,7 +2,7 @@
   <div class="col-md-12 stretch-card">
     <div class="card">
       <div class="card-body">
-        <h6 class="card-title fw-semibold">Seguridad / Opciones de Menú</h6>
+        <h6 class="card-title fw-semibold">Accesos / Opciones de Menú</h6>
         <div class="row mb-4 align-items-end">
           <div class="fw-bold d-flex justify-content-end">
             <span class="fw-semibold">Total de registros: </span> {{ opcionesFiltradas.length }}
@@ -160,7 +160,7 @@
         <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="opcionSeleccionada.aplicaciones"
           required>
           <option value="" disabled selected>Seleccione una aplicación</option>
-          <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.description">{{ app.description }}</option>
         </select>
       </div>
       <div class="mb-3">

@@ -13,12 +13,8 @@
         <button class="btn btn-success" (click)="openAddApplicationModal(appModal)">
           <i class="mdi mdi-plus"></i> Agregar
         </button>
-        <!-- <button class="btn btn-danger" (click)="exitMenu()">
-          <i class="mdi mdi-arrow-left"></i>
-          Salir
-        </button> -->
       </div>
-      <div>
+      <div >
         <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
           [(ngModel)]="searchTerm" (input)="filtrarAplicaciones()">
       </div>
@@ -68,8 +64,8 @@
                 <i class="feather icon-edit"></i>
               </button>
             </td>
-            <td>{{ app.nombre }}</td>
-            <td>{{ app.siglas }}</td>
+            <td>{{ app.description }}</td>
+            <td>{{ app.siglasApplic }}</td>
             <td>{{ app.comentarios }}</td>
           </tr>
         </tbody>
@@ -131,14 +127,14 @@
     <div class="modal-body">
       <div class="mb-3">
         <label for="nombre" class="form-label">Nombre</label>
-        <input id="nombre" name="nombre" class="form-control" [(ngModel)]="appSeleccionada.nombre" required>
+        <input id="nombre" name="nombre" class="form-control" [(ngModel)]="appSeleccionada.description" required>
       </div>
       <div class="mb-3">
         <label for="siglas" class="form-label">Siglas</label>
-        <input id="siglas" name="siglas" class="form-control" [(ngModel)]="appSeleccionada.siglas" required>
+        <input id="siglas" name="siglas" class="form-control" [(ngModel)]="appSeleccionada.siglasApplic" required>
       </div>
       <div class="mb-3">
-        <label for="comentarios" class="form-label">Comentarios</label>
+        <label for="comentarios" class="form-label">Descripción</label>
         <textarea id="comentarios" name="comentarios" class="form-control" [(ngModel)]="appSeleccionada.comentarios"></textarea>
       </div>
     </div>

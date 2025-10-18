@@ -15,7 +15,7 @@
           <i class="mdi mdi-plus"></i> Agregar
         </button>
         <button class="btn btn-primary" (click)="openAgregarEnLote(agregarLoteModal)">
-          <i class="mdi mdi-file-upload"></i> Agregar en lote
+          <i class="mdi mdi-file-upload"></i> Carga Masiva
         </button>
         <button class="btn btn-warning" (click)="openModificarEstatusModal(modificarEstatusModal)">
           <i class="mdi mdi-account-switch"></i> Modificar estatus
@@ -166,6 +166,13 @@
       <label for="editEmail" class="form-label">E-mail</label>
       <input id="editEmail" name="editEmail" type="email" class="form-control" [(ngModel)]="usuarioSeleccionado.email" required>
     </div>
+    <div class="mb-3">
+      <label for="editUserStatus" class="form-label">Estatus</label>
+      <select id="editUserStatus" class="form-select" [(ngModel)]="usuarioSeleccionado.userStatus" name="editUserStatus" required>
+        <option [ngValue]="1">Activo</option>
+        <option [ngValue]="0">Inactivo</option>
+      </select>
+    </div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-success" type="submit">Guardar</button>
@@ -194,11 +201,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let rol of usuarioSeleccionado?.roles">
-            <td>{{ rol.id }}</td>
-            <td>{{ rol.alias }}</td>
-            <td>{{ rol.descripcion }}</td>
-            <td>{{ rol.tipo }}</td>
-            <td>{{ rol.aplicacion }}</td>
+            <td>{{ rol.mscRoleId }}</td>
+            <td>{{ rol.roleName }}</td>
+            <td>{{ rol.description }}</td>
+            <td>{{ rol.inUsoEnRed }}</td>
+            <td>{{ rol.siglasApplic }}</td>
           </tr>
         </tbody>
       </table>
@@ -239,9 +246,9 @@
                 <label class="form-check-label" [for]="'rolSeleccionado' + i"></label>
               </div>
             </td>
-            <td>{{ rol.alias }}</td>
-            <td>{{ rol.descripcion }}</td>
-            <td>{{ rol.aplicacion }}</td>
+            <td>{{ rol.roleName ?? rol.roleName }}</td>
+            <td>{{ rol.description ?? rol.description }}</td>
+            <td>{{ rol.siglasApplic ?? rol.siglasApplic }}</td>
           </tr>
         </tbody>
       </table>
@@ -285,7 +292,7 @@
 <!-- Modal: Agregar en lote (subir Excel) -->
 <ng-template #agregarLoteModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Agregar usuarios en lote</h5>
+    <h5 class="modal-title">Carga Masiva</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
   <form (ngSubmit)="procesarAgregarLote(modal)">
@@ -323,7 +330,7 @@
 
 <!-- Modal: Modificar estatus en lote -->
 <ng-template #modificarEstatusModal let-modal>
-  <div class="modal-header">
+  <div class="modal-header">a
     <h5 class="modal-title">Modificar estatus de usuarios seleccionados</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>

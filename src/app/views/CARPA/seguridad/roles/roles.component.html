@@ -1,46 +1,6 @@
-
-<!-- Modal para agregar/editar rol -->
-<ng-template #addRoleModal let-modal>
-  <div class="modal-header">
-    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Agregar Registro' : 'Editar Registro' }}</h5>
-    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
-  </div>
-  <form (ngSubmit)="saveRole(modal)">
-    <div class="modal-body">
-      <div class="mb-3">
-        <label for="rol" class="form-label">Rol (alias corto)</label>
-        <input id="rol" name="rol" class="form-control" [(ngModel)]="newRole.rol" required>
-      </div>
-      <div class="mb-3">
-        <label for="descripcion" class="form-label">Descripción</label>
-        <textarea id="descripcion" name="descripcion" class="form-control" [(ngModel)]="newRole.descripcion"></textarea>
-      </div>
-      <div class="mb-3">
-        <label for="tipo" class="form-label">Tipo</label>
-        <select id="tipo" name="tipo" class="form-select" [(ngModel)]="newRole.tipo" required>
-          <option value="" disabled selected>Seleccione un tipo</option>
-          <option value="usuarios de la torre">Usuarios de la Torre</option>
-          <option value="usuarios de red comercial">Usuarios de Red Comercial</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label for="aplicacion" class="form-label">Aplicación</label>
-        <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newRole.aplicacion" required>
-          <option value="" disabled selected>Seleccione una aplicación</option>
-          <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button type="submit" class="btn btn-success">{{ modalModo === 'agregar' ? 'agregar' : 'Guardar' }}</button>
-      <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
-    </div>
-  </form>
-</ng-template>
-
 <div class="card">
   <div class="card-header">
-    <h6 class="card-title fw-semibold">Seguridad / Roles</h6>
+    <h6 class="card-title fw-semibold">Accesos / Roles</h6>
   </div>
   <div class="card-body" style="position: relative;">
     <div class="row mb-4 align-items-end">
@@ -153,3 +113,42 @@
     </div>
   </div>
 </div>
+
+<!-- Modal para agregar/editar rol -->
+<ng-template #addRoleModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Agregar Registro' : 'Editar Registro' }}</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <form (ngSubmit)="saveRole(modal)">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="rol" class="form-label">Rol (alias corto)</label>
+        <input id="rol" name="rol" class="form-control" [(ngModel)]="newRole.rol" required>
+      </div>
+      <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea id="descripcion" name="descripcion" class="form-control" [(ngModel)]="newRole.descripcion"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="tipo" class="form-label">Tipo</label>
+        <select id="tipo" name="tipo" class="form-select" [(ngModel)]="newRole.tipo" required>
+          <option value="" disabled selected>Seleccione un tipo</option>
+          <option value="usuarios de la torre">Usuarios de la Torre</option>
+          <option value="usuarios de red comercial">Usuarios de Red Comercial</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="aplicacion" class="form-label">Aplicación</label>
+        <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newRole.aplicacion" required>
+          <option value="" disabled selected>Seleccione una aplicación</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.description">{{ app.description }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-success">{{ modalModo === 'agregar' ? 'agregar' : 'Guardar' }}</button>
+      <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+    </div>
+  </form>
+</ng-template>

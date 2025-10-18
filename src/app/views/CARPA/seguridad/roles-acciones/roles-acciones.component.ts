@@ -8,6 +8,7 @@ export interface Accion {
 
 import { Component, OnInit } from '@angular/core';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
+import { RolesService } from 'src/app/services/roles/roles.service';
 
 export interface RolAccion {
   rol: string;
@@ -22,20 +23,8 @@ export interface RolAccion {
 })
 export class RolesAccionesComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
-  roles: RolAccion[] = [
-    { rol: 'Administrador', descripcion: 'Acceso total al sistema', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Operador', descripcion: 'Acceso limitado', aplicacion: 'Inventario' },
-    { rol: 'Consulta', descripcion: 'Solo lectura', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Supervisor', descripcion: 'Supervisa operaciones', aplicacion: 'Inventario' },
-    { rol: 'Auditor', descripcion: 'Auditoría de acciones', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Soporte', descripcion: 'Soporte técnico', aplicacion: 'Inventario' },
-    { rol: 'Invitado', descripcion: 'Acceso restringido', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Analista', descripcion: 'Análisis de datos', aplicacion: 'Inventario' },
-    { rol: 'Desarrollador', descripcion: 'Desarrollo de software', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Tester', descripcion: 'Pruebas de sistema', aplicacion: 'Inventario' },
-    { rol: 'Líder', descripcion: 'Liderazgo de equipo', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Usuario', descripcion: 'Usuario estándar', aplicacion: 'Inventario' }
-  ];
+  // roles will be loaded from backend via RolesService (we don't need the 'tipo' field here)
+  roles: RolAccion[] = [];
 
   // Buscador y paginador para acciones
   accionesSearchTerm: string = '';
@@ -70,12 +59,35 @@ export class RolesAccionesComponent implements OnInit {
 
   constructor(
     private aplicacionesService: AplicacionesService
+    , private rolesService: RolesService
   ) { }
 
   ngOnInit(): void {
     this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
-    this.filtrarRoles();
-    this.filtrarAcciones();
+
+    // load roles from backend and map to RolAccion (exclude 'tipo')
+    this.rolesService.consultarRoles({}).subscribe({
+      next: (resp: any) => {
+        if (resp && Array.isArray(resp.data)) {
+          this.roles = resp.data.map((r: any) => ({
+            rol: r.rol || '',
+            descripcion: r.descripcion || '',
+            aplicacion: r.aplicacion || ''
+          }));
+        } else {
+          console.warn('RolesAcciones: unexpected roles payload, using empty list', resp);
+          this.roles = [];
+        }
+        this.filtrarRoles();
+        this.filtrarAcciones();
+      },
+      error: (err) => {
+        console.error('Error loading roles for RolesAcciones:', err);
+        this.roles = [];
+        this.filtrarRoles();
+        this.filtrarAcciones();
+      }
+    });
   }
   filtrarAcciones(): void {
     if (this.accionesSearchTerm.trim()) {

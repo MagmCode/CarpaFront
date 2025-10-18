@@ -3,8 +3,8 @@
 		<h6 class="card-title fw-semibold mb-0">Reportes por Aplicación</h6>
 		<div>
 			<select class="form-select" [(ngModel)]="selectedApp" (change)="onAppSelected()" style="width: 280px">
-				<option [ngValue]="null">-- Seleccione una aplicación --</option>
-				<option *ngFor="let a of aplicaciones" [ngValue]="a.id">{{ a.nombre }}</option>
+				<option [ngValue]="null">Seleccione una aplicación</option>
+				<option *ngFor="let a of aplicaciones" [ngValue]="a.idApplication">{{ a.siglasApplic }}</option>
 			</select>
 		</div>
 	</div>
@@ -31,7 +31,7 @@
 								<div class="col-6 col-md-12 col-xl-5">
 									  <h3 class="mb-2">{{ getUsuariosCount() }}</h3>
 									<div class="d-flex align-items-baseline">
-										<p class="text-muted small mb-0">Usuarios registrados en {{ selectedApp }}</p>
+										<p class="text-muted small mb-0">Usuarios registrados en {{ getSelectedAppName() }}</p>
 									</div>
 								</div>
 								<div class="col-6 col-md-12 col-xl-7 d-flex align-items-center justify-content-center">
@@ -58,7 +58,7 @@
 								<div class="col-6 col-md-12 col-xl-5">
 									  <h3 class="mb-2">{{ getAccionesCount() }}</h3>
 									<div class="d-flex align-items-baseline">
-										<p class="text-muted small mb-0">Acciones disponibles  en {{ selectedApp }}</p>
+										  <p class="text-muted small mb-0">Acciones disponibles  en {{ getSelectedAppName() }}</p>
 									</div>
 								</div>
 								<div class="col-6 col-md-12 col-xl-7 d-flex align-items-center justify-content-center">
@@ -85,7 +85,7 @@
 								<div class="col-6 col-md-12 col-xl-5">
 									  <h3 class="mb-2">{{ getRolesCount() }}</h3>
 									<div class="d-flex align-items-baseline">
-										<p class="text-muted small mb-0">Roles definidos  en {{ selectedApp }}</p>
+										  <p class="text-muted small mb-0">Roles definidos  en {{ getSelectedAppName() }}</p>
 									</div>
 								</div>
 								<div class="col-6 col-md-12 col-xl-7 d-flex align-items-center justify-content-center">

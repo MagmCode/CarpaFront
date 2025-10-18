@@ -3,6 +3,7 @@ import { Component, OnInit, TemplateRef } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
+import { RolesService } from 'src/app/services/roles/roles.service';
 
 export interface Rol {
   rol: string;
@@ -18,20 +19,8 @@ export interface Rol {
 })
 export class RolesComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
-  roles: Rol[] = [
-    { rol: 'Administrador', descripcion: 'Acceso total al sistema', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Operador', descripcion: 'Acceso limitado', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Consulta', descripcion: 'Solo lectura', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Supervisor', descripcion: 'Supervisa operaciones', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Auditor', descripcion: 'Auditoría de acciones', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Soporte', descripcion: 'Soporte técnico', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Invitado', descripcion: 'Acceso restringido', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Analista', descripcion: 'Análisis de datos', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Desarrollador', descripcion: 'Desarrollo de software', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Tester', descripcion: 'Pruebas de sistema', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Líder', descripcion: 'Liderazgo de equipo', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Usuario', descripcion: 'Usuario estándar', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' }
-  ];
+  // roles will be loaded from backend via RolesService
+  roles: Rol[] = [];
 
   // Paginación y búsqueda
   page: number = 1;
@@ -51,12 +40,32 @@ export class RolesComponent implements OnInit {
 
   constructor(
     private aplicacionesService: AplicacionesService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private rolesService: RolesService
   ) { }
 
   ngOnInit(): void {
     this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
-    this.filtrarRoles();
+
+    // request roles from backend and populate the table
+    // the backend responds with { success, message, data: [...] }
+  this.rolesService.consultarRoles({}).subscribe({
+      next: (resp: any) => {
+        if (resp && Array.isArray(resp.data)) {
+          this.roles = resp.data;
+        } else {
+          console.warn('RolesService returned unexpected payload, falling back to empty list', resp);
+          this.roles = [];
+        }
+        this.filtrarRoles();
+      },
+      error: (err) => {
+        console.error('Error fetching roles from backend:', err);
+        // keep roles as empty and still run filter to update UI
+        this.roles = [];
+        this.filtrarRoles();
+      }
+    });
   }
 
   filtrarRoles(): void {

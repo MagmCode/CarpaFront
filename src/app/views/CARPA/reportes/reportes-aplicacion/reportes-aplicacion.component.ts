@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
 
 type ViewMode = 'usuarios' | 'acciones' | 'roles';
 
@@ -9,14 +10,13 @@ type ViewMode = 'usuarios' | 'acciones' | 'roles';
 })
 export class ReportesAplicacionComponent implements OnInit {
 
-  // aplicaciones de ejemplo
-  aplicaciones = [
-    { id: 'app1', nombre: 'Aplicación A' },
-    { id: 'app2', nombre: 'Aplicación B' },
-    { id: 'app3', nombre: 'Aplicación C' }
-  ];
+  aplicaciones: Aplicacion[] = [];
 
-  selectedApp: string | null = null;
+  // selected application id (can be number or string depending on backend)
+  selectedApp: Aplicacion['idApplication'] | null = null;
+
+  // ensure sample data is seeded only once when aplicaciones load
+  private seedDone: boolean = false;
 
   // vista actual
   view: ViewMode = 'usuarios';
@@ -34,10 +34,22 @@ export class ReportesAplicacionComponent implements OnInit {
   itemsFiltrados: any[] = [];
   itemsPaginados: any[] = [];
 
-  constructor() { }
+  constructor(private aplicacionesService: AplicacionesService) { }
 
   ngOnInit(): void {
-    this.seedSampleData();
+    // subscribe to aplicaciones provided by the service
+    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      this.aplicaciones = apps || [];
+      // seed sample data once when apps are available (keeps previous behavior for demo/testing)
+      if (!this.seedDone && this.aplicaciones.length) {
+        this.seedSampleData();
+        this.seedDone = true;
+      }
+      this.updateList();
+    });
+
+    // trigger backend load (non-blocking)
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
   }
 
   // helpers para el template: contar por aplicacion (evita arrow functions inline en el template)
@@ -56,18 +68,25 @@ export class ReportesAplicacionComponent implements OnInit {
     return this.roles.filter(r => r.aplicacion === this.selectedApp).length;
   }
 
+  // returns the selected application's display name (or null)
+  getSelectedAppName(): string | null {
+    if (!this.selectedApp) return null;
+    const app = this.aplicaciones.find(a => a.idApplication === this.selectedApp);
+    return app ? app.description : null;
+  }
+
   seedSampleData() {
     // crear datos de ejemplo para cada aplicacion
     this.aplicaciones.forEach((app, ai) => {
       // usuarios
       for (let i = 1; i <= 23; i++) {
         this.usuarios.push({
-          aplicacion: app.id,
-          usuarioId: `${app.id}-u${i}`,
+          aplicacion: app.idApplication,
+          usuarioId: `${app.idApplication}-u${i}`,
           rol: ['Admin', 'Editor', 'Viewer'][i % 3],
-          nombres: `Nombre ${i} ${app.nombre}`,
+          nombres: `Nombre ${i} ${app.description}`,
           apellidos: `Apellido ${i}`,
-          email: `user${i}@${app.id}.local`,
+          email: `user${i}@${app.idApplication}.local`,
           estatus: i % 4 === 0 ? 'Inactivo' : 'Activo'
         });
       }
@@ -75,16 +94,16 @@ export class ReportesAplicacionComponent implements OnInit {
       // acciones
       for (let i = 1; i <= 12; i++) {
         this.acciones.push({
-          aplicacion: app.id,
+          aplicacion: app.idApplication,
           rol: ['Admin','Editor','Viewer'][i % 3],
           accion: `ACC_${i}`,
-          descripcion: `Descripción de la acción ${i} en ${app.nombre}`
+          descripcion: `Descripción de la acción ${i} en ${app.description}`
         });
       }
 
       // roles
       ['Admin','Editor','Viewer'].forEach((r, idx) => {
-        this.roles.push({ aplicacion: app.id, rol: r, descripcion: `${r} de ${app.nombre}`, tipo: idx === 0 ? 'Sistema' : 'Normal' });
+        this.roles.push({ aplicacion: app.idApplication, rol: r, descripcion: `${r} de ${app.description}`, tipo: idx === 0 ? 'Sistema' : 'Normal' });
       });
     });
   }
@@ -184,7 +203,7 @@ export class ReportesAplicacionComponent implements OnInit {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const filename = `${this.selectedApp || 'report'}_${this.view}.csv`;
+  const filename = `${this.getSelectedAppName() || this.selectedApp || 'report'}_${this.view}.csv`;
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);

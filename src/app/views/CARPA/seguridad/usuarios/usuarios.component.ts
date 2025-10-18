@@ -7,6 +7,7 @@ import { UsuariosService } from 'src/app/services/usuarios/usuarios.service';
 import { DataTable } from 'simple-datatables';
 import Swal from 'sweetalert2';
 import { ModificarStatusService } from 'src/app/services/usuarios/modificarStatus.service';
+import { RolesService } from 'src/app/services/roles/roles.service';
 
 @Component({
   selector: 'app-usuarios',
@@ -27,12 +28,7 @@ export class UsuariosComponent implements OnInit {
 
    private dataTable: any;
   
-  rolesDisponibles: RolUsuario[] = [
-    { id: 1, alias: 'ADMIN', descripcion: 'Administrador', tipo: 'Usuarios de la Torre', aplicacion: 'Gestión Usuarios' },
-    { id: 2, alias: 'INV', descripcion: 'Inventario', tipo: 'Usuarios de Red Comercial', aplicacion: 'Inventario' },
-    { id: 3, alias: 'USER', descripcion: 'Usuario básico', tipo: 'Usuarios de la Torre', aplicacion: 'Gestión Usuarios' }
-  ];
-  
+  rolesDisponibles: RolUsuario[] 
   usuarioSeleccionado: Usuario | null = null;
   
   nuevoUsuarioId: string = '';
@@ -47,7 +43,8 @@ export class UsuariosComponent implements OnInit {
     private router: Router,
     private usuariosService: UsuariosService,
     private modificarStatusService: ModificarStatusService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private rolesService: RolesService
   ) { }
   
   itemsPorPagina: number = 10;
@@ -262,8 +259,8 @@ export class UsuariosComponent implements OnInit {
     this.usuariosFiltrados = this.usuarios.filter(u =>
       (!this.usuarioId || u.userId.toLowerCase().includes(this.usuarioId.toLowerCase())) &&
       // (!this.userStatus || u.userStatus === this.userStatus) &&
-      (!this.aplicacion || u.roles.some(r => r.aplicacion === this.aplicacion)) &&
-      (this.listaTodos === 'todos' || u.roles.some(r => r.alias === this.listaTodos)) &&
+      (!this.aplicacion || u.roles.some(r => r.siglasApplic === this.aplicacion)) &&
+      (this.listaTodos === 'todos' || u.roles.some(r => r.roleName === this.listaTodos)) &&
       (term === '' || u.userId.toLowerCase().includes(term) || u.fullName.toLowerCase().includes(term) || u.email.toLowerCase().includes(term))
     );
 
@@ -422,42 +419,165 @@ export class UsuariosComponent implements OnInit {
   }
   
   guardarEdicionUsuario(modal: any) {
-    if (this.usuarioSeleccionado) {
-      const idx = this.usuarios.findIndex(u => u.userId === this.usuarioSeleccionado!.userId);
-      if (idx !== -1) {
-        this.usuarios[idx] = { ...this.usuarioSeleccionado };
-      }
+    if (!this.usuarioSeleccionado) {
+      modal.close();
+      return;
     }
-    modal.close();
+
+    const payload: any = {
+      userId: this.usuarioSeleccionado.userId,
+      userStatus: this.usuarioSeleccionado.userStatus
+    };
+
+    // Call backend update with minimal payload { userId, userStatus }
+    this.usuariosService.updateUsuario(payload).subscribe({
+      next: (updated: any) => {
+        // Normalize and update local list
+        const mapped = this.mapBackendUsuarios([updated])[0] || { ...this.usuarioSeleccionado };
+        const idx = this.usuarios.findIndex(u => u.userId === (mapped.userId || this.usuarioSeleccionado!.userId));
+        if (idx !== -1) {
+          this.usuarios[idx] = mapped;
+        }
+        this.filtrarUsuarios();
+        modal.close();
+        this.showSuccessToast('Usuario actualizado', `Usuario ${payload.userId} actualizado.`);
+      },
+      error: (err) => {
+        console.error('Error guardando edición', err);
+        Swal.fire({ title: 'Error', text: 'No se pudo guardar la edición.', icon: 'error' });
+      }
+    });
   }
   
   openVerRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
-    this.usuarioSeleccionado = usuario;
-    this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
+    // fetch roles associated to this user by mscUserId and open modal with only those roles
+    const msc = usuario.mscUserId;
+    this.usuariosService.getRolesUsuario(String(msc)).subscribe({
+      next: (roles: any) => {
+        // Normalize backend role shape to the UI model (RolUsuario)
+        const list = Array.isArray(roles) ? roles : (roles?.data && Array.isArray(roles.data) ? roles.data : []);
+        const normalized = list.map((r: any) => ({
+          // preserve backend original fields (used by the template)
+          mscRoleId: r.mscRoleId ?? r.id ?? 0,
+          roleName: r.roleName ?? r.alias ?? '',
+          description: r.description ?? r.descripcion ?? '',
+          inUsoEnRed: r.inUsoEnRed ?? r.tipo ?? '',
+          siglasApplic: r.siglasApplic ?? r.aplicacion ?? r.application ?? '',
+          // also provide UI-friendly aliases (backwards compatibility)
+          id: r.mscRoleId ?? r.id ?? 0,
+          alias: r.roleName ?? r.alias ?? '',
+          descripcion: r.description ?? r.descripcion ?? '',
+          tipo: r.inUsoEnRed ?? r.tipo ?? '',
+          aplicacion: r.siglasApplic ?? r.aplicacion ?? r.application ?? ''
+  } as any));
+        this.usuarioSeleccionado = { ...usuario, roles: normalized } as Usuario;
+        this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
+      },
+      error: (err) => {
+        console.error('Error obteniendo roles', err);
+        Swal.fire({ title: 'Error', text: 'No se pudieron obtener los roles del usuario.', icon: 'error' });
+      }
+    });
 
   }
   
   openAsociarRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
+    // First fetch roles assigned to the user, then fetch all roles and mark selections by mscRoleId
     this.usuarioSeleccionado = usuario;
-    this.rolesDisponibles.forEach(r => {
-      r.seleccionado = !!usuario.roles.find(ur => ur.id === r.id);
+    const msc = usuario.mscUserId;
+    this.usuariosService.getRolesUsuario(String(msc)).subscribe({
+      next: (assigned: any) => {
+        const assignedList = Array.isArray(assigned) ? assigned : (Array.isArray(assigned?.data) ? assigned.data : []);
+        const assignedIds = new Set(assignedList.map((ar: any) => String(ar.mscRoleId ?? ar.id ?? ar.roleId ?? '')));
+
+        // fetch all roles
+        this.rolesService.consultarRoles({}).subscribe({
+          next: (resp: any) => {
+            const list = Array.isArray(resp?.data) ? resp.data : (Array.isArray(resp) ? resp : []);
+            this.rolesDisponibles = list.map((r: any) => {
+              const idVal = r.mscRoleId ?? r.id ?? 0;
+              const idStr = String(idVal);
+              return ({
+                // preserve backend id and ui aliases
+                mscRoleId: idVal,
+                id: idVal,
+                roleName: r.roleName ?? r.alias ?? r.rol ?? r.name ?? '',
+                alias: r.roleName ?? r.alias ?? r.rol ?? r.name ?? '',
+                description: r.description ?? r.descripcion ?? '',
+                descripcion: r.description ?? r.descripcion ?? '',
+                inUsoEnRed: r.inUsoEnRed ?? r.tipo ?? r.type ?? '',
+                tipo: r.inUsoEnRed ?? r.tipo ?? r.type ?? '',
+                siglasApplic: r.siglasApplic ?? r.aplicacion ?? r.application ?? '',
+                aplicacion: r.siglasApplic ?? r.aplicacion ?? r.application ?? '',
+                seleccionado: assignedIds.has(idStr)
+              } as RolUsuario & { seleccionado?: boolean });
+            });
+            this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
+          },
+          error: (err) => {
+            console.error('Error cargando roles disponibles', err);
+            Swal.fire({ title: 'Error', text: 'No se pudieron cargar los roles disponibles.', icon: 'error' });
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error cargando roles asignados del usuario', err);
+        // fallback: load all roles without pre-selection
+        this.rolesService.consultarRoles({}).subscribe({
+          next: (resp: any) => {
+            const list = Array.isArray(resp?.data) ? resp.data : (Array.isArray(resp) ? resp : []);
+            this.rolesDisponibles = list.map((r: any) => ({
+              id: r.mscRoleId ?? r.id ?? 0,
+              alias: r.roleName ?? r.alias ?? r.rol ?? r.name ?? '',
+              descripcion: r.description ?? r.descripcion ?? '',
+              tipo: r.inUsoEnRed ?? r.tipo ?? r.type ?? '',
+              aplicacion: r.siglasApplic ?? r.aplicacion ?? r.application ?? '',
+              seleccionado: false
+            } as RolUsuario & { seleccionado?: boolean }));
+            this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
+          },
+          error: (err2) => {
+            console.error('Error cargando roles disponibles', err2);
+            Swal.fire({ title: 'Error', text: 'No se pudieron cargar los roles disponibles.', icon: 'error' });
+          }
+        });
+      }
     });
-    this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
   }
   
   guardarAsociacionRoles(usuario: Usuario, modal: any) {
-    const rolesSeleccionados = this.rolesDisponibles.filter(r => r.seleccionado);
+    const rolesSeleccionados = this.rolesDisponibles.filter(r => (r as any).seleccionado);
+    console.log('Roles seleccionados para asignar:', rolesSeleccionados);
     const idx = this.usuarios.findIndex(u => u.userId === usuario.userId);
-    if (idx !== -1) {
-      this.usuarios[idx].roles = rolesSeleccionados.map(r => ({
-        id: r.id,
-        alias: r.alias,
-        descripcion: r.descripcion,
-        tipo: r.tipo,
-        aplicacion: r.aplicacion
-      }));
-    }
-    modal.close();
+    // Build payload for backend
+    // send as userId but with the value of mscUserId (backend expects userId field)
+    const payload = {
+      userId: usuario.mscUserId,
+      // prefer mscRoleId when present, otherwise fallback to id
+      roleIds: rolesSeleccionados.map(r => (r as any).mscRoleId)
+    };
+
+    this.usuariosService.asignarRoles(payload).subscribe({
+      next: (resp: any) => {
+        // update local user's roles to the selected ones
+        if (idx !== -1) {
+          this.usuarios[idx].roles = rolesSeleccionados.map(r => ({
+            mscRoleId: r.mscRoleId,
+            roleName: r.roleName,
+            description: r.description,
+            inUsoEnRed: r.inUsoEnRed,
+            siglasAplic: r.siglasApplic
+          }));
+        }
+        this.filtrarUsuarios();
+        modal.close();
+        this.showSuccessToast('Roles asignados', `Se asignaron ${rolesSeleccionados.length} roles.`);
+      },
+      error: (err) => {
+        console.error('Error asignando roles', err);
+        Swal.fire({ title: 'Error', text: 'No se pudieron asignar los roles.', icon: 'error' });
+      }
+    });
   }
   
   get totalPaginas(): number {

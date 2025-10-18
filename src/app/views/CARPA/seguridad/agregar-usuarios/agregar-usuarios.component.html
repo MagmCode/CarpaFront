@@ -8,7 +8,7 @@
             <label for="aplicacion" class="form-label">Aplicación</label>
             <select id="aplicacion" class="form-select" [(ngModel)]="aplicacionSeleccionada" name="aplicacion" (change)="onAplicacionChange()" required>
               <option value="" disabled selected>Seleccione una aplicación</option>
-              <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+              <option *ngFor="let app of aplicaciones" [value]="app.idApplication">{{ app.description }}</option>
             </select>
           </div>
           <div class="mb-3" *ngIf="aplicacionSeleccionada">

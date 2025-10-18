@@ -9,7 +9,7 @@
               <label for="filtroAplicacion" class="form-label">Aplicación</label>
               <select id="filtroAplicacion" class="form-select" [(ngModel)]="aplicacionSeleccionada" name="filtroAplicacion" (change)="filtrarDatos()">
                 <option value="">Todas</option>
-                <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+                <option *ngFor="let app of aplicaciones" [value]="app.idApplication">{{ app.description }}</option>
               </select>
             </div>
           </div>

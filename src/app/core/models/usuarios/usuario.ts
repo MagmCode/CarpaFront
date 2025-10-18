@@ -1,9 +1,11 @@
 export interface RolUsuario {
-  id: number;
-  alias: string;
-  descripcion: string;
-  tipo: string;
-  aplicacion: string;
+  // backend fields
+  mscRoleId?: number;
+  roleName?: string;
+  description?: string;
+  inUsoEnRed?: string;
+  idApplication?: number | string;
+  siglasApplic?: string;
   seleccionado?: boolean;
 }
 

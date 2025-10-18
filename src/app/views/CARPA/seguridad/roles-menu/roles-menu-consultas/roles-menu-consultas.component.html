@@ -68,7 +68,7 @@
         <label for="aplicacion" class="form-label">Aplicación</label>
         <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newRole.aplicacion" required>
           <option value="" disabled selected>Seleccione una aplicación</option>
-          <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.idApplication">{{ app.description }}</option>
         </select>
       </div>
     </div>

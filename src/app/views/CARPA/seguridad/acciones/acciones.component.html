@@ -18,7 +18,7 @@
         <label for="aplicacion" class="form-label">Aplicación</label>
         <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newAction.aplicacion" required>
           <option value="" disabled selected>Seleccione una aplicación</option>
-          <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.description">{{ app.description }}</option>
         </select>
       </div>
     </div>
@@ -32,7 +32,7 @@
 
 <div class="card">
   <div class="card-header">
-    <h6 class="card-title fw-semibold">Seguridad / Acciones</h6>
+    <h6 class="card-title fw-semibold">Accesos / Privilegio</h6>
   </div>
   <div class="card-body" style="position: relative;">
     <div class="row mb-4 align-items-end">
@@ -46,10 +46,10 @@
             <i class="mdi mdi-plus"></i> Agregar
           </button>
           <button class="btn btn-primary" (click)="openAgregarEnLote(agregarLoteModal)">
-            <i class="mdi mdi-file-upload"></i> Agregar en lote
+            <i class="mdi mdi-file-upload"></i> Carga Masiva
           </button>
           <button class="btn btn-danger" (click)="openEliminarEnLote(eliminarLoteModal)">
-            <i class="mdi mdi-delete"></i> Eliminar en lote
+            <i class="mdi mdi-delete"></i> Eliminar Masivo
           </button>
         </div>
       <div>

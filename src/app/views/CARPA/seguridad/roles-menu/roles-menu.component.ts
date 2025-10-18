@@ -1,5 +1,6 @@
 import { Component, OnInit, TemplateRef } from '@angular/core';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
+import { RolesService } from 'src/app/services/roles/roles.service';
 import { Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -36,10 +37,7 @@ export class RolesMenuComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
 
   roles: RolMenu[] = [
-    { id: 1, rol: 'Administrador', descripcion: 'Acceso total', aplicacion: 'Gestión Usuarios' },
-    { id: 2, rol: 'Operador', descripcion: 'Acceso limitado', aplicacion: 'Inventario' },
-    { id: 3, rol: 'Consulta', descripcion: 'Solo lectura', aplicacion: 'Gestión Usuarios' },
-    { id: 4, rol: 'Supervisor', descripcion: 'Supervisa operaciones', aplicacion: 'Inventario' }
+    // will be populated from backend
   ];
 
   // Paginación y búsqueda para la tabla principal
@@ -134,12 +132,42 @@ export class RolesMenuComponent implements OnInit {
     private aplicacionesService: AplicacionesService,
     private router: Router,
     private modalService: NgbModal
+    , private rolesService: RolesService
   ) { }
 
   ngOnInit(): void {
     this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
-    this.filtrarRoles();
-    this.filtrarMenu();
+
+    // load roles from backend and map to RolMenu[] (generate numeric ids)
+    this.rolesService.consultarRoles({}).subscribe({
+      next: (resp: any) => {
+        if (resp && Array.isArray(resp.data)) {
+          this.roles = resp.data.map((r: any, idx: number) => ({
+            id: idx + 1,
+            rol: r.rol || '',
+            descripcion: r.descripcion || '',
+            aplicacion: r.aplicacion || ''
+          }));
+        } else {
+          console.warn('RolesMenu: unexpected roles payload, using empty list', resp);
+          this.roles = [];
+        }
+        this.filtrarRoles();
+        this.filtrarMenu();
+      },
+      error: (err: any) => {
+        console.error('RolesMenu: error loading roles', err);
+        // fallback to local defaults to keep UI usable in dev
+        this.roles = [
+          { id: 1, rol: 'Administrador', descripcion: 'Acceso total', aplicacion: 'Gestión Usuarios' },
+          { id: 2, rol: 'Operador', descripcion: 'Acceso limitado', aplicacion: 'Inventario' },
+          { id: 3, rol: 'Consulta', descripcion: 'Solo lectura', aplicacion: 'Gestión Usuarios' },
+          { id: 4, rol: 'Supervisor', descripcion: 'Supervisa operaciones', aplicacion: 'Inventario' }
+        ];
+        this.filtrarRoles();
+        this.filtrarMenu();
+      }
+    });
   }
 
   // Tabla principal

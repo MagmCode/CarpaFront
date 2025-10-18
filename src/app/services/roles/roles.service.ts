@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, catchError, Observable, throwError, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -33,13 +33,24 @@ export class RolesService {
     return this.rolesSubject.getValue();
   }
 
-  consultarRoles(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/admin/roles/usuario/260`).pipe(
+  // Accept any payload (the backend expects JSON) and set headers accordingly.
+  consultarRoles(payload: any): Observable<any> {
+    const url = `${this.apiUrl}/admin/roles/buscar`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post<any>(url, payload, { headers }).pipe(
       map((response: any) => {
-        console.log('RolesService:', response);
+        console.log('RolesService response:', response);
         return response;
       }),
-      catchError((error: HttpErrorResponse) => throwError(() => error.error))
+      catchError((error: HttpErrorResponse) => {
+        console.error('RolesService error details:', {
+          status: error.status,
+          url: error.url,
+          message: error.message,
+          error: error.error
+        });
+        return throwError(() => error.error || { message: error.message || 'Unknown error' });
+      })
     );
   }
 }
