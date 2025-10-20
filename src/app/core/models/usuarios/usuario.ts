@@ -17,5 +17,16 @@ export interface Usuario {
   userStatus: number;
   roles: RolUsuario[];
   seleccionado?: boolean;
-  imported?: boolean; // indica si el usuario fue importado desde un archivo
+  imported?: boolean;
+  // Nuevos campos para alta de usuario
+  typeAccess?: '' | 'Local' | 'Directorio Activo' | 'LDAP';
+  login?: string;
+  clave?: string;
+  encriptamiento?: string;
+  cedula?: number;
+  descCargo?: string;
+  descGeneral?: string;
+  passwordDays?: number;
+  vigencia?: number; // días
+  isEditable?: boolean;
 }

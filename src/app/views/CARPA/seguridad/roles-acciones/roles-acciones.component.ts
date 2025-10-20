@@ -228,7 +228,7 @@ export class RolesAccionesComponent implements OnInit {
       return;
     }
     console.log('Enviando asociación:', { idRole, idAcciones });
-    const payload = { idRole, idAcciones };
+    const payload = { mscRoleId: idRole, idAcciones };
     // Llamar al backend para guardar la asociación
     this.rolesService.rolesAcciones(payload).subscribe({
       next: (resp: any) => {

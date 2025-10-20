@@ -135,7 +135,7 @@
 <ng-template #eliminarModal let-modal>
   <div class="modal-header">
     <h5 class="modal-title">Confirmar Eliminación</h5>
-    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  <button type="button" class="btn-close" aria-label="Close" (click)="modal.close(); limpiarFormularioNuevoUsuario()"></button>
   </div>
   <div class="modal-body text-center">
     <p>¿Está seguro que desea eliminar el usuario <strong>{{ usuarioSeleccionado?.userId }}</strong>?</p>
@@ -146,39 +146,124 @@
   </div>
 </ng-template>
 
-<!-- Modal 2: Editar usuario -->
+<!-- Modal 2: Editar usuario (usa el mismo formulario que agregar) -->
 <ng-template #editarModal let-modal>
   <div class="modal-header">
     <h5 class="modal-title">Editar Usuario</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-<form *ngIf="usuarioSeleccionado" (ngSubmit)="guardarEdicionUsuario(modal)">
-  <div class="modal-body">
-    <div class="mb-3">
-      <label for="editUserId" class="form-label">User ID</label>
-      <input id="editUserId" class="form-control" [(ngModel)]="usuarioSeleccionado.userId" name="editUserId" required readonly>
+  <form *ngIf="usuarioSeleccionado" (ngSubmit)="guardarEdicionUsuario(modal)">
+    <div class="modal-body">
+      <div class="row g-3">
+        <!-- Si es LDAP, solo mostrar los campos requeridos -->
+        <ng-container *ngIf="usuarioSeleccionado.typeAccess === 'LDAP'; else noLdapFields">
+          <!-- Login (login) -->
+          <div class="col-md-4">
+            <label for="editLogin" class="form-label">Login</label>
+            <input id="editLogin" name="editLogin" class="form-control" [(ngModel)]="usuarioSeleccionado.userId" [disabled]="!usuarioSeleccionado.isEditable" required>
+          </div>
+          <!-- Cédula -->
+          <div class="col-md-4">
+            <label for="editCedula" class="form-label">Cédula</label>
+            <input id="editCedula" name="editCedula" type="number" class="form-control" [(ngModel)]="usuarioSeleccionado.cedula" [disabled]="!usuarioSeleccionado.isEditable" required>
+          </div>
+          <!-- Nombre -->
+          <div class="col-md-4">
+            <label for="editFullName" class="form-label">Nombre del usuario</label>
+            <input id="editFullName" name="editFullName" class="form-control" [(ngModel)]="usuarioSeleccionado.fullName" [disabled]="!usuarioSeleccionado.isEditable" required>
+          </div>
+          <!-- Descripción -->
+          <div class="col-md-4">
+            <label for="editDescripcion" class="form-label">Descripción del usuario</label>
+            <input id="editDescripcion" name="editDescripcion" class="form-control" [(ngModel)]="usuarioSeleccionado.descGeneral" [disabled]="!usuarioSeleccionado.isEditable" autocomplete="off">
+          </div>
+          <!-- Estatus -->
+          <div class="col-md-4">
+            <label for="editUserStatus" class="form-label">Estatus</label>
+            <select id="editUserStatus" name="editUserStatus" class="form-select" [(ngModel)]="usuarioSeleccionado.userStatus" [disabled]="!usuarioSeleccionado.isEditable" required>
+              <option [ngValue]="1">Activo</option>
+              <option [ngValue]="0">Inactivo</option>
+            </select>
+          </div>
+          <!-- Vigencia -->
+          <div class="col-md-4">
+            <label for="editVigencia" class="form-label">Vigencia</label>
+            <select id="editVigencia" name="editVigencia" class="form-select" [(ngModel)]="usuarioSeleccionado.vigencia" [disabled]="!usuarioSeleccionado.isEditable" required>
+              <option [ngValue]="30">30 días</option>
+              <option [ngValue]="60">60 días</option>
+              <option [ngValue]="90">90 días</option>
+              <option [ngValue]="180">180 días</option>
+            </select>
+          </div>
+          <!-- Correo -->
+          <div class="col-md-4">
+            <label for="editEmail" class="form-label">Correo del usuario</label>
+            <input id="editEmail" name="editEmail" type="email" class="form-control" [(ngModel)]="usuarioSeleccionado.email" [disabled]="!usuarioSeleccionado.isEditable" required>
+          </div>
+        </ng-container>
+        <ng-template #noLdapFields>
+          <!-- Para otros tipos de usuario -->
+          <!-- Login -->
+          <div class="col-md-4">
+            <label for="editLogin" class="form-label">Login</label>
+            <input id="editLogin" name="editLogin" class="form-control" [(ngModel)]="usuarioSeleccionado.userId" [disabled]="!usuarioSeleccionado.isEditable" required>
+          </div>
+          <!-- Clave -->
+          <div class="col-md-4">
+            <label for="editClave" class="form-label">Clave</label>
+            <input id="editClave" name="editClave" type="password" class="form-control" [(ngModel)]="usuarioSeleccionado.clave" [disabled]="!usuarioSeleccionado.isEditable" required autocomplete="new-password">
+          </div>
+          <!-- Encriptamiento -->
+          <div class="col-md-4">
+            <label for="editEncriptamiento" class="form-label">Encriptamiento</label>
+            <input id="editEncriptamiento" name="editEncriptamiento" class="form-control" [(ngModel)]="usuarioSeleccionado.encriptamiento" [disabled]="!usuarioSeleccionado.isEditable">
+          </div>
+          <!-- Cédula -->
+          <div class="col-md-4">
+            <label for="editCedula" class="form-label">Cédula</label>
+            <input id="editCedula" name="editCedula" type="number" class="form-control" [(ngModel)]="usuarioSeleccionado.cedula" [disabled]="!usuarioSeleccionado.isEditable" required>
+          </div>
+          <!-- Nombre -->
+          <div class="col-md-4">
+            <label for="editFullName" class="form-label">Nombre del usuario</label>
+            <input id="editFullName" name="editFullName" class="form-control" [(ngModel)]="usuarioSeleccionado.fullName" [disabled]="!usuarioSeleccionado.isEditable" required>
+          </div>
+          <!-- Descripción -->
+          <div class="col-md-4">
+            <label for="editDescripcion" class="form-label">Descripción del usuario</label>
+            <input id="editDescripcion" name="editDescripcion" class="form-control" [(ngModel)]="usuarioSeleccionado.descGeneral" [disabled]="!usuarioSeleccionado.isEditable" autocomplete="off">
+          </div>
+          <!-- Estatus -->
+          <div class="col-md-4">
+            <label for="editUserStatus" class="form-label">Estatus</label>
+            <select id="editUserStatus" name="editUserStatus" class="form-select" [(ngModel)]="usuarioSeleccionado.userStatus" [disabled]="!usuarioSeleccionado.isEditable" required>
+              <option [ngValue]="1">Activo</option>
+              <option [ngValue]="0">Inactivo</option>
+            </select>
+          </div>
+          <!-- Vigencia -->
+          <div class="col-md-4">
+            <label for="editVigencia" class="form-label">Vigencia</label>
+            <select id="editVigencia" name="editVigencia" class="form-select" [(ngModel)]="usuarioSeleccionado.vigencia" [disabled]="!usuarioSeleccionado.isEditable" required>
+              <option [ngValue]="30">30 días</option>
+              <option [ngValue]="60">60 días</option>
+              <option [ngValue]="90">90 días</option>
+              <option [ngValue]="180">180 días</option>
+            </select>
+          </div>
+          <!-- Correo -->
+          <div class="col-md-4">
+            <label for="editEmail" class="form-label">Correo del usuario</label>
+            <input id="editEmail" name="editEmail" type="email" class="form-control" [(ngModel)]="usuarioSeleccionado.email" [disabled]="!usuarioSeleccionado.isEditable" required>
+          </div>
+        </ng-template>
+      </div>
     </div>
-    <div class="mb-3">
-      <label for="editFullName" class="form-label">Nombres y Apellidos</label>
-      <input id="editFullName" class="form-control" [(ngModel)]="usuarioSeleccionado.fullName" name="editFullName" required>
+    <div class="modal-footer">
+      <button class="btn btn-success" type="submit" [disabled]="!usuarioSeleccionado.isEditable">Guardar</button>
+      <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
     </div>
-    <div class="mb-3">
-      <label for="editEmail" class="form-label">E-mail</label>
-      <input id="editEmail" name="editEmail" type="email" class="form-control" [(ngModel)]="usuarioSeleccionado.email" required>
-    </div>
-    <div class="mb-3">
-      <label for="editUserStatus" class="form-label">Estatus</label>
-      <select id="editUserStatus" class="form-select" [(ngModel)]="usuarioSeleccionado.userStatus" name="editUserStatus" required>
-        <option [ngValue]="1">Activo</option>
-        <option [ngValue]="0">Inactivo</option>
-      </select>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-success" type="submit">Guardar</button>
-    <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
-  </div>
-</form>
+  </form>
 </ng-template>
 
 <!-- Modal 3: Ver roles asociados -->
@@ -263,28 +348,126 @@
 <!-- Modal para añadir usuario -->
 <ng-template #addUserModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Añadir Usuario</h5>
+    <h5 class="modal-title">Agregar Usuario</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
   <form (ngSubmit)="addUser(modal)">
     <div class="modal-body">
-      <div class="mb-3">
-        <label for="nuevoUsuarioId" class="form-label">Usuario ID</label>
-        <input id="nuevoUsuarioId" name="nuevoUsuarioId" class="form-control" [(ngModel)]="nuevoUsuarioId" required>
-      </div>
-      <div class="mb-3">
-        <label for="nuevoFullName" class="form-label">Nombres y Apellidos</label>
-        <input id="nuevoFullName" name="nuevoFullName" class="form-control" [(ngModel)]="nuevoFullName" required>
-      </div>
-      <div class="mb-3">
-        <label for="nuevoEmail" class="form-label">E-mail</label>
-        <input id="nuevoEmail" name="nuevoEmail" type="email" class="form-control" [(ngModel)]="nuevoEmail" required>
-      </div>
+      <div class="row g-3">
+        <!-- Tipo de acceso -->
+        <div class="col-md-4">
+          <label for="nuevoTypeAccess" class="form-label">Tipo de acceso</label>
+          <select id="nuevoTypeAccess" name="nuevoTypeAccess" class="form-select" [(ngModel)]="nuevoTypeAccess" (ngModelChange)="onChangeNuevoTypeAccess()" required>
+            <option [ngValue]="''">Seleccione</option>
+            <option [ngValue]="'Local'">Local</option>
+            <option [ngValue]="'Directorio Activo'">Directorio Activo (LDAP)</option>
+          </select>
+        </div>
 
+        <!-- Campos para Seleccione -->
+        <ng-container *ngIf="nuevoTypeAccess === ''">
+          <div class="col-md-4">
+            <label for="nuevoFullName" class="form-label">Nombre completo</label>
+            <input id="nuevoFullName" name="nuevoFullName" class="form-control" [(ngModel)]="nuevoFullName" disabled required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoEmail" class="form-label">Correo</label>
+            <input id="nuevoEmail" name="nuevoEmail" type="email" class="form-control" [(ngModel)]="nuevoEmail" disabled required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoCedula" class="form-label">Cédula</label>
+            <input id="nuevoCedula" name="nuevoCedula" type="number" class="form-control" [(ngModel)]="nuevoCedula" disabled required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoDescCargo" class="form-label">Cargo</label>
+            <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [(ngModel)]="nuevoDescCargo" disabled required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoEstatus" class="form-label">Estatus</label>
+            <select id="nuevoEstatus" name="nuevoEstatus" class="form-select" [(ngModel)]="nuevoEstatus" disabled required>
+              <option [ngValue]="1">Activo</option>
+              <option [ngValue]="0">Inactivo</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoDescGeneral" class="form-label">Descripción del usuario</label>
+            <input id="nuevoDescGeneral" name="nuevoDescGeneral" class="form-control" [(ngModel)]="nuevoDescGeneral" disabled required>
+          </div>
+        </ng-container>
+
+        <!-- Campos para Local -->
+        <ng-container *ngIf="nuevoTypeAccess === 'Local'">
+          <div class="col-md-4">
+            <label for="nuevoLogin" class="form-label">Login</label>
+            <input id="nuevoLogin" name="nuevoLogin" class="form-control" [(ngModel)]="nuevoLogin" required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoClave" class="form-label">Clave</label>
+            <input id="nuevoClave" name="nuevoClave" type="password" class="form-control" [(ngModel)]="nuevoClave" required autocomplete="new-password">
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoFullName" class="form-label">Nombre completo</label>
+            <input id="nuevoFullName" name="nuevoFullName" class="form-control" [(ngModel)]="nuevoFullName" required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoEmail" class="form-label">Correo</label>
+            <input id="nuevoEmail" name="nuevoEmail" type="email" class="form-control" [(ngModel)]="nuevoEmail" required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoCedula" class="form-label">Cédula</label>
+            <input id="nuevoCedula" name="nuevoCedula" type="number" class="form-control" [(ngModel)]="nuevoCedula" required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoDescCargo" class="form-label">Cargo</label>
+            <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [(ngModel)]="nuevoDescCargo" required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoDescGeneral" class="form-label">Descripción del usuario</label>
+            <input id="nuevoDescGeneral" name="nuevoDescGeneral" class="form-control" [(ngModel)]="nuevoDescGeneral" required>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoVigencia" class="form-label">Vigencia</label>
+            <select id="nuevoVigencia" name="nuevoVigencia" class="form-select" [(ngModel)]="nuevoVigencia" required>
+              <option [ngValue]="30">30 días</option>
+              <option [ngValue]="60">60 días</option>
+              <option [ngValue]="90">90 días</option>
+              <option [ngValue]="180">180 días</option>
+            </select>
+          </div>
+        </ng-container>
+
+        <!-- Campos para LDAP -->
+        <ng-container *ngIf="nuevoTypeAccess === 'Directorio Activo'">
+          <div class="col-md-4">
+            <label for="nuevoLogin" class="form-label">Login</label>
+            <div class="input-group">
+              <input id="nuevoLogin" name="nuevoLogin" class="form-control" [(ngModel)]="nuevoLogin" required>
+              <button type="button" class="btn btn-outline-info btn-sm" (click)="consultarDirectorioActivo(nuevoLogin)">
+                <i class="mdi mdi-magnify"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoFullName" class="form-label">Nombre completo</label>
+            <input id="nuevoFullName" name="nuevoFullName" class="form-control" [(ngModel)]="nuevoFullName" required disabled="true">
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoEmail" class="form-label">Correo</label>
+            <input id="nuevoEmail" name="nuevoEmail" type="email" class="form-control" [(ngModel)]="nuevoEmail" required disabled="true">
+          </div>
+          <div class="col-md-4">
+            <label for="nuevoEstatus" class="form-label">Estatus</label>
+            <select id="nuevoEstatus" name="nuevoEstatus" class="form-select" [(ngModel)]="nuevoEstatus" required disabled="true">
+              <option [ngValue]="1">Activo</option>
+              <option [ngValue]="0">Inactivo</option>
+            </select>
+          </div>
+        </ng-container>
+      </div>
     </div>
     <div class="modal-footer">
-      <button type="submit" class="btn btn-success">Añadir</button>
-      <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+      <button type="submit" class="btn btn-success">Agregar</button>
+  <button type="button" class="btn btn-secondary" (click)="modal.close(); limpiarFormularioNuevoUsuario()">Cerrar</button>
     </div>
   </form>
 </ng-template>

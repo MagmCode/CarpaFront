@@ -19,6 +19,22 @@ import { Usuario, RolUsuario } from 'src/app/core/models/usuarios/usuario';
   providedIn: 'root',
 })
 export class UsuariosService {
+  /**
+   * Buscar usuario por userId en el backend (POST /admin/users/search)
+   * Retorna datos del usuario para autocompletar campos en el formulario.
+   */
+  buscarUsuario(userId: string): Observable<any> {
+    const url = `${this.apiUrl}/admin/users/search`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    const body = { userId };
+    return this.http.post<any>(url, body, { headers }).pipe(
+      map((resp: any) => this.normalizeRaw<any>(resp)),
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error buscando usuario', { status: error.status, error: error.error });
+        return throwError(() => error.error || error.message || 'Error buscando usuario');
+      })
+    );
+  }
   private apiUrl = environment.Url;
   private usuariosSubject = new BehaviorSubject<any[]>([]);
   usuarios$ = this.usuariosSubject.asObservable();
@@ -174,4 +190,20 @@ export class UsuariosService {
       })
     );
   }
+
+    /**
+     * Editar estatus masivo de usuarios via POST /admin/users/update/batch
+     * Recibe payload { userId: string[], userStatus: number }
+     */
+    editarEstatusMasivo(payload: { userId: string[]; userStatus: number }): Observable<any> {
+      const url = `${this.apiUrl}/admin/users/update/batch`;
+      const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+      return this.http.post<any>(url, payload, { headers }).pipe(
+        map((resp: any) => this.normalizeRaw<any>(resp)),
+        catchError((error: HttpErrorResponse) => {
+          console.error('Error en edición masiva de estatus', { status: error.status, error: error.error });
+          return throwError(() => error.error || error.message || 'Error editando estatus masivo');
+        })
+      );
+    }
 }

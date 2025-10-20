@@ -15,6 +15,79 @@ import { RolesService } from 'src/app/services/roles/roles.service';
   styleUrls: ['./usuarios.component.scss']
 })
 export class UsuariosComponent implements OnInit {
+  // Nuevos campos para el formulario según requerimiento
+  nuevoDescCargo: string = '';
+  nuevoDescGeneral: string = '';
+  nuevoVigencia: number = 30; // passwordDays
+  limpiarFormularioNuevoUsuario() {
+    this.nuevoLogin = '';
+    this.nuevoClave = '';
+    this.nuevoEncriptamiento = '';
+    this.nuevoCedula = null;
+    this.nuevoDescripcion = '';
+    this.nuevoVigencia = 30;
+    this.nuevoFullName = '';
+    this.nuevoEmail = '';
+    this.nuevoEstatus = 1;
+    this.datosDirectorioActivo = null;
+  }
+
+  onChangeNuevoTypeAccess() {
+    this.limpiarFormularioNuevoUsuario();
+  }
+  // Campos para el formulario de alta de usuario
+  nuevoTypeAccess: '' | 'Local' | 'Directorio Activo' = '';
+  nuevoLogin: string = '';
+  nuevoClave: string = '';
+  nuevoEncriptamiento: string = '';
+  nuevoCedula: number | null = null;
+  nuevoDescripcion: string = '';
+  passwordDays: number = 30;
+  nuevoFullName: string = '';
+  nuevoEmail: string = '';
+  nuevoEstatus: number | null = 1;
+  datosDirectorioActivo: any = null;
+
+  // Stub para consulta de directorio activo
+  consultarDirectorioActivo(login: string) {
+    // Llama al backend para buscar usuario por userId (login)
+    console.log('[consultarDirectorioActivo] Buscando usuario:', login);
+    this.usuariosService.buscarUsuario(login).subscribe({
+      next: (resp: any) => {
+        console.log('[consultarDirectorioActivo] Respuesta del backend:', resp);
+        let user = resp;
+        if (Array.isArray(resp)) {
+          user = resp[0];
+        }
+        if (user) {
+          this.nuevoLogin = user.userId || login;
+          this.nuevoFullName = user.fullName || '';
+          this.nuevoEmail = user.email || '';
+          this.nuevoEstatus = user.userStatus ?? 1;
+          console.log('[consultarDirectorioActivo] Asignados:', {
+            nuevoLogin: this.nuevoLogin,
+            nuevoFullName: this.nuevoFullName,
+            nuevoEmail: this.nuevoEmail,
+            nuevoEstatus: this.nuevoEstatus
+          });
+        } else {
+          this.nuevoLogin = login;
+          this.nuevoFullName = '';
+          this.nuevoEmail = '';
+          this.nuevoEstatus = 1;
+          console.log('[consultarDirectorioActivo] Usuario no encontrado, valores por defecto asignados');
+        }
+      },
+      error: (err: any) => {
+        this.nuevoLogin = login;
+        this.nuevoFullName = '';
+        this.nuevoEmail = '';
+        this.nuevoEstatus = 1;
+        console.error('[consultarDirectorioActivo] Error en búsqueda:', err);
+        Swal.fire({ title: 'No encontrado', text: 'No se encontró el usuario en el directorio activo.', icon: 'info' });
+      }
+    });
+  }
   
   usuarioId: string = '';
   userStatus: number = 0;
@@ -32,10 +105,7 @@ export class UsuariosComponent implements OnInit {
   usuarioSeleccionado: Usuario | null = null;
   
   nuevoUsuarioId: string = '';
-  nuevoEstatus: number | null = 1;
   nuevoAplicacion: string = '';
-  nuevoFullName: string = '';
-  nuevoEmail: string = '';
   
   constructor(
     private aplicacionesService: AplicacionesService,
@@ -316,7 +386,9 @@ export class UsuariosComponent implements OnInit {
 
   // Template in some views calls openAddApplicationModal — provide a wrapper
   openAddApplicationModal(content: any) {
-    this.openAddUserModal(content);
+    // this.openAddUserModal(content);
+    this.modalService.open(content, { centered: true, size: 'lg' });
+    
   }
   
   addUser(modal: any) {
@@ -393,7 +465,11 @@ export class UsuariosComponent implements OnInit {
   
     openEditarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
     this.usuarioSeleccionado = { ...usuario };
-    this.modalService.open(TemplateRef, { centered: true });
+    // Si es LDAP, sincronizar login <-> userId para el modal
+    if (this.usuarioSeleccionado.typeAccess === 'LDAP') {
+      this.usuarioSeleccionado.login = this.usuarioSeleccionado.userId;
+    }
+    this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
   }
 
   procesarStatus(modal: any) {
@@ -647,11 +723,20 @@ export class UsuariosComponent implements OnInit {
       Swal.fire({ title: 'Sin selección', text: 'No hay usuarios seleccionados.', icon: 'info' });
       return;
     }
-    // aplicar estatus a los usuarios seleccionados
-    seleccionados.forEach(u => u.userStatus = Number(this.nuevoEstatusMasivo) );
-    this.filtrarUsuarios();
-    modal.close();
-    this.showSuccessToast('Estatus actualizado', `${seleccionados.length} usuario(s) actualizados.`);
+    const userIds = seleccionados.map(u => u.userId);
+    const nuevoStatus = Number(this.nuevoEstatusMasivo);
+    this.usuariosService.editarEstatusMasivo({ userId: userIds, userStatus: nuevoStatus }).subscribe({
+      next: (resp: any) => {
+        // Actualizar localmente los usuarios seleccionados
+        seleccionados.forEach(u => u.userStatus = nuevoStatus);
+        this.filtrarUsuarios();
+        modal.close();
+        this.showSuccessToast('Estatus actualizado', `${seleccionados.length} usuario(s) actualizados.`);
+      },
+      error: (err: any) => {
+        Swal.fire({ title: 'Error', text: 'No se pudo actualizar el estatus masivo.', icon: 'error' });
+      }
+    });
   }
 
   salir() {
