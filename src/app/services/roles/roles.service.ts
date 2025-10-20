@@ -1,30 +1,35 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+} from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, catchError, Observable, throwError, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class RolesService {
-    private rolesSubject = new BehaviorSubject<any[]>([]);
-    private apiUrl: string = environment.Url;
-    roles$ = this.rolesSubject.asObservable();
 
 
-  constructor(private http: HttpClient) { }
+  private rolesSubject = new BehaviorSubject<any[]>([]);
+  private apiUrl: string = environment.Url;
+  roles$ = this.rolesSubject.asObservable();
+
+  constructor(private http: HttpClient) {}
 
   // buscarRolesUsuarios(): Observable <any> {
   //   return this.http.get<any>(`${this.apiUrl}/admin/roles/usuario/260`).pipe(
   //       map((response: any)=> {
   //           return response
-  //       }), 
+  //       }),
   //       catchError((error: HttpErrorResponse)=> {return throwError(()=>error.error)})
   //   )
   // }
 
-  // 
-  
+  //
+
   setRoles(roles: any[]) {
     this.rolesSubject.next(roles);
   }
@@ -47,9 +52,11 @@ export class RolesService {
           status: error.status,
           url: error.url,
           message: error.message,
-          error: error.error
+          error: error.error,
         });
-        return throwError(() => error.error || { message: error.message || 'Unknown error' });
+        return throwError(
+          () => error.error || { message: error.message || 'Unknown error' }
+        );
       })
     );
   }
@@ -62,6 +69,27 @@ export class RolesService {
 
   rolesAcciones(payload: any): Observable<any> {
     const url = `${this.apiUrl}/admin/roles-actions/sincronizar-acciones`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post<any>(url, payload, { headers });
+  }
+
+    /**
+   * Buscar acciones por roles
+   * @param payload { roleId: string | number }
+   */
+
+  buscarAccionesPorRol(payload: any): Observable<any> {
+    const url = `${this.apiUrl}/admin/roles-actions/ActionsByRole`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post<any>(url, payload, { headers });
+  }
+
+  /**
+   * Buscar menú por roles
+   * @param payload { roleId: string | number }
+   */
+  buscarMenuPorRol(payload: any): Observable<any> {
+    const url = `${this.apiUrl}/admin/roles-actions/MenuByRole`;
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     return this.http.post<any>(url, payload, { headers });
   }

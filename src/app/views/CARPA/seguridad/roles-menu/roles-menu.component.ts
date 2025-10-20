@@ -233,44 +233,87 @@ export class RolesMenuComponent implements OnInit {
   asociarAcciones(rol: RolMenu): void {
     this.rolSeleccionado = rol;
     this.asociando = true;
-    // Consulta las opciones de menú desde el backend y mapea la respuesta
+    // 1. Consultar todos los menús
     this.menuService.OpcionesMenu().subscribe({
       next: (resp: any[]) => {
-        // Mapea la respuesta a la estructura MenuOption (jerárquica)
-        const buildTree = (items: any[]): MenuOption[] => {
-          const byId = new Map<number, MenuOption>();
-          for (const it of items) {
-            byId.set(it.id, {
-              id: it.id,
-              nombreMenu: it.nombre ?? it.nombreMenu ?? '',
-              url: it.ruta ?? it.url ?? '',
-              orden: Number(it.orden ?? 0),
-              aplicaciones: it.siglasAplicacion ?? it.aplicaciones ?? '',
-              checked: false,
-              hijos: [],
-              expanded: false
-            });
-          }
-          const roots: MenuOption[] = [];
-          for (const node of Array.from(byId.values())) {
-            const pid = items.find((i: any) => i.id === node.id)?.idPadre;
-            if (pid === null || pid === undefined || pid === 0) {
-              if (node.hijos && node.hijos.length === 0) delete node.hijos;
-              roots.push(node);
-            } else {
-              const parent = byId.get(pid);
-              if (parent) {
-                parent.hijos = parent.hijos || [];
-                parent.hijos.push(node);
-              } else {
-                roots.push(node);
+        // 2. Consultar los menús asociados al rol
+        this.rolesService.buscarMenuPorRol({ mscRoleId: rol.id }).subscribe({
+          next: (menuResp: any) => {
+            const seleccionados: number[] = Array.isArray(menuResp?.data) ? menuResp.data : [];
+            // Mapea la respuesta a la estructura MenuOption (jerárquica)
+            const buildTree = (items: any[]): MenuOption[] => {
+              const byId = new Map<number, MenuOption>();
+              for (const it of items) {
+                byId.set(it.id, {
+                  id: it.id,
+                  nombreMenu: it.nombre ?? it.nombreMenu ?? '',
+                  url: it.ruta ?? it.url ?? '',
+                  orden: Number(it.orden ?? 0),
+                  aplicaciones: it.siglasAplicacion ?? it.aplicaciones ?? '',
+                  checked: seleccionados.includes(it.id),
+                  hijos: [],
+                  expanded: false
+                });
               }
-            }
+              const roots: MenuOption[] = [];
+              for (const node of Array.from(byId.values())) {
+                const pid = items.find((i: any) => i.id === node.id)?.idPadre;
+                if (pid === null || pid === undefined || pid === 0) {
+                  if (node.hijos && node.hijos.length === 0) delete node.hijos;
+                  roots.push(node);
+                } else {
+                  const parent = byId.get(pid);
+                  if (parent) {
+                    parent.hijos = parent.hijos || [];
+                    parent.hijos.push(node);
+                  } else {
+                    roots.push(node);
+                  }
+                }
+              }
+              return roots;
+            };
+            this.menuOptions = buildTree(resp);
+            this.filtrarMenu();
+          },
+          error: () => {
+            // Si falla la consulta de menús asociados, mostrar todos sin selección
+            const buildTree = (items: any[]): MenuOption[] => {
+              const byId = new Map<number, MenuOption>();
+              for (const it of items) {
+                byId.set(it.id, {
+                  id: it.id,
+                  nombreMenu: it.nombre ?? it.nombreMenu ?? '',
+                  url: it.ruta ?? it.url ?? '',
+                  orden: Number(it.orden ?? 0),
+                  aplicaciones: it.siglasAplicacion ?? it.aplicaciones ?? '',
+                  checked: false,
+                  hijos: [],
+                  expanded: false
+                });
+              }
+              const roots: MenuOption[] = [];
+              for (const node of Array.from(byId.values())) {
+                const pid = items.find((i: any) => i.id === node.id)?.idPadre;
+                if (pid === null || pid === undefined || pid === 0) {
+                  if (node.hijos && node.hijos.length === 0) delete node.hijos;
+                  roots.push(node);
+                } else {
+                  const parent = byId.get(pid);
+                  if (parent) {
+                    parent.hijos = parent.hijos || [];
+                    parent.hijos.push(node);
+                  } else {
+                    roots.push(node);
+                  }
+                }
+              }
+              return roots;
+            };
+            this.menuOptions = buildTree(resp);
+            this.filtrarMenu();
           }
-          return roots;
-        };
-        this.menuOptions = buildTree(resp);
-        this.filtrarMenu();
+        });
       },
       error: () => {
         this.menuOptions = [];

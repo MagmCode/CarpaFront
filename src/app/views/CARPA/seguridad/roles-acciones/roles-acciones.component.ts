@@ -196,7 +196,27 @@ export class RolesAccionesComponent implements OnInit {
   asociarAcciones(rol: RolAccion): void {
     this.rolSeleccionado = rol;
     this.asociando = true;
-    // Aquí podrías cargar las acciones asociadas al rol desde backend si aplica
+    // Consultar acciones asociadas al rol
+    this.rolesService.buscarAccionesPorRol({ mscRoleId: rol.id }).subscribe({
+      next: (resp: any) => {
+        const seleccionados: number[] = Array.isArray(resp?.data) ? resp.data : [];
+        // Marcar como checked las acciones que coincidan con los ids devueltos
+        // Para esto, necesitamos los idAction de cada acción (de backend)
+        const accionesBackend = this.accionesService.getAcciones();
+        for (const accion of this.acciones) {
+          const found = accionesBackend.find((a: any) => a.url === accion.url && a.description === accion.descripcion);
+          accion.checked = !!(found && seleccionados.includes(found.idAction));
+        }
+        this.filtrarAcciones();
+      },
+      error: () => {
+        // Si falla la consulta, no marcar nada
+        for (const accion of this.acciones) {
+          accion.checked = false;
+        }
+        this.filtrarAcciones();
+      }
+    });
   }
 
   cancelarAsociacion(): void {
