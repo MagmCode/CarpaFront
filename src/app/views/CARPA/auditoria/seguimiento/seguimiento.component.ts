@@ -35,8 +35,7 @@ export class SeguimientoComponent implements OnInit {
   viewFiltro: boolean = true; // true -> mostrar formulario de filtro; false -> mostrar tabla de resultados
   filtro = {
     aplicacion: null as string | null,
-    fechaDesde: null as NgbDateStruct | null,
-    fechaHasta: null as NgbDateStruct | null
+    fecha: null as NgbDateStruct | null
   };
 
   // búsqueda y paginación para la vista de resultados
@@ -69,19 +68,36 @@ export class SeguimientoComponent implements OnInit {
     if (this.filtro.aplicacion) {
       res = res.filter(l => l.aplicacion === this.filtro.aplicacion);
     }
+    // filtrar por fecha única si está definida (convertir NgbDateStruct a Date)
+    if (!this.filtro.fecha) {
+      Swal.fire('Atención', 'Seleccione una fecha para consultar (máximo 7 días atrás).', 'warning');
+      return;
+    }
 
-  // filtrar por rango de fechas si están definidos (convertir NgbDateStruct a Date)
-  const desde = this.filtro.fechaDesde ? new Date(this.filtro.fechaDesde.year, (this.filtro.fechaDesde.month - 1), this.filtro.fechaDesde.day) : null;
-  const hasta = this.filtro.fechaHasta ? new Date(this.filtro.fechaHasta.year, (this.filtro.fechaHasta.month - 1), this.filtro.fechaHasta.day) : null;
-    if (desde) {
-      res = res.filter(l => new Date(l.timestamp) >= desde);
+    const sel = this.filtro.fecha;
+    const selectedDate = new Date(sel.year, sel.month - 1, sel.day);
+    // normalizar horas
+    const startOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 23, 59, 59, 999);
+
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+    const minAllowed = new Date(todayStart);
+    minAllowed.setDate(minAllowed.getDate() - 7); // 7 days lookback
+
+    if (startOfDay < minAllowed) {
+      Swal.fire('Atención', 'La fecha no puede ser anterior a 7 días atrás.', 'warning');
+      return;
     }
-    if (hasta) {
-      // incluir todo el día de 'hasta'
-      const hastaFin = new Date(hasta.getFullYear(), hasta.getMonth(), hasta.getDate());
-      hastaFin.setHours(23,59,59,999);
-      res = res.filter(l => new Date(l.timestamp) <= hastaFin);
+    if (startOfDay > todayStart) {
+      Swal.fire('Atención', 'No se puede consultar una fecha futura.', 'warning');
+      return;
     }
+
+    res = res.filter(l => {
+      const ts = new Date(l.timestamp);
+      return ts >= startOfDay && ts <= endOfDay;
+    });
 
     // guardar copia de la consulta para búsquedas no destructivas
     this.logsQueryResult = [...res];

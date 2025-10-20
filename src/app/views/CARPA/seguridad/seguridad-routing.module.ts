@@ -21,7 +21,7 @@ import { UsuariosConsultasComponent } from './usuarios/usuarios-consultas/usuari
 
 const routes: Routes = [
   {
-    path: 'aplicaciones', component: AplicacionesComponent
+    path: 'sistemas', component: AplicacionesComponent
   },
   {
     path: 'opciones-menu', component: OpcionesDeMenuComponent
@@ -56,9 +56,7 @@ const routes: Routes = [
   {
     path: 'usuarios/consultas', component: UsuariosConsultasComponent
   },
-  {
-    path: 'parametros-sistema', component: ParametrosSistemaComponent
-  },
+
   {
     path: 'agregar-usuarios', component: AgregarUsuariosComponent
   },

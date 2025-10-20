@@ -16,43 +16,43 @@ export const MENU: MenuItem[] = [
     subItems: [
       {
         label: 'Sistemas',
-        link: '/seguridad/aplicaciones',
+        link: '/accesos/sistemas',
       },
       {
         label: 'Opciones del Menú',
-        link: '/seguridad/opciones-menu',
+        link: '/accesos/opciones-menu',
       },
       {
         label: 'Privilegios',
-        link: '/seguridad/privilegios',
+        link: '/accesos/privilegios',
       },
       {
         label: 'Roles',
-        link: '/seguridad/roles',
+        link: '/accesos/roles',
       },
       {
         label: 'Roles - Privilegios',
-        link: '/seguridad/roles-privilegios',
+        link: '/accesos/roles-privilegios',
       },
       {
         label: 'Roles - Menú',
-        link: '/seguridad/roles-menu',
+        link: '/accesos/roles-menu',
       },
       {
         label: 'Usuarios',
-        link: '/seguridad/usuarios',
+        link: '/accesos/usuarios',
       },
       // {
       //   label: 'Consultas',
-      //   link: '/seguridad/consultas',
+      //   link: '/accesos/consultas',
       //   subItems: [
       //   {
       //     label: 'Opciones de Menú por Rol',
-      //     link: '/seguridad/consultas/opciones-menu-por-rol',
+      //     link: '/accesos/consultas/opciones-menu-por-rol',
       //   },
       //   {
       //     label: 'Opciones de Menú por URL',
-      //     link: '/seguridad/consultas/opciones-menu-por-url',
+      //     link: '/accesos/consultas/opciones-menu-por-url',
       //   },
       //   ]
       // }
@@ -64,11 +64,11 @@ export const MENU: MenuItem[] = [
     subItems: [
       {
         label: 'Conexiones',
-        link: '/configuracion/servicios-web-bcv',
+        link: '/configuracion/conexiones',
       },
       {
         label: 'Criterios',
-        link: '/seguridad/parametros-sistema',
+        link: '/configuracion/criterios',
       },
     ],
   },

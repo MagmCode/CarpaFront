@@ -23,7 +23,7 @@ const routes: Routes = [
       },
 
       {
-        path: 'seguridad', 
+        path: 'accesos', 
         loadChildren: () => import('./views/CARPA/seguridad/seguridad.module').then(m => m.SeguridadModule)
       },
 
