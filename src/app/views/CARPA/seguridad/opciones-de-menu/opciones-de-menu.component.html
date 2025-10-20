@@ -38,7 +38,7 @@
                 <th>Nivel</th>
                 <th>Orden</th>
                 <th style="cursor:pointer" (click)="ordenarPor('aplicaciones')">
-                  Aplicación
+                  Sistema
                   <span *ngIf="sortColumn === 'aplicaciones'">
                     <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
                   </span>
@@ -69,15 +69,15 @@
                       </button>
                     </td>
                     <td>
-                      <span [style.padding-left.px]="(nivel || 0) * 24">
-                        {{ menu.nombreMenu }}
-                      </span>
-                    </td>
-                    <td>{{ menu.url }}</td>
-                    <td>{{ parent?.nombreMenu || '-' }}</td>
+                        <span [style.padding-left.px]="(nivel || 0) * 24">
+                          {{ menu.nombre }}
+                        </span>
+                      </td>
+                      <td>{{ menu.ruta }}</td>
+                      <td>{{ parent?.nombre || '-' }}</td>
                     <td>{{ nivel || 0 }}</td>
                     <td>{{ menu.orden }}</td>
-                    <td>{{ menu.aplicaciones }}</td>
+                    <td>{{ menu.siglasAplicacion }}</td>
                   </tr>
                   <ng-container *ngIf="menu.hijos && menu.hijos.length && menu._expandido">
                     <ng-container
@@ -148,19 +148,19 @@
     <div class="modal-body">
       <div class="mb-3">
         <label for="nombreMenu" class="form-label">Nombre</label>
-        <input id="nombreMenu" name="nombreMenu" class="form-control" [(ngModel)]="opcionSeleccionada.nombreMenu"
+        <input id="nombreMenu" name="nombreMenu" class="form-control" [(ngModel)]="opcionSeleccionada.nombre"
           required>
       </div>
       <div class="mb-3">
         <label for="url" class="form-label">URL</label>
-        <input id="url" name="url" class="form-control" [(ngModel)]="opcionSeleccionada.url" required>
+        <input id="url" name="url" class="form-control" [(ngModel)]="opcionSeleccionada.ruta" required>
       </div>
       <div class="mb-3">
-        <label for="aplicaciones" class="form-label">Aplicación</label>
-        <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="opcionSeleccionada.aplicaciones"
+        <label for="aplicaciones" class="form-label">Sistema</label>
+        <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="opcionSeleccionada.idAplicacion"
           required>
-          <option value="" disabled selected>Seleccione una aplicación</option>
-          <option *ngFor="let app of aplicaciones" [value]="app.description">{{ app.description }}</option>
+          <option [ngValue]="null">Seleccione una aplicación</option>
+          <option *ngFor="let app of aplicaciones" [ngValue]="app.idApplication">{{ app.siglasApplic || app.description }}</option>
         </select>
       </div>
       <div class="mb-3">

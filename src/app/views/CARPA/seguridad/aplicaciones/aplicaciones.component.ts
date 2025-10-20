@@ -44,24 +44,24 @@ export class AplicacionesComponent implements OnInit {
     // NOTE: temporalmente comentamos la suscripción al servicio backend
     // para permitir trabajo offline / datos ficticios.
     // subscribe to apps coming from the service
-    // this.aplicacionesService.getAplicaciones$().subscribe(apps => {
-    //   this.aplicaciones = apps || [];
-    //   this.filtrarAplicaciones();
-    // });
+    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      this.aplicaciones = apps || [];
+      this.filtrarAplicaciones();
+    });
     // trigger load from backend (non-blocking)
-    // this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
 
     // Si el arreglo está vacío, llenar con datos ficticios (no modifica la lógica de filtrado)
-    if (!this.aplicaciones || this.aplicaciones.length === 0) {
-      this.aplicaciones = [
-        { idApplication: 101, description: 'Sistema de Ventas', siglasApplic: 'VEN', comentarios: 'Aplicación principal de ventas' },
-        { idApplication: 102, description: 'Portal Clientes', siglasApplic: 'CLI', comentarios: 'Acceso de clientes externos' },
-        { idApplication: 103, description: 'API Interna', siglasApplic: 'API', comentarios: 'Servicios internos y microservicios' },
-        { idApplication: 104, description: 'Admin Backoffice', siglasApplic: 'ADM', comentarios: 'Administración y configuración' },
-        { idApplication: 105, description: 'Reporting', siglasApplic: 'REP', comentarios: 'Generación de informes' }
-      ];
-      this.filtrarAplicaciones();
-    }
+    // if (!this.aplicaciones || this.aplicaciones.length === 0) {
+    //   this.aplicaciones = [
+    //     { idApplication: 101, description: 'Sistema de Ventas', siglasApplic: 'VEN', comentarios: 'Aplicación principal de ventas' },
+    //     { idApplication: 102, description: 'Portal Clientes', siglasApplic: 'CLI', comentarios: 'Acceso de clientes externos' },
+    //     { idApplication: 103, description: 'API Interna', siglasApplic: 'API', comentarios: 'Servicios internos y microservicios' },
+    //     { idApplication: 104, description: 'Admin Backoffice', siglasApplic: 'ADM', comentarios: 'Administración y configuración' },
+    //     { idApplication: 105, description: 'Reporting', siglasApplic: 'REP', comentarios: 'Generación de informes' }
+    //   ];
+    //   this.filtrarAplicaciones();
+    // }
   }
   ngAfterViewInit(): void {
     // Inicializa DataTable después de que la vista esté lista (opcional, si usas simple-datatables)
