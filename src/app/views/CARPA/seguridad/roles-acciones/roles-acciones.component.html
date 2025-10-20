@@ -33,7 +33,7 @@
               </span>
             </th>
             <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">
-              Aplicación
+              Sistema
               <span *ngIf="sortColumn === 'aplicacion'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </span>
@@ -107,7 +107,7 @@
   <div class="card-body">
     <div class="mb-3">
       <strong>Rol:</strong> {{ rolSeleccionado?.rol }}<br>
-      <strong>Aplicación:</strong> {{ rolSeleccionado?.aplicacion }}
+      <strong>Sistema:</strong> {{ rolSeleccionado?.aplicacion }}
     </div>
 
     <div class="d-flex justify-content-between mb-3">
@@ -121,7 +121,7 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Checklist</th>
+            <th>Seleccione</th>
             <th>URL</th>
             <th>Descripción</th>
           </tr>

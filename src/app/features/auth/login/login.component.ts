@@ -42,9 +42,10 @@ export class LoginComponent implements OnInit {
  submit(event: Event): void {
     event.preventDefault();
     this.loading = true;
-    const { codUsuario } = this.loginForm.value;
+    const { codUsuario, password } = this.loginForm.value;
     const payload = {
       codUsuario,
+      password,
       siglasApplic: 'NOTINFI'
     };
 

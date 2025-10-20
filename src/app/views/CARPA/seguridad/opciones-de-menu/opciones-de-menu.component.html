@@ -158,8 +158,8 @@
       <div class="mb-3">
         <label for="aplicaciones" class="form-label">Sistema</label>
         <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="opcionSeleccionada.idAplicacion"
-          required>
-          <option [ngValue]="null">Seleccione una aplicación</option>
+          required [disabled]="modalModo === 'editar' || !!parentForSubmenu">
+          <option [ngValue]="null">Seleccione un sistema</option>
           <option *ngFor="let app of aplicaciones" [ngValue]="app.idApplication">{{ app.siglasApplic || app.description }}</option>
         </select>
       </div>

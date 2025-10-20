@@ -19,29 +19,31 @@ export const MENU: MenuItem[] = [
         link: '/accesos/sistemas',
       },
       {
-        label: 'Opciones del Menú',
-        link: '/accesos/opciones-menu',
+        label: 'Usuarios',
+        link: '/accesos/usuarios',
       },
       {
-        label: 'Privilegios',
-        link: '/accesos/privilegios',
+        label: 'Opciones del Menú',
+        link: '/accesos/opciones-menu',
       },
       {
         label: 'Roles',
         link: '/accesos/roles',
       },
       {
-        label: 'Roles - Privilegios',
-        link: '/accesos/roles-privilegios',
+        label: 'Privilegios',
+        link: '/accesos/privilegios',
       },
+
       {
         label: 'Roles - Menú',
         link: '/accesos/roles-menu',
       },
       {
-        label: 'Usuarios',
-        link: '/accesos/usuarios',
+        label: 'Roles - Privilegios',
+        link: '/accesos/roles-privilegios',
       },
+
       // {
       //   label: 'Consultas',
       //   link: '/accesos/consultas',

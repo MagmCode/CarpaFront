@@ -53,4 +53,16 @@ export class RolesService {
       })
     );
   }
+
+  rolesmenu(payload: any): Observable<any> {
+    const url = `${this.apiUrl}/admin/roles-menus/sincronizar-menus`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post<any>(url, payload, { headers });
+  }
+
+  rolesAcciones(payload: any): Observable<any> {
+    const url = `${this.apiUrl}/admin/roles-actions/sincronizar-acciones`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post<any>(url, payload, { headers });
+  }
 }

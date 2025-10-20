@@ -265,7 +265,7 @@ export class OpcionesDeMenuComponent implements OnInit {
     console.log('Salir del menú de opciones de menú');
   }
 
-  private parentForSubmenu: OpcionMenu | null = null;
+  public parentForSubmenu: OpcionMenu | null = null;
 
   openAddOpcionModal(content: TemplateRef<any>, parent?: OpcionMenu): void {
     this.modalModo = 'agregar';
@@ -371,23 +371,40 @@ export class OpcionesDeMenuComponent implements OnInit {
         }
       });
     } else if (this.modalModo === 'editar') {
-      if (this.parentForEdit && this.indexForEdit !== null && this.parentForEdit.hijos) {
-        this.parentForEdit.hijos[this.indexForEdit] = { ...this.opcionSeleccionada };
-      } else {
-        const idx = this.opciones.findIndex(o => o === this.opcionesPaginadas.find(op => op === this.opcionSeleccionada));
-        if (idx > -1) {
-          this.opciones[idx] = { ...this.opcionSeleccionada };
-        } else {
-          // fallback: buscar por nombreMenu y url
-          const idx2 = this.opciones.findIndex(o => o.nombre === this.opcionSeleccionada.nombre && o.ruta === this.opcionSeleccionada.ruta);
-          if (idx2 > -1) this.opciones[idx2] = { ...this.opcionSeleccionada };
+      // Build payload for backend
+      const payload: any = {
+        id: this.opcionSeleccionada.id,
+        nombre: this.opcionSeleccionada.nombre,
+        ruta: this.opcionSeleccionada.ruta,
+        orden: Number(this.opcionSeleccionada.orden) || 1,
+        habilitado: this.opcionSeleccionada.checked ? 1 : 0
+      };
+      this.menuService.editarMenu(payload).subscribe({
+        next: (edited: any) => {
+          this.showEditSuccess(edited);
+          this.reloadMenu();
+          modal.close();
+        },
+        error: (err) => {
+          console.error('Error editando opción de menú', err);
+          Swal.fire({ title: 'Error', text: 'No se pudo editar la opción de menú.', icon: 'error' });
         }
-      }
+      });
     }
     this.parentForSubmenu = null;
     this.parentForEdit = null;
     this.indexForEdit = null;
     this.filtrarOpciones();
+  }
+
+  private showEditSuccess(edited: any) {
+    Swal.fire({
+      title: 'Editado',
+      text: `Opción editada: ${edited?.nombre ?? edited?.nombreMenu ?? 'OK'}`,
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false
+    });
   }
 
   private showCreateSuccess(created: any) {
@@ -417,13 +434,33 @@ export class OpcionesDeMenuComponent implements OnInit {
           this.opciones = this.opciones.filter(o => o !== opcion);
         }
         this.filtrarOpciones();
-        Swal.fire({
-          title: 'Eliminado',
-          text: `La opción de menú "${opcion.nombre}" ha sido eliminada.`,
-          icon: 'success',
-          timer: 1500,
-          showConfirmButton: false
-        });
+          // Detecta el mensaje específico del backend
+          this.menuService.eliminarMenu(opcion.id!).subscribe({
+            next: () => {
+              this.reloadMenu();
+              Swal.fire({
+                title: 'Eliminado',
+                text: `La opción de menú \"${opcion.nombre}\" ha sido eliminada.`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+              });
+            },
+            error: (err) => {
+              console.error('Error eliminando opción de menú', err);
+              const msg = err?.message || err?.error?.message || '';
+              if (msg.includes('No se puede eliminar un menú que tiene submenús')) {
+                Swal.fire({
+                  title: 'No permitido',
+                  text: 'No se puede eliminar un menú que contenga submenús.',
+                  icon: 'warning',
+                  showConfirmButton: true
+                });
+              } else {
+                Swal.fire({ title: 'Error', text: 'No se pudo eliminar la opción de menú.', icon: 'error' });
+              }
+            }
+          });
       }
     });
   }

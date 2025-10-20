@@ -1,8 +1,18 @@
+
 import { Component, OnInit, TemplateRef } from '@angular/core';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
+import { AccionesService } from 'src/app/services/acciones/acciones.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
 import Swal from 'sweetalert2';
+
+interface Accion {
+  idAction: number;
+  url: string;
+  description: string;
+  idApplication: number;
+  applicationName: string;
+  secured: string;
+}
 
 @Component({
   selector: 'app-acciones',
@@ -12,12 +22,8 @@ import Swal from 'sweetalert2';
 export class AccionesComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
 
-  acciones: { url: string; descripcion: string; aplicacion: string }[] = [
-    { url: '/usuarios', descripcion: 'Gestión de usuarios', aplicacion: 'Gestión Usuarios' },
-    { url: '/inventario', descripcion: 'Control de inventario', aplicacion: 'Inventario' },
-    { url: '/reportes', descripcion: 'Reportes del sistema', aplicacion: 'Gestión Usuarios' },
-    { url: '/movimientos', descripcion: 'Movimientos de inventario', aplicacion: 'Inventario' }
-  ];
+  acciones: { url: string; descripcion: string; aplicacion: string }[] = [];
+  aplicacionesMap: { [desc: string]: number } = {}; // Para mapear nombre a id
 
   // Paginación y búsqueda
   page: number = 1;
@@ -34,16 +40,46 @@ export class AccionesComponent implements OnInit {
   // Modal y edición
   modalModo: 'agregar' | 'editar' = 'agregar';
   newAction: { url: string; descripcion: string; aplicacion: string } = { url: '', descripcion: '', aplicacion: '' };
-  accionSeleccionada: { url: string; descripcion: string; aplicacion: string } | null = null;
+  accionSeleccionada: ({ url: string; descripcion: string; aplicacion: string } | Accion) | null = null;
 
   constructor(
     private aplicacionesService: AplicacionesService,
+    private accionesService: AccionesService,
     private modalService: NgbModal
   ) { }
 
   ngOnInit(): void {
-    this.aplicaciones = this.aplicacionesService.getAplicaciones();
-    this.filtrarAcciones();
+    // Suscribirse al observable para tener la lista siempre actualizada
+    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      this.aplicaciones = apps || [];
+      // Mapear nombre a id para el combo
+      this.aplicacionesMap = {};
+      this.aplicaciones.forEach(app => {
+        this.aplicacionesMap[app.description] = app.idApplication;
+      });
+    });
+    // Cargar desde backend (no bloqueante)
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
+    this.cargarAcciones();
+  }
+
+  cargarAcciones() {
+    this.accionesService.buscar({}).subscribe({
+      next: (resp: any) => {
+        const data = resp && resp.data ? resp.data : resp;
+        this.acciones = (Array.isArray(data) ? data : []).map((a: any) => ({
+          url: a.url,
+          descripcion: a.description,
+          aplicacion: a.applicationName
+        }));
+        this.filtrarAcciones();
+      },
+      error: (err) => {
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar las acciones.', icon: 'error' });
+        this.acciones = [];
+        this.filtrarAcciones();
+      }
+    });
   }
 
   filtrarAcciones(): void {
@@ -111,27 +147,86 @@ export class AccionesComponent implements OnInit {
     this.modalService.open(content, { centered: true });
   }
 
-  openEditActionModal(content: TemplateRef<any>, accion: { url: string; descripcion: string; aplicacion: string }) {
+  openEditActionModal(content: TemplateRef<any>, accion: any) {
     this.modalModo = 'editar';
-    this.newAction = { ...accion };
-    this.accionSeleccionada = accion;
+    // Buscar la aplicación por nombre o id
+    let appId: string = '';
+    // Si la acción tiene idApplication, úsalo; si no, busca por nombre
+    if (accion.idApplication) {
+      appId = String(accion.idApplication);
+    } else if (accion.aplicacion) {
+      // Buscar en la lista de aplicaciones por nombre
+      const found = this.aplicaciones.find(app => app.description === accion.aplicacion || app.siglasApplic === accion.aplicacion);
+      if (found) appId = String(found.idApplication);
+    }
+    this.newAction = {
+      url: accion.url,
+      descripcion: accion.descripcion,
+      aplicacion: appId
+    };
+    // Guardar el objeto original del backend (con idAction) si existe
+    this.accionSeleccionada = (accion.idAction !== undefined) ? accion : this.buscarAccionPorCampos(accion);
     this.modalService.open(content, { centered: true });
+  }
+
+  // Busca la acción original en this.accionesService.getAcciones() por url y descripcion
+  private buscarAccionPorCampos(accion: any): any {
+    const lista = this.accionesService.getAcciones();
+    return lista.find(a => a.url === accion.url && a.description === (accion.descripcion || accion.description));
   }
 
   saveAction(modal: any) {
     if (this.modalModo === 'agregar') {
-      this.acciones.push({ ...this.newAction });
+      let idApplication = Number(this.newAction.aplicacion);
+      const payload = {
+        url: this.newAction.url,
+        description: this.newAction.descripcion,
+        idApplication: idApplication,
+        secured: 's'
+      };
+      this.accionesService.crear(payload).subscribe({
+        next: () => {
+          Swal.fire({ icon: 'success', title: 'Acción creada', timer: 1200, showConfirmButton: false });
+          this.cargarAcciones();
+          modal.close();
+        },
+        error: (err) => {
+          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la acción.' });
+        }
+      });
     } else if (this.modalModo === 'editar' && this.accionSeleccionada) {
-      const idx = this.acciones.findIndex(a => a === this.accionSeleccionada);
-      if (idx > -1) {
-        this.acciones[idx] = { ...this.newAction };
+      // Buscar idApplication
+      let idApplication = Number(this.newAction.aplicacion);
+      // Type guard para obtener idAction
+      let idAction: number | undefined = undefined;
+      if ('idAction' in this.accionSeleccionada) {
+        idAction = (this.accionSeleccionada as any).idAction;
       }
+      if (!idAction) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo determinar el id de la acción a editar.' });
+        return;
+      }
+      const payload = {
+        idAction: idAction,
+        url: this.newAction.url,
+        description: this.newAction.descripcion,
+        idApplication: idApplication,
+        secured: 's'
+      };
+      this.accionesService.editar(payload).subscribe({
+        next: () => {
+          Swal.fire({ icon: 'success', title: 'Acción editada', timer: 1200, showConfirmButton: false });
+          this.cargarAcciones();
+          modal.close();
+        },
+        error: (err) => {
+          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo editar la acción.' });
+        }
+      });
     }
-    this.filtrarAcciones();
-    modal.close();
   }
 
-  deleteAccion(accion: { url: string; descripcion: string; aplicacion: string }): void {
+  deleteAccion(accion: any): void {
     Swal.fire({
       title: `¿Desea eliminar la acción?`,
       text: `URL: ${accion.url}`,
@@ -142,14 +237,33 @@ export class AccionesComponent implements OnInit {
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.acciones = this.acciones.filter(a => a !== accion);
-        this.filtrarAcciones();
-        Swal.fire({
-          title: 'Eliminado',
-          text: `La acción ha sido eliminada.`,
-          icon: 'success',
-          timer: 1500,
-          showConfirmButton: false
+        // Buscar el idAction
+        let idAction: number | undefined = undefined;
+        if ('idAction' in accion) {
+          idAction = (accion as any).idAction;
+        } else {
+          // Buscar en la lista original
+          const found = this.accionesService.getAcciones().find(a => a.url === accion.url && a.description === (accion.descripcion || accion.description));
+          if (found) idAction = found.idAction;
+        }
+        if (!idAction) {
+          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo determinar el id de la acción a eliminar.' });
+          return;
+        }
+        this.accionesService.eliminar(idAction).subscribe({
+          next: () => {
+            Swal.fire({
+              title: 'Eliminado',
+              text: `La acción ha sido eliminada.`,
+              icon: 'success',
+              timer: 1500,
+              showConfirmButton: false
+            });
+            this.cargarAcciones();
+          },
+          error: (err) => {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar la acción.' });
+          }
         });
       }
     });

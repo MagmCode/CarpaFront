@@ -6,6 +6,7 @@ import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-s
 import { RolesService } from 'src/app/services/roles/roles.service';
 
 export interface Rol {
+  id: number;
   rol: string;
   descripcion: string;
   tipo: string;
@@ -36,7 +37,7 @@ export class RolesComponent implements OnInit {
 
   // Modal y edición
   modalModo: 'agregar' | 'editar' = 'agregar';
-  newRole: Rol = { rol: '', descripcion: '', tipo: '', aplicacion: '' };
+  newRole: Rol = { id: 0, rol: '', descripcion: '', tipo: '', aplicacion: '' };
 
   constructor(
     private aplicacionesService: AplicacionesService,
@@ -127,7 +128,7 @@ export class RolesComponent implements OnInit {
 
   openAddRoleModal(content: TemplateRef<any>): void {
     this.modalModo = 'agregar';
-    this.newRole = { rol: '', descripcion: '', tipo: '', aplicacion: '' };
+    this.newRole = { id: 0, rol: '', descripcion: '', tipo: '', aplicacion: '' };
     this.modalService.open(content, { centered: true });
   }
 

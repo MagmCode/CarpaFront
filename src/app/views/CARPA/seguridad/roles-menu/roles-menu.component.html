@@ -27,7 +27,7 @@
             <th>Asociar</th>
             <th (click)="ordenarPor('rol')" style="cursor:pointer">Rol</th>
             <th (click)="ordenarPor('descripcion')" style="cursor:pointer">Descripción</th>
-            <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">Aplicación</th>
+            <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">Sistema</th>
           </tr>
         </thead>
         <tbody>
@@ -97,7 +97,7 @@
         <strong>ID Rol:</strong> {{ rolSeleccionado?.id }}<br>
         <strong>Rol:</strong> {{ rolSeleccionado?.rol }}<br>
         <strong>Descripción:</strong> {{ rolSeleccionado?.descripcion }}<br>
-        <strong>Aplicación:</strong> {{ rolSeleccionado?.aplicacion }}
+        <strong>Sistema:</strong> {{ rolSeleccionado?.aplicacion }}
       </div>
 
       <div class="d-flex justify-content-between mb-3">
@@ -116,7 +116,7 @@
               <th style="width:120px" class="text-center">Seleccione</th>
               <th>Nombre</th>
               <th>URL</th>
-              <th (click)="ordenarMenuPor('aplicaciones')" style="cursor:pointer">Aplicación
+              <th (click)="ordenarMenuPor('aplicaciones')" style="cursor:pointer">Sistema
                 <span *ngIf="menuSortColumn === 'aplicaciones'">
                   <i class="mdi" [ngClass]="menuSortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
                 </span>
@@ -226,9 +226,9 @@
         </select>
       </div>
       <div class="mb-3">
-        <label for="aplicacion" class="form-label">Aplicación</label>
+        <label for="aplicacion" class="form-label">Sistema</label>
   <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newRole.aplicacion">
-          <option value="" disabled selected>Seleccione una aplicación</option>
+          <option value="" disabled selected>Seleccione un sistema</option>
           <option *ngFor="let app of aplicaciones" [value]="app.idApplication">{{ app.description }}</option>
         </select>
       </div>

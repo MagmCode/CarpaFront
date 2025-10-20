@@ -7,10 +7,13 @@ export interface Accion {
 }
 
 import { Component, OnInit } from '@angular/core';
+import Swal from 'sweetalert2';
+import { AccionesService } from 'src/app/services/acciones/acciones.service';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
 import { RolesService } from 'src/app/services/roles/roles.service';
 
 export interface RolAccion {
+  id: number;
   rol: string;
   descripcion: string;
   aplicacion: string;
@@ -37,13 +40,7 @@ export class RolesAccionesComponent implements OnInit {
   // Estado para vista de asociación
   asociando: boolean = false;
   rolSeleccionado: RolAccion | null = null;
-  acciones: Accion[] = [
-    { url: '/usuarios/list', descripcion: 'Ver usuarios', checked: false },
-    { url: '/usuarios/add', descripcion: 'Agregar usuario', checked: false },
-    { url: '/inventario/list', descripcion: 'Ver inventario', checked: false },
-    { url: '/inventario/add', descripcion: 'Agregar inventario', checked: false },
-    { url: '/auditoria', descripcion: 'Ver auditoría', checked: false }
-  ];
+  acciones: Accion[] = [];
 
   // Paginación y búsqueda
   page: number = 1;
@@ -58,8 +55,9 @@ export class RolesAccionesComponent implements OnInit {
   sortDirection: 'asc' | 'desc' = 'asc';
 
   constructor(
-    private aplicacionesService: AplicacionesService
-    , private rolesService: RolesService
+  private aplicacionesService: AplicacionesService,
+  private rolesService: RolesService,
+  private accionesService: AccionesService
   ) { }
 
   ngOnInit(): void {
@@ -70,6 +68,7 @@ export class RolesAccionesComponent implements OnInit {
       next: (resp: any) => {
         if (resp && Array.isArray(resp.data)) {
           this.roles = resp.data.map((r: any) => ({
+            id: r.id, // <-- agregar el id del rol
             rol: r.rol || '',
             descripcion: r.descripcion || '',
             aplicacion: r.aplicacion || ''
@@ -85,6 +84,23 @@ export class RolesAccionesComponent implements OnInit {
         console.error('Error loading roles for RolesAcciones:', err);
         this.roles = [];
         this.filtrarRoles();
+        this.filtrarAcciones();
+      }
+    });
+
+    // Consultar acciones desde el backend y mapear para la tabla
+    this.accionesService.buscar({}).subscribe({
+      next: (resp: any) => {
+        const data = resp && resp.data ? resp.data : resp;
+        this.acciones = (Array.isArray(data) ? data : []).map((a: any) => ({
+          url: a.url,
+          descripcion: a.description,
+          checked: false
+        }));
+        this.filtrarAcciones();
+      },
+      error: () => {
+        this.acciones = [];
         this.filtrarAcciones();
       }
     });
@@ -189,9 +205,49 @@ export class RolesAccionesComponent implements OnInit {
   }
 
   guardarAsociacion(): void {
-    // Aquí podrías guardar la asociación en backend
+    // Obtener el id del rol seleccionado (de backend)
+    const idRole = (this.rolSeleccionado as any)?.id;
+    // Obtener los id de las acciones seleccionadas
+    const idAcciones: number[] = [];
+    // Buscar en la lista original de acciones (de backend)
+    const accionesBackend = this.accionesService.getAcciones();
+    for (const accion of this.acciones) {
+      if (accion.checked) {
+        // Buscar el idAction por url y descripcion
+        const found = accionesBackend.find((a: any) => a.url === accion.url && a.description === accion.descripcion);
+        if (found && found.idAction) {
+          idAcciones.push(found.idAction);
+        }
+      }
+    }
+    if (!idRole || !idAcciones.length) {
+      // Opcional: mostrar error si falta info
+      console.warn('No hay rol o acciones seleccionadas para asociar');
+      this.asociando = false;
+      this.rolSeleccionado = null;
+      return;
+    }
+    console.log('Enviando asociación:', { idRole, idAcciones });
+    const payload = { idRole, idAcciones };
+    // Llamar al backend para guardar la asociación
+    this.rolesService.rolesAcciones(payload).subscribe({
+      next: (resp: any) => {
+        console.log('Asociación exitosa:', resp);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Asociación realizada con éxito',
+          showConfirmButton: false,
+          timer: 2500
+        });
+      },
+      error: (err: any) => {
+        console.error('Error al asociar acciones:', err);
+        // Opcional: mostrar mensaje de error
+      }
+    });
     this.asociando = false;
     this.rolSeleccionado = null;
-    // Opcional: mostrar mensaje de éxito
   }
 }

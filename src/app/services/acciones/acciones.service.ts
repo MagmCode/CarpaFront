@@ -1,13 +1,16 @@
+
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, throwError, map, catchError } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
-export interface Accion {
-  id?: number | string;
-  nombre: string;
-  descripcion?: string;
-  aplicacion?: string;
+interface Accion {
+  idAction: number;
+  url: string;
+  description: string;
+  idApplication: number;
+  applicationName: string;
+  secured: string;
 }
 
 @Injectable({
@@ -69,18 +72,21 @@ export class AccionesService {
     );
   }
 
-  // Editar acción (POST admin/acciones/editar)
+  // Editar acción (PUT admin/acciones/editar/{id})
   editar(payload: any): Observable<any> {
-    const url = `${this.apiUrl}/admin/acciones/editar`;
+    const id = payload.idAction;
+    const url = `${this.apiUrl}/admin/acciones/editar/${id}`;
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    return this.http.post<any>(url, payload, { headers }).pipe(
+    // No enviar idAction en el body
+    const { idAction, ...body } = payload;
+    return this.http.put<any>(url, body, { headers }).pipe(
       map((resp: any) => {
         const data = resp && resp.data ? resp.data : resp;
         const updated = Array.isArray(data) ? data[0] : data;
         if (updated) {
           try {
             const current = this.accionesSubject.getValue();
-            const idx = current.findIndex(a => String(a.id) === String(updated.id));
+            const idx = current.findIndex(a => String(a.idAction) === String(updated.idAction));
             if (idx > -1) {
               const copy = [...current];
               copy[idx] = updated as Accion;
@@ -95,6 +101,31 @@ export class AccionesService {
       catchError((err: HttpErrorResponse) => {
         console.error('AccionesService.editar error', err);
         return throwError(() => err.error || err.message || 'Error editando accion');
+      })
+    );
+  }
+
+  // Eliminar acción (DELETE admin/acciones/eliminar/{id})
+  eliminar(id: number | string): Observable<any> {
+    const url = `${this.apiUrl}/admin/acciones/eliminar/${id}`;
+    return this.http.delete<any>(url).pipe(
+      map((resp: any) => {
+        const data = resp && resp.data ? resp.data : resp;
+        // Actualizar cache local eliminando la acción
+        try {
+          const current = this.accionesSubject.getValue();
+          const idx = current.findIndex((a: any) => String(a.idAction) === String(id));
+          if (idx > -1) {
+            const copy = [...current];
+            copy.splice(idx, 1);
+            this.accionesSubject.next(copy);
+          }
+        } catch (e) { /* ignore cache update errors */ }
+        return data;
+      }),
+      catchError((err: HttpErrorResponse) => {
+        console.error('AccionesService.eliminar error', err);
+        return throwError(() => err.error || err.message || 'Error eliminando acción');
       })
     );
   }
