@@ -3,6 +3,8 @@
     <h6 class="card-title fw-semibold">Accesos / Sistemas </h6>
   </div>
   <div class="card-body" style="position: relative;">
+          <app-local-loading [loading]="loading"></app-local-loading>
+
     <div class="row mb-4 align-items-end">
       <div class="d-flex justify-content-end">
         <strong>Total de registros:&nbsp;</strong>  {{ aplicacionesFiltradas.length}}

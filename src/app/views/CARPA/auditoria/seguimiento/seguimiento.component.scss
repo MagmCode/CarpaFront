@@ -1,3 +1,4 @@
+
 @use 'src/assets/scss/_variables' as *;
 
 .volver {
@@ -13,4 +14,15 @@
 }
 .icon-bdv-icon-back-m::before {
     color: $secondary;
+}
+
+/* Card log hover effect */
+.card.log-card {
+    transition: box-shadow 0.2s, background 0.2s, transform 0.2s;
+    background: #fff;
+}
+.card.log-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.12);
+    background: rgba(0,0,0,0.04);
+    transform: translateY(-4px) scale(1.02);
 }

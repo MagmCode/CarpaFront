@@ -1,40 +1,11 @@
-<!-- Modal para Agregar/editar acción -->
-<ng-template #addActionModal let-modal>
-  <div class="modal-header">
-    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Nuevo Registro' : 'Editar Registro' }}</h5>
-    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
-  </div>
-  <form (ngSubmit)="saveAction(modal)">
-    <div class="modal-body">
-      <div class="mb-3">
-        <label for="url" class="form-label">URL</label>
-        <input id="url" name="url" class="form-control" [(ngModel)]="newAction.url" required>
-      </div>
-      <div class="mb-3">
-        <label for="descripcion" class="form-label">Descripción</label>
-        <textarea id="descripcion" name="descripcion" class="form-control" [(ngModel)]="newAction.descripcion" required></textarea>
-      </div>
-      <div class="mb-3">
-        <label for="aplicacion" class="form-label">Sistema</label>
-        <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newAction.aplicacion" required>
-          <option value="" disabled>Seleccione un Sistema</option>
-          <option *ngFor="let app of aplicaciones" [value]="app.idApplication">{{ app.siglasApplic }}</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button type="submit" class="btn btn-success">{{ modalModo === 'agregar' ? 'Agregar' : 'Guardar' }}</button>
-      <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
-    </div>
-  </form>
-</ng-template>
-
 
 <div class="card">
   <div class="card-header">
     <h6 class="card-title fw-semibold">Accesos / Privilegio</h6>
   </div>
   <div class="card-body" style="position: relative;">
+        <app-local-loading [loading]="loading"></app-local-loading>
+
     <div class="row mb-4 align-items-end">
       <div class="fw-bold d-flex justify-content-end">
   <span class="fw-semibold">Total de registros: </span> {{ accionesFiltradas.length || 0 }}
@@ -144,6 +115,40 @@
     </div>
   </div>
 </div>
+
+<!-- Modal para Agregar/editar acción -->
+<ng-template #addActionModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Nuevo Registro' : 'Editar Registro' }}</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <form (ngSubmit)="saveAction(modal)">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="url" class="form-label">URL</label>
+        <input id="url" name="url" class="form-control" [(ngModel)]="newAction.url" required>
+      </div>
+      <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea id="descripcion" name="descripcion" class="form-control" [(ngModel)]="newAction.descripcion" required></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="aplicacion" class="form-label">Sistema</label>
+        <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newAction.aplicacion" required>
+          <option value="" disabled>Seleccione un Sistema</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.idApplication">{{ app.siglasApplic }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-success">{{ modalModo === 'agregar' ? 'Agregar' : 'Guardar' }}</button>
+      <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+    </div>
+  </form>
+</ng-template>
+
+
+
     <!-- Modal: Agregar en lote (subir Excel) -->
     <ng-template #agregarLoteModal let-modal>
       <div class="modal-header">

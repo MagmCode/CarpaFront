@@ -31,8 +31,8 @@
 
 				<div class="col-12 my-4 d-flex gap-2 justify-content-center">
 					<button class="btn btn-primary" (click)="consultar()">Consultar</button>
-					<button class="btn btn-secondary"
-						(click)="filtro = { aplicacion: null, fecha: null }">Limpiar</button>
+					<!-- <button class="btn btn-secondary"
+						(click)="filtro = { aplicacion: null, fecha: null }">Limpiar</button> -->
 				</div>
 			</div>
 		</div>
@@ -43,50 +43,39 @@
 				<div class="d-flex  justify-content-end mb-3">
 				<strong>Total:&nbsp;</strong>{{ logsFiltrados.length }}
 			</div>
-				<div class="d-flex justify-content-between align-items-center mb-4">
-					<button class="btn btn-success" (click)="exportCsv()"><i class="feather icon-download"></i>
-						Exportar</button>
-								<input class="form-control" style="width:260px;" placeholder="Buscar..." [(ngModel)]="searchTerm"
-						(input)="filtrarBusqueda()">
-					</div>
+				   <div class="d-flex justify-content-between align-items-center mb-4 gap-2">
+					   <!-- <button class="btn btn-success" (click)="exportCsv()"><i class="feather icon-download"></i>
+						   Exportar</button> -->
+					   <select class="form-select" style="width:150px;" [(ngModel)]="statusFiltro" (change)="filtrarPorStatus()">
+						   <option [ngValue]="null">Todos</option>
+						   <option value="completed">Completado</option>
+						   <option value="error">Error</option>
+						   <option value="in-progress">En progreso</option>
+					   </select>
+					   <input class="form-control" style="width:260px;" placeholder="Buscar..." [(ngModel)]="searchTerm"
+						   (input)="filtrarBusqueda()">
+				   </div>
 			</div>
 
-			<div class="table-responsive">
-				<table class="table table-bordered align-middle text-center">
-					<thead class="table-light">
-						<tr>
-							<th (click)="toggleSort('timestamp')" style="cursor:pointer">Fecha <small
-									*ngIf="sortField==='timestamp'">{{ sortDir }}</small></th>
-							<th (click)="toggleSort('source')" style="cursor:pointer">Origen <small
-									*ngIf="sortField==='source'">{{ sortDir }}</small></th>
-							<th (click)="toggleSort('message')" style="cursor:pointer" class="text-start">Mensaje <small
-									*ngIf="sortField==='message'">{{ sortDir }}</small></th>
-							<th (click)="toggleSort('status')" style="cursor:pointer">Estado <small
-									*ngIf="sortField==='status'">{{ sortDir }}</small></th>
-							<th (click)="toggleSort('aplicacion')" style="cursor:pointer">Aplicación <small
-									*ngIf="sortField==='aplicacion'">{{ sortDir }}</small></th>
-							<th>Ver</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr *ngFor="let l of logsPaginados">
-							<td>{{ l.timestamp }}</td>
-							<td>{{ l.source }}</td>
-							<td class="text-start text-truncate" style="max-width:400px">{{ l.message }}</td>
-							<td>
-								<span class="badge"
-									[ngClass]="l.status === 'completed' ? 'bg-success' : (l.status === 'error' ? 'bg-danger' : 'bg-info')">{{
-									l.status }}</span>
-							</td>
-							<td>{{ l.aplicacion }}</td>
-							<td>
-								<button class="btn btn-primary btn-sm" (click)="openViewModal(viewModal, l)"><i
-										class="feather icon-eye"></i></button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
+									<div class="row g-3">
+										<ng-container *ngFor="let l of logsPaginados">
+															<div class="col-12">
+																<div class="card h-100 shadow-sm border-primary log-card">
+													<div class="card-body">
+														<div class="d-flex justify-content-between align-items-center mb-2">
+															<span class="badge"
+																[ngClass]="l.status === 'completed' ? 'bg-success' : (l.status === 'error' ? 'bg-danger' : 'bg-info')">{{ l.status }}</span>
+															<span class="text-muted small">{{ l.timestamp }}</span>
+														</div>
+														<h6 class="card-title mb-1">{{ l.source }}</h6>
+														<div class="mb-2 text-truncate" style="max-width:100%"><strong>Mensaje:</strong> {{ l.message }}</div>
+														<div class="mb-2"><strong>Aplicación:</strong> {{ l.aplicacion }}</div>
+														<button class="btn btn-outline-primary btn-sm w-100" (click)="openViewModal(viewModal, l)"><i class="feather icon-eye"></i> Ver detalle</button>
+													</div>
+												</div>
+											</div>
+										</ng-container>
+									</div>
 
 			<!-- Paginación -->
 			<div class="d-flex justify-content-between align-items-center mt-3">

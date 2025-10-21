@@ -13,6 +13,8 @@ import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-s
 })
 export class AplicacionesComponent implements OnInit {
 
+  loading = false;
+
   aplicaciones: Aplicacion[] = [];
 
 
@@ -45,11 +47,15 @@ export class AplicacionesComponent implements OnInit {
     // para permitir trabajo offline / datos ficticios.
     // subscribe to apps coming from the service
     this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      
       this.aplicaciones = apps || [];
       this.filtrarAplicaciones();
     });
+    this.loading = true;
     // trigger load from backend (non-blocking)
-    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {
+      this.loading = false;
+    }, error: () => {} });
 
     // Si el arreglo está vacío, llenar con datos ficticios (no modifica la lógica de filtrado)
     // if (!this.aplicaciones || this.aplicaciones.length === 0) {

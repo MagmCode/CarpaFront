@@ -38,6 +38,7 @@ export interface MenuOption {
 })
 export class RolesMenuComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
+  loading = false;
 
   roles: RolMenu[] = [
     // will be populated from backend
@@ -142,6 +143,7 @@ export class RolesMenuComponent implements OnInit {
   ngOnInit(): void {
     this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
 
+    this.loading = true;
     // load roles from backend and map to RolMenu[] (generate numeric ids)
     this.rolesService.consultarRoles({}).subscribe({
       next: (resp: any) => {
@@ -158,9 +160,11 @@ export class RolesMenuComponent implements OnInit {
         }
         this.filtrarRoles();
         this.filtrarMenu();
+        this.loading = false;
       },
       error: (err: any) => {
         console.error('RolesMenu: error loading roles', err);
+        this.loading = false;
         // fallback to local defaults to keep UI usable in dev
         this.roles = [
           // { id: 1, rol: 'Administrador', descripcion: 'Acceso total', aplicacion: 'Gestión Usuarios' },
@@ -233,6 +237,7 @@ export class RolesMenuComponent implements OnInit {
   asociarAcciones(rol: RolMenu): void {
     this.rolSeleccionado = rol;
     this.asociando = true;
+    this.loading = true;
     // 1. Consultar todos los menús
     this.menuService.OpcionesMenu().subscribe({
       next: (resp: any[]) => {
@@ -275,6 +280,7 @@ export class RolesMenuComponent implements OnInit {
             };
             this.menuOptions = buildTree(resp);
             this.filtrarMenu();
+            this.loading = false;
           },
           error: () => {
             // Si falla la consulta de menús asociados, mostrar todos sin selección
@@ -312,12 +318,14 @@ export class RolesMenuComponent implements OnInit {
             };
             this.menuOptions = buildTree(resp);
             this.filtrarMenu();
+            this.loading = false;
           }
         });
       },
       error: () => {
         this.menuOptions = [];
         this.filtrarMenu();
+        this.loading = false;
       }
     });
   }

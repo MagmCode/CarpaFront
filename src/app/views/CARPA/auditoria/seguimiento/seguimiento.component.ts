@@ -11,8 +11,29 @@ type SortDir = 'asc' | 'desc' | null;
   styleUrls: ['./seguimiento.component.scss']
 })
 export class SeguimientoComponent implements OnInit {
+  statusFiltro: string | null = null;
+  filtrarPorStatus(): void {
+    let res = [...this.logsQueryResult];
+    if (this.statusFiltro) {
+      res = res.filter(l => l.status === this.statusFiltro);
+    }
+    // aplicar búsqueda si hay término
+    const term = this.searchTerm ? this.searchTerm.trim().toLowerCase() : '';
+    if (term) {
+      res = res.filter(l =>
+        (l.source || '').toLowerCase().includes(term) ||
+        (l.message || '').toLowerCase().includes(term) ||
+        (l.timestamp || '').toLowerCase().includes(term)
+      );
+    }
+    this.logsFiltrados = res;
+    this.page = 1;
+    this.applySort();
+    this.actualizarPaginacion();
+  }
 
   constructor(private modalService: NgbModal) { }
+  
 
   // aplicaciones (simuladas) para selector
   aplicaciones = [
@@ -22,11 +43,8 @@ export class SeguimientoComponent implements OnInit {
   ];
 
   // ejemplo de logs del sistema
-  logs: any[] = [
-    { id: 1, timestamp: '2025-10-14 10:12:05', source: 'AuthService', message: 'Inicio de sesión iniciado', status: 'in-progress', details: 'Procesando autenticación del usuario...', aplicacion: 'app1' },
-    { id: 2, timestamp: '2025-10-14 09:45:12', source: 'ReportService', message: 'Generación de reporte mensual', status: 'completed', details: 'Reporte generado correctamente y almacenado en /reports/monthly.', aplicacion: 'app2' },
-    { id: 3, timestamp: '2025-10-13 18:23:48', source: 'SyncJob', message: 'Sincronización de productos', status: 'error', details: 'Timeout al comunicarse con /api/productos. Código: ETIMEDOUT', aplicacion: 'app1' }
-  ];
+  logs: any[] = [];
+
 
   // selección y modal
   selectedLog: any = null;
@@ -35,8 +53,17 @@ export class SeguimientoComponent implements OnInit {
   viewFiltro: boolean = true; // true -> mostrar formulario de filtro; false -> mostrar tabla de resultados
   filtro = {
     aplicacion: null as string | null,
-    fecha: null as NgbDateStruct | null
+    fecha: this.getTodayDateStruct()
   };
+
+  private getTodayDateStruct(): NgbDateStruct {
+    const today = new Date();
+    return {
+      year: today.getFullYear(),
+      month: today.getMonth() + 1,
+      day: today.getDate()
+    };
+  }
 
   // búsqueda y paginación para la vista de resultados
   searchTerm: string = '';
@@ -53,7 +80,41 @@ export class SeguimientoComponent implements OnInit {
   sortDir: SortDir = 'desc';
 
   ngOnInit(): void {
-    // inicialmente no mostrar resultados
+    // Generar 50 logs de ejemplo con la fecha de hoy
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const baseDate = `${yyyy}-${mm}-${dd}`;
+    const sources = ['AuthService', 'ReportService', 'SyncJob', 'UserService', 'ApiGateway'];
+    const messages = [
+      'Inicio de sesión iniciado',
+      'Generación de reporte mensual',
+      'Sincronización de productos',
+      'Usuario creado',
+      'Error de conexión',
+      'Actualización de perfil',
+      'Eliminación de usuario',
+      'Consulta de datos',
+      'Exportación de registros',
+      'Cambio de contraseña'
+    ];
+    const statuses = ['completed', 'error', 'in-progress'];
+    const aplicaciones = ['app1', 'app2', 'app3'];
+    this.logs = Array.from({ length: 50 }, (_, i) => {
+      const hour = String(8 + (i % 12)).padStart(2, '0');
+      const min = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+      const sec = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+      return {
+        id: i + 1,
+        timestamp: `${baseDate} ${hour}:${min}:${sec}`,
+        source: sources[i % sources.length],
+        message: messages[i % messages.length],
+        status: statuses[i % statuses.length],
+        details: `Detalle del log #${i + 1}. Operación: ${messages[i % messages.length]}.`,
+        aplicacion: aplicaciones[i % aplicaciones.length]
+      };
+    });
   }
 
   openViewModal(content: TemplateRef<any>, log: any) {
@@ -140,20 +201,7 @@ export class SeguimientoComponent implements OnInit {
 
   // ---- Búsqueda, orden y paginación ----
   filtrarBusqueda(): void {
-    const term = this.searchTerm ? this.searchTerm.trim().toLowerCase() : '';
-    if (term) {
-      this.logsFiltrados = this.logsQueryResult.filter(l =>
-        (l.source || '').toLowerCase().includes(term) ||
-        (l.message || '').toLowerCase().includes(term) ||
-        (l.timestamp || '').toLowerCase().includes(term)
-      );
-    } else {
-      // restaurar al resultado original de la última consulta
-      this.logsFiltrados = [...this.logsQueryResult];
-    }
-    this.page = 1;
-    this.applySort();
-    this.actualizarPaginacion();
+    this.filtrarPorStatus();
   }
 
   aplicarBusquedaComoUsuario() {

@@ -27,6 +27,8 @@ export interface OpcionMenu {
 })
 export class OpcionesDeMenuComponent implements OnInit {
 
+  loading = false;
+
   opciones: OpcionMenu[] = [
     // {
     //   nombreMenu: 'Usuarios',
@@ -90,6 +92,7 @@ export class OpcionesDeMenuComponent implements OnInit {
   }
 
   private reloadMenu(): void {
+    this.loading = true;
     this.menuService.OpcionesMenu().subscribe({
       next: (resp: any[]) => {
         const flat: any[] = Array.isArray(resp) ? resp : [];
@@ -109,6 +112,7 @@ export class OpcionesDeMenuComponent implements OnInit {
           const tree = this.buildTreeFromFlat(mapped as any[]);
           this.opciones = tree;
           this.filtrarOpciones();
+          this.loading = false;
           return;
         }
         this.filtrarOpciones();

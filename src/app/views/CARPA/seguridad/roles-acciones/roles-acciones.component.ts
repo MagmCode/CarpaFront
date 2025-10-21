@@ -29,6 +29,8 @@ export class RolesAccionesComponent implements OnInit {
   // roles will be loaded from backend via RolesService (we don't need the 'tipo' field here)
   roles: RolAccion[] = [];
 
+  loading = false;
+
   // Buscador y paginador para acciones
   accionesSearchTerm: string = '';
   accionesFiltradas: Accion[] = [];
@@ -63,6 +65,7 @@ export class RolesAccionesComponent implements OnInit {
   ngOnInit(): void {
     this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
 
+    this.loading = true;
     // load roles from backend and map to RolAccion (exclude 'tipo')
     this.rolesService.consultarRoles({}).subscribe({
       next: (resp: any) => {
@@ -79,15 +82,17 @@ export class RolesAccionesComponent implements OnInit {
         }
         this.filtrarRoles();
         this.filtrarAcciones();
+        this.loading = false;
       },
       error: (err) => {
         console.error('Error loading roles for RolesAcciones:', err);
         this.roles = [];
         this.filtrarRoles();
         this.filtrarAcciones();
+        this.loading = false;
       }
     });
-
+    this.loading = true;
     // Consultar acciones desde el backend y mapear para la tabla
     this.accionesService.buscar({}).subscribe({
       next: (resp: any) => {
@@ -98,10 +103,12 @@ export class RolesAccionesComponent implements OnInit {
           checked: false
         }));
         this.filtrarAcciones();
+        this.loading = false;
       },
       error: () => {
         this.acciones = [];
         this.filtrarAcciones();
+        this.loading = false;
       }
     });
   }
@@ -196,6 +203,7 @@ export class RolesAccionesComponent implements OnInit {
   asociarAcciones(rol: RolAccion): void {
     this.rolSeleccionado = rol;
     this.asociando = true;
+    this.loading = true;
     // Consultar acciones asociadas al rol
     this.rolesService.buscarAccionesPorRol({ mscRoleId: rol.id }).subscribe({
       next: (resp: any) => {
@@ -208,9 +216,11 @@ export class RolesAccionesComponent implements OnInit {
           accion.checked = !!(found && seleccionados.includes(found.idAction));
         }
         this.filtrarAcciones();
+        this.loading = false;
       },
       error: () => {
         // Si falla la consulta, no marcar nada
+        this.loading = false;
         for (const accion of this.acciones) {
           accion.checked = false;
         }

@@ -21,6 +21,7 @@ interface Accion {
 })
 export class AccionesComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
+  loading = false;
 
   acciones: { url: string; descripcion: string; aplicacion: string }[] = [];
   aplicacionesMap: { [desc: string]: number } = {}; // Para mapear nombre a id
@@ -64,6 +65,7 @@ export class AccionesComponent implements OnInit {
   }
 
   cargarAcciones() {
+    this.loading = true;
     this.accionesService.buscar({}).subscribe({
       next: (resp: any) => {
         const data = resp && resp.data ? resp.data : resp;
@@ -73,11 +75,13 @@ export class AccionesComponent implements OnInit {
           aplicacion: a.applicationName
         }));
         this.filtrarAcciones();
+        this.loading = false;
       },
       error: (err) => {
         Swal.fire({ title: 'Error', text: 'No se pudieron cargar las acciones.', icon: 'error' });
         this.acciones = [];
         this.filtrarAcciones();
+        this.loading = false;
       }
     });
   }

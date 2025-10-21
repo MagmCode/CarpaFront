@@ -19,6 +19,8 @@ export interface Rol {
   styleUrls: ['./roles.component.scss']
 })
 export class RolesComponent implements OnInit {
+
+  loading = false;
   aplicaciones: Aplicacion[] = [];
   // roles will be loaded from backend via RolesService
   roles: Rol[] = [];
@@ -50,6 +52,7 @@ export class RolesComponent implements OnInit {
 
     // request roles from backend and populate the table
     // the backend responds with { success, message, data: [...] }
+    this.loading = true;
   this.rolesService.consultarRoles({}).subscribe({
       next: (resp: any) => {
         if (resp && Array.isArray(resp.data)) {
@@ -59,12 +62,14 @@ export class RolesComponent implements OnInit {
           this.roles = [];
         }
         this.filtrarRoles();
+        this.loading = false;
       },
       error: (err) => {
         console.error('Error fetching roles from backend:', err);
         // keep roles as empty and still run filter to update UI
         this.roles = [];
         this.filtrarRoles();
+        this.loading = false;
       }
     });
   }
