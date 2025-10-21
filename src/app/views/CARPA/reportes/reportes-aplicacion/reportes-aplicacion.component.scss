@@ -35,3 +35,18 @@
     border: 2px solid rgba($warning, 0.2);
     background-color: rgba($warning, 0.03);
 }
+
+.volver {
+    &:hover {
+        color: white;
+    }
+
+    /* when hovering the button, target the icon inside it */
+    &:hover .icon-bdv-icon-back-m::before,
+    &:focus .icon-bdv-icon-back-m::before {
+        color: white;
+    }
+}
+.icon-bdv-icon-back-m::before {
+    color: $secondary;
+}

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
+import { ReportesService } from 'src/app/services/auditoria/reportes.service';
 
 type ViewMode = 'usuarios' | 'acciones' | 'roles';
 
@@ -21,10 +22,10 @@ export class ReportesAplicacionComponent implements OnInit {
   // vista actual
   view: ViewMode = 'usuarios';
 
-  // datos de ejemplo (cada registro referencia una aplicacion)
   usuarios: any[] = [];
   acciones: any[] = [];
   roles: any[] = [];
+    loading: boolean = false;
 
   // filtrado y paginación
   searchTerm: string = '';
@@ -34,38 +35,27 @@ export class ReportesAplicacionComponent implements OnInit {
   itemsFiltrados: any[] = [];
   itemsPaginados: any[] = [];
 
-  constructor(private aplicacionesService: AplicacionesService) { }
+  constructor(
+    private aplicacionesService: AplicacionesService,
+    private reportesService: ReportesService
+  ) { }
 
   ngOnInit(): void {
-    // subscribe to aplicaciones provided by the service
     this.aplicacionesService.getAplicaciones$().subscribe(apps => {
       this.aplicaciones = apps || [];
-      // seed sample data once when apps are available (keeps previous behavior for demo/testing)
-      if (!this.seedDone && this.aplicaciones.length) {
-        this.seedSampleData();
-        this.seedDone = true;
-      }
-      this.updateList();
     });
-
-    // trigger backend load (non-blocking)
     this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
   }
 
   // helpers para el template: contar por aplicacion (evita arrow functions inline en el template)
   getUsuariosCount(): number {
-    if (!this.selectedApp) return 0;
-    return this.usuarios.filter(u => u.aplicacion === this.selectedApp).length;
+    return this.usuarios.length;
   }
-
   getAccionesCount(): number {
-    if (!this.selectedApp) return 0;
-    return this.acciones.filter(a => a.aplicacion === this.selectedApp).length;
+    return this.acciones.length;
   }
-
   getRolesCount(): number {
-    if (!this.selectedApp) return 0;
-    return this.roles.filter(r => r.aplicacion === this.selectedApp).length;
+    return this.roles.length;
   }
 
   // returns the selected application's display name (or null)
@@ -75,44 +65,39 @@ export class ReportesAplicacionComponent implements OnInit {
     return app ? app.description : null;
   }
 
-  seedSampleData() {
-    // crear datos de ejemplo para cada aplicacion
-    this.aplicaciones.forEach((app, ai) => {
-      // usuarios
-      for (let i = 1; i <= 23; i++) {
-        this.usuarios.push({
-          aplicacion: app.idApplication,
-          usuarioId: `${app.idApplication}-u${i}`,
-          rol: ['Admin', 'Editor', 'Viewer'][i % 3],
-          nombres: `Nombre ${i} ${app.description}`,
-          apellidos: `Apellido ${i}`,
-          email: `user${i}@${app.idApplication}.local`,
-          estatus: i % 4 === 0 ? 'Inactivo' : 'Activo'
-        });
-      }
-
-      // acciones
-      for (let i = 1; i <= 12; i++) {
-        this.acciones.push({
-          aplicacion: app.idApplication,
-          rol: ['Admin','Editor','Viewer'][i % 3],
-          accion: `ACC_${i}`,
-          descripcion: `Descripción de la acción ${i} en ${app.description}`
-        });
-      }
-
-      // roles
-      ['Admin','Editor','Viewer'].forEach((r, idx) => {
-        this.roles.push({ aplicacion: app.idApplication, rol: r, descripcion: `${r} de ${app.description}`, tipo: idx === 0 ? 'Sistema' : 'Normal' });
-      });
-    });
-  }
+  // Elimina la generación de datos de ejemplo
 
   // cuando se selecciona app o cambia vista
   onAppSelected() {
     this.searchTerm = '';
     this.page = 1;
-    this.updateList();
+    this.usuarios = [];
+    this.acciones = [];
+    this.roles = [];
+    // obtener siglasApplic de la app seleccionada
+    const app = this.aplicaciones.find(a => a.idApplication === this.selectedApp);
+    const siglas = app ? app.siglasApplic : null;
+    if (siglas) {
+      this.loading = true;
+      this.reportesService.obtenerReportes(siglas).subscribe({
+        next: (resp: any) => {
+          this.usuarios = Array.isArray(resp.usuarios) ? resp.usuarios : [];
+          this.acciones = Array.isArray(resp.acciones) ? resp.acciones : [];
+          this.roles = Array.isArray(resp.roles) ? resp.roles : [];
+          this.updateList();
+          this.loading = false;
+        },
+        error: () => {
+          this.usuarios = [];
+          this.acciones = [];
+          this.roles = [];
+          this.updateList();
+          this.loading = false;
+        }
+      });
+    } else {
+      this.updateList();
+    }
   }
 
   setView(v: ViewMode) {
@@ -123,44 +108,33 @@ export class ReportesAplicacionComponent implements OnInit {
   }
 
   updateList() {
-    if (!this.selectedApp) {
-      this.itemsFiltrados = [];
-      this.itemsPaginados = [];
-      this.totalPages = 1;
-      return;
-    }
-
     let source: any[] = [];
-    if (this.view === 'usuarios') source = this.usuarios.filter(u => u.aplicacion === this.selectedApp);
-    if (this.view === 'acciones') source = this.acciones.filter(a => a.aplicacion === this.selectedApp);
-    if (this.view === 'roles') source = this.roles.filter(r => r.aplicacion === this.selectedApp);
+    if (this.view === 'usuarios') source = this.usuarios;
+    if (this.view === 'acciones') source = this.acciones;
+    if (this.view === 'roles') source = this.roles;
 
     if (this.searchTerm && this.searchTerm.trim()) {
       const term = this.searchTerm.trim().toLowerCase();
       this.itemsFiltrados = source.filter(item => {
-        // buscar en las propiedades relevantes según la vista
         if (this.view === 'usuarios') {
-          return (item.usuarioId || '').toLowerCase().includes(term)
-            || (item.rol || '').toLowerCase().includes(term)
-            || (item.nombres || '').toLowerCase().includes(term)
-            || (item.apellidos || '').toLowerCase().includes(term)
-            || (item.email || '').toLowerCase().includes(term)
-            || (item.estatus || '').toLowerCase().includes(term);
+          return (item.userId || '').toLowerCase().includes(term)
+            || (item.fullName || '').toLowerCase().includes(term)
+            || (item.email || '').toLowerCase().includes(term);
         }
         if (this.view === 'acciones') {
-          return (item.rol || '').toLowerCase().includes(term)
-            || (item.accion || '').toLowerCase().includes(term)
-            || (item.descripcion || '').toLowerCase().includes(term);
+          return (item.url || '').toLowerCase().includes(term)
+            || (item.description || '').toLowerCase().includes(term)
+            || (item.applicationName || '').toLowerCase().includes(term);
         }
         // roles
         return (item.rol || '').toLowerCase().includes(term)
           || (item.descripcion || '').toLowerCase().includes(term)
-          || (item.tipo || '').toLowerCase().includes(term);
+          || (item.tipo || '').toLowerCase().includes(term)
+          || (item.aplicacion || '').toLowerCase().includes(term);
       });
     } else {
       this.itemsFiltrados = [...source];
     }
-
     this.actualizarPaginacion();
   }
 
@@ -216,6 +190,10 @@ export class ReportesAplicacionComponent implements OnInit {
       return '"' + s.replace(/"/g, '""') + '"';
     }
     return s;
+  }
+
+    regresarAFiltro() {
+    this.selectedApp = null;
   }
 
 }
