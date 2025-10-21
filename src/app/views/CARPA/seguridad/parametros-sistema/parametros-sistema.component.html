@@ -24,7 +24,7 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Eliminar</th>
+            <!-- <th>Eliminar</th> -->
             <th>Editar</th>
             <th>Nombre del Parámetro</th>
             <th>Valor</th>
@@ -32,11 +32,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let parametro of parametrosPaginados">
-            <td>
+            <!-- <td>
               <button class="btn btn-danger btn-sm" (click)="confirmarEliminarParametro(parametro)">
                 <i class="feather icon-trash-2"></i>
               </button>
-            </td>
+            </td> -->
             <td>
               <button class="btn btn-warning btn-sm" (click)="openEditarModal(parametro, editarModal)">
                 <i class="feather icon-edit"></i>
