@@ -4,7 +4,7 @@
     <h6 class="card-title fw-semibold">Accesos / Usuarios</h6>
 
     <div class="card-body" style="position: relative;">
-      <app-local-loading [loading]="loading"></app-local-loading>
+      <app-local-loading [loading]="loading || modalLoadingEditar || modalLoadingVerRoles || modalLoadingVincularRoles"></app-local-loading>
       <div class="row mb-4 align-items-end">
         <div class="fw-bold d-flex justify-content-end">
           <strong>Total de registros:&nbsp;</strong> {{ usuariosFiltrados.length}}
@@ -162,7 +162,9 @@
       <h5 class="modal-title">Editar Usuario</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
-    <form *ngIf="usuarioSeleccionado" (ngSubmit)="guardarEdicionUsuario(modal)">
+    <!-- Loading overlay for Editar -->
+    <!-- Spinner now shown in card-body, not here -->
+    <form *ngIf="usuarioSeleccionado && !modalLoadingEditar" (ngSubmit)="guardarEdicionUsuario(modal)">
       <div class="modal-body">
         <div class="row g-3">
           <!-- Si es LDAP, solo mostrar los campos requeridos -->
@@ -174,21 +176,25 @@
                 [disabled]="!usuarioSeleccionado.isEditable" required>
             </div>
             <!-- Cédula -->
-            <!-- <div class="col-md-4">
+            <div class="col-md-4">
             <label for="editCedula" class="form-label">Cédula</label>
             <input id="editCedula" name="editCedula" type="number" class="form-control" [(ngModel)]="usuarioSeleccionado.cedula" [disabled]="!usuarioSeleccionado.isEditable" required>
-          </div> -->
+          </div>
             <!-- Nombre -->
             <div class="col-md-4">
               <label for="editFullName" class="form-label">Nombre del usuario</label>
               <input id="editFullName" name="editFullName" class="form-control"
                 [(ngModel)]="usuarioSeleccionado.fullName" [disabled]="!usuarioSeleccionado.isEditable" required>
             </div>
+                          <div class="col-md-4">
+              <label for="nuevoDescCargo" class="form-label">Cargo</label>
+              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [(ngModel)]="usuarioSeleccionado.descCargo" [disabled]="!usuarioSeleccionado.isEditable" required>
+            </div>
             <!-- Descripción -->
-            <!-- <div class="col-md-4">
-            <label for="editDescripcion" class="form-label">Descripción del usuario</label>
+            <div class="col-md-4">
+            <label for="editDescripcion" class="form-label">Unidad</label>
             <input id="editDescripcion" name="editDescripcion" class="form-control" [(ngModel)]="usuarioSeleccionado.descGeneral" [disabled]="!usuarioSeleccionado.isEditable" autocomplete="off">
-          </div> -->
+          </div>
             <!-- Estatus -->
             <div class="col-md-4">
               <label for="editUserStatus" class="form-label">Estatus</label>
@@ -199,7 +205,7 @@
               </select>
             </div>
             <!-- Vigencia -->
-            <!-- <div class="col-md-4">
+            <div class="col-md-4">
             <label for="editVigencia" class="form-label">Vigencia</label>
             <select id="editVigencia" name="editVigencia" class="form-select" [(ngModel)]="usuarioSeleccionado.vigencia" [disabled]="!usuarioSeleccionado.isEditable" required>
               <option [ngValue]="30">30 días</option>
@@ -207,7 +213,7 @@
               <option [ngValue]="90">90 días</option>
               <option [ngValue]="180">180 días</option>
             </select>
-          </div> -->
+          </div>
             <!-- Correo -->
             <div class="col-md-4">
               <label for="editEmail" class="form-label">Correo del usuario</label>
@@ -221,13 +227,13 @@
             <div class="col-md-4">
               <label for="editLogin" class="form-label">Login</label>
               <input id="editLogin" name="editLogin" class="form-control" [(ngModel)]="usuarioSeleccionado.userId"
-                [disabled]="!usuarioSeleccionado.isEditable" required>
+                [disabled]="!usuarioSeleccionado.isEditable" required disabled="true">
             </div>
             <!-- Clave -->
-            <!-- <div class="col-md-4">
+            <div class="col-md-4">
             <label for="editClave" class="form-label">Clave</label>
             <input id="editClave" name="editClave" type="password" class="form-control" [(ngModel)]="usuarioSeleccionado.clave" [disabled]="!usuarioSeleccionado.isEditable" required autocomplete="new-password">
-          </div> -->
+          </div>
             <!-- Cédula -->
             <div class="col-md-4">
               <label for="editCedula" class="form-label">Cédula</label>
@@ -246,9 +252,13 @@
               <input id="editEmail" name="editEmail" type="email" class="form-control"
                 [(ngModel)]="usuarioSeleccionado.email" [disabled]="!usuarioSeleccionado.isEditable" required>
             </div>
+                        <div class="col-md-4">
+              <label for="nuevoDescCargo" class="form-label">Cargo</label>
+              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [(ngModel)]="usuarioSeleccionado.cargo" [disabled]="!usuarioSeleccionado.isEditable" required>
+            </div>
             <!-- Descripción -->
             <div class="col-md-4">
-              <label for="editDescripcion" class="form-label">Descripción del usuario</label>
+              <label for="editDescripcion" class="form-label">Unidad</label>
               <input id="editDescripcion" name="editDescripcion" class="form-control"
                 [(ngModel)]="usuarioSeleccionado.descGeneral" [disabled]="!usuarioSeleccionado.isEditable"
                 autocomplete="off">
@@ -290,7 +300,9 @@
       <h5 class="modal-title">Roles Asociados al Usuario: {{ usuarioSeleccionado?.fullName }}</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
-    <div class="modal-body">
+    <!-- Loading overlay for Ver Roles -->
+    <!-- Spinner now shown in card-body, not here -->
+    <div class="modal-body" *ngIf="!modalLoadingVerRoles">
       <div class="table-responsive">
         <table class="table table-bordered">
           <thead class="table-light">
@@ -325,8 +337,9 @@
       <h5 class="modal-title">Vincular Roles a {{ usuarioSeleccionado?.fullName }}</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
-    <div class="modal-body">
-
+    <!-- Loading overlay for Vincular Roles -->
+    <!-- Spinner now shown in card-body, not here -->
+    <div class="modal-body" *ngIf="!modalLoadingVincularRoles">
       <div class="table-responsive">
         <table class="table table-bordered">
           <thead class="table-light">
@@ -359,6 +372,20 @@
       <button class="btn btn-secondary" (click)="modal.close()">Salir</button>
     </div>
   </ng-template>
+  <style>
+    .modal-loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.7);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
 
   <!-- Modal para añadir usuario -->
   <ng-template #addUserModal let-modal>
@@ -473,9 +500,14 @@
               <label for="nuevoLogin" class="form-label">Login</label>
               <div class="input-group">
                 <input id="nuevoLogin" name="nuevoLogin" class="form-control" [(ngModel)]="nuevoLogin" required>
-                <button type="button" class="btn btn-outline-info btn-sm"
-                  (click)="consultarDirectorioActivo(nuevoLogin)">
-                  <i class="mdi mdi-magnify"></i>
+                <button type="button" class="btn btn-outline-info btn-sm" [disabled]="ldapLoading"
+                  (click)="buscarUsuarioLDAP(nuevoLogin)">
+                  <ng-container *ngIf="ldapLoading; else searchIcon">
+                    <span class="spinner-border spinner-border-sm text-info" role="status" aria-hidden="true"></span>
+                  </ng-container>
+                  <ng-template #searchIcon>
+                    <i class="mdi mdi-magnify"></i>
+                  </ng-template>
                 </button>
               </div>
             </div>
@@ -488,6 +520,30 @@
               <label for="nuevoEmail" class="form-label">Correo</label>
               <input id="nuevoEmail" name="nuevoEmail" type="email" class="form-control" [(ngModel)]="nuevoEmail"
                 required disabled="true">
+            </div>
+            <div class="col-md-4">
+              <label for="nuevoCedula" class="form-label">Cédula</label>
+              <input id="nuevoCedula" name="nuevoCedula" type="number" class="form-control" [(ngModel)]="nuevoCedula"
+                required disabled="true">
+            </div>
+            <div class="col-md-4">
+              <label for="nuevoDescCargo" class="form-label">Cargo</label>
+              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [(ngModel)]="nuevoDescCargo"
+                required disabled="true">
+            </div>
+            <div class="col-md-4">
+              <label for="nuevoDescGeneral" class="form-label">Unidad</label>
+              <input id="nuevoDescGeneral" name="nuevoDescGeneral" class="form-control" [(ngModel)]="nuevoDescGeneral"
+                required disabled="true">
+            </div>
+            <div class="col-md-4">
+              <label for="nuevoVigencia" class="form-label">Vigencia</label>
+              <select id="nuevoVigencia" name="nuevoVigencia" class="form-select" [(ngModel)]="nuevoVigencia" required disabled="true">
+                <option [ngValue]="30">30 días</option>
+                <option [ngValue]="60">60 días</option>
+                <option [ngValue]="90">90 días</option>
+                <option [ngValue]="180">180 días</option>
+              </select>
             </div>
             <div class="col-md-4">
               <label for="nuevoEstatus" class="form-label">Estatus</label>

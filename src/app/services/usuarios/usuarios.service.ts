@@ -19,22 +19,7 @@ import { Usuario, RolUsuario } from 'src/app/core/models/usuarios/usuario';
   providedIn: 'root',
 })
 export class UsuariosService {
-  /**
-   * Buscar usuario por userId en el backend (POST /admin/users/search)
-   * Retorna datos del usuario para autocompletar campos en el formulario.
-   */
-  buscarUsuario(userId: string): Observable<any> {
-    const url = `${this.apiUrl}/admin/users/search`;
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    const body = { userId };
-    return this.http.post<any>(url, body, { headers }).pipe(
-      map((resp: any) => this.normalizeRaw<any>(resp)),
-      catchError((error: HttpErrorResponse) => {
-        console.error('Error buscando usuario', { status: error.status, error: error.error });
-        return throwError(() => error.error || error.message || 'Error buscando usuario');
-      })
-    );
-  }
+
   private apiUrl = environment.Url;
   private usuariosSubject = new BehaviorSubject<any[]>([]);
   usuarios$ = this.usuariosSubject.asObservable();
@@ -45,6 +30,24 @@ export class UsuariosService {
   private normalizeRaw<T>(resp: any): T | T[] {
     const raw = resp && resp.data ? resp.data : resp;
     return raw;
+  }
+
+    /**
+   * Buscar usuario por userId en el backend (POST /admin/users/search)
+   * Retorna datos del usuario para autocompletar campos en el formulario.
+   */
+  buscarUsuario(codUsuario: string): Observable<any> {
+    // const url = `${this.apiUrl}/admin/users/search`;
+    const url = `${this.apiUrl}/admin/users/ad`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    const body = { codUsuario };
+    return this.http.post<any>(url, body, { headers }).pipe(
+      map((resp: any) => this.normalizeRaw<any>(resp)),
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error buscando usuario', { status: error.status, error: error.error });
+        return throwError(() => error.error || error.message || 'Error buscando usuario');
+      })
+    );
   }
 
   consultarUsuarios(): Observable<Usuario[]> {
@@ -75,7 +78,7 @@ export class UsuariosService {
     const url = `${this.apiUrl}/admin/users/update`;
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
-    return this.http.put<any>(url, usuario, { headers }).pipe(
+    return this.http.post<any>(url, usuario, { headers }).pipe(
       map((resp: any) => this.normalizeRaw<Usuario>(resp) as Usuario),
       map((raw: any) => (Array.isArray(raw) ? raw[0] : raw) as Usuario),
       tap((updated: Usuario) => {

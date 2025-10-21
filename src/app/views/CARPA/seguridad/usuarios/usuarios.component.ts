@@ -18,6 +18,59 @@ import { RolesService } from 'src/app/services/roles/roles.service';
   styleUrls: ['./usuarios.component.scss'],
 })
 export class UsuariosComponent implements OnInit {
+  // Loading states for modals
+  modalLoadingEditar: boolean = false;
+  modalLoadingVerRoles: boolean = false;
+  modalLoadingVincularRoles: boolean = false;
+  ldapLoading: boolean = false;
+  buscarUsuarioLDAP(login: string) {
+    this.ldapLoading = true;
+    this.usuariosService.buscarUsuario(login).subscribe({
+      next: (resp: any) => {
+        let user = resp;
+        if (Array.isArray(resp)) {
+          user = resp[0];
+        }
+        if (user) {
+          this.nuevoLogin = user.codigo || login;
+          this.nuevoFullName = user.nombreCompleto || 'error';
+          this.nuevoEmail = user.correo || 'error';
+          this.nuevoEstatus = user.estatus === 'A' ? 1 : user.estatus === 'I' ? 0 : 1;
+          this.ldapLoading = false;
+          this.nuevoDescCargo = user.cargo || 'error';
+          this.nuevoCedula = user.cedula || null;
+          this.nuevoDescGeneral = user.descUnidad || 'error';
+        } else {
+          this.nuevoLogin = login;
+          this.nuevoFullName = '';
+          this.nuevoEmail = '';
+          this.nuevoEstatus = 1;
+          this.ldapLoading = false;
+          this.nuevoDescCargo = '';
+          this.nuevoCedula = null;
+          this.nuevoDescGeneral = '';
+
+          Swal.fire({
+            title: 'No encontrado',
+            text: 'No se encontró el usuario en el directorio activo.',
+            icon: 'info',
+          });
+        }
+      },
+      error: (err: any) => {
+        this.nuevoLogin = login;
+        this.nuevoFullName = '';
+        this.nuevoEmail = '';
+        this.nuevoEstatus = 1;
+        this.ldapLoading = false;
+        Swal.fire({
+          title: 'Error',
+          text: 'Ocurrió un error al buscar el usuario. Vuelva a intentar.',
+          icon: 'error',
+        });
+      },
+    });
+  }
   showClave: boolean = false;
   loading = false;
 
@@ -53,6 +106,9 @@ export class UsuariosComponent implements OnInit {
   nuevoEmail: string = '';
   nuevoEstatus: number | null = 1;
   datosDirectorioActivo: any = null;
+  nuevoEditable: boolean = true;
+  nuevoDescUnidad: string = '';
+  nuevoCodigo: string = '';
 
   // Stub para consulta de directorio activo
   consultarDirectorioActivo(login: string) {
@@ -139,26 +195,26 @@ export class UsuariosComponent implements OnInit {
 
   ngOnInit(): void {
     this.aplicaciones = this.aplicacionesService.getAplicaciones();
+    // Suscribirse al observable de usuarios para actualización automática
+    this.usuariosService.usuarios$.subscribe((data) => {
+      // Solo usar datos del backend, no cargar registros de ejemplo locales
+      // const hasData = Array.isArray(data) && data.length > 0;
+      // if (hasData) {
+      //   localStorage.setItem('usuariosConsultados', JSON.stringify(data));
+      //   this.usuarios = this.mapBackendUsuarios(data);
+      // } else {
+      //   const sample = this.generateSampleUsuarios(20);
+      //   localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
+      //   this.usuarios = this.mapBackendUsuarios(sample);
+      // }
+      this.usuarios = this.mapBackendUsuarios(data);
+      this.filtrarUsuarios();
+      this.loading = false;
+    });
+    // Disparar la consulta inicial
     this.loading = true;
     this.usuariosService.consultarUsuarios().subscribe({
-      next: (data) => {
-        const hasData = Array.isArray(data) && data.length > 0;
-        if (hasData) {
-          localStorage.setItem('usuariosConsultados', JSON.stringify(data));
-          this.usuarios = this.mapBackendUsuarios(data);
-        } else {
-          const sample = this.generateSampleUsuarios(20);
-          localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
-          this.usuarios = this.mapBackendUsuarios(sample);
-        }
-        this.filtrarUsuarios();
-        this.loading = false;
-      },
-      error: (err) => {
-        const sample = this.generateSampleUsuarios(20);
-        localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
-        this.usuarios = this.mapBackendUsuarios(sample);
-        this.filtrarUsuarios();
+      next: () => {
         this.loading = false;
       },
     });
@@ -275,36 +331,13 @@ export class UsuariosComponent implements OnInit {
   usuariosAll() {
     this.usuariosService.consultarUsuarios().subscribe({
       next: (data) => {
-        // if backend returned data use it, otherwise fall back to sample data
-        const hasData = Array.isArray(data) && data.length > 0;
-        if (hasData) {
-          // this.usuariosService.setUsuarios(data);
-          localStorage.setItem('usuariosConsultados', JSON.stringify(data));
-          this.usuarios = this.mapBackendUsuarios(data);
-          console.log('Usuarios All (backend):', this.usuarios);
-        } else {
-          console.warn(
-            'No se recibieron usuarios desde backend, usando datos de ejemplo.'
-          );
-          const sample = this.generateSampleUsuarios(20);
-          // this.usuariosService.setUsuarios(sample);
-          localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
-          this.usuarios = this.mapBackendUsuarios(sample);
-          console.log('Usuarios All (sample):', this.usuarios);
-        }
-        // apply filtering/sorting/pagination after setting usuarios
+        // Solo usar datos del backend, no cargar registros de ejemplo locales
+        this.usuarios = this.mapBackendUsuarios(data);
         this.filtrarUsuarios();
       },
       error: (err) => {
-        console.error(
-          'Error al consultar usuarios, usando datos de ejemplo:',
-          err
-        );
-        const sample = this.generateSampleUsuarios(20);
-        // this.usuariosService.setUsuarios(sample);
-        localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
-        this.usuarios = this.mapBackendUsuarios(sample);
-        this.filtrarUsuarios();
+        console.error('Error al consultar usuarios:', err);
+        // No cargar registros de ejemplo locales
       },
     });
   }
@@ -344,8 +377,22 @@ export class UsuariosComponent implements OnInit {
       email: u.email ?? '',
       userStatus: u.userStatus ?? 0,
       roles: Array.isArray(u.roles) ? u.roles : [],
+      typeAccess: u.typeAccess ?? '',
+      isEditable: u.isEditable ?? true,
       // agregar flag seleccionado para la selección de filas
       seleccionado: false as any,
+      cedula: this.nuevoCedula || 0,
+      descCargo: this.nuevoDescCargo || '',
+      descGeneral: this.nuevoDescGeneral || '',
+      passwordDays: this.nuevoVigencia || 30,
+      codigo: this.nuevoCodigo || '',
+      descUnidad: this.nuevoDescUnidad || '',
+      estatus:
+        this.nuevoEstatus === 1 ? 'A' : this.nuevoEstatus === 0 ? 'I' : 'A',
+      correo: this.nuevoEmail || '',
+      codigoCargo: '',
+      nombreCompleto: this.nuevoFullName || '',
+      cargo: '',
     }));
   }
 
@@ -441,20 +488,51 @@ export class UsuariosComponent implements OnInit {
   }
 
   addUser(modal: any) {
-    // create a new user from the modal inputs
-    const newUser: Usuario = {
-      mscUserId: String(Date.now()),
-      userId: this.nuevoUsuarioId,
-      fullName: this.nuevoFullName || '',
-      email: this.nuevoEmail || '',
-      userStatus: Number(this.nuevoEstatus) || 0,
-      roles: [],
-      imported: false,
-    };
-    this.usuarios = [newUser, ...this.usuarios];
-    this.filtrarUsuarios();
-    this.showSuccessToast('Usuario añadido', `User ID: ${newUser.userId}`);
-    modal.close();
+    let payload: any;
+    if (this.nuevoTypeAccess === 'Local') {
+      payload = {
+        userId: this.nuevoLogin,
+        typeAccess: 'LOCAL',
+        fullName: this.nuevoFullName,
+        email: this.nuevoEmail,
+        password: this.nuevoClave,
+        cedula: this.nuevoCedula,
+        descCargo: this.nuevoDescCargo,
+        descGeneral: this.nuevoDescGeneral,
+        passwordDays: this.nuevoVigencia,
+      };
+    } else if (this.nuevoTypeAccess === 'Directorio Activo') {
+      payload = {
+        userId: this.nuevoLogin,
+        typeAccess: 'LDAP',
+      };
+    } else {
+      // fallback: do nothing if type not selected
+      Swal.fire({
+        title: 'Tipo de acceso requerido',
+        text: 'Seleccione Local o Directorio Activo',
+        icon: 'warning',
+      });
+      return;
+    }
+    this.loading = true;
+    this.usuariosService.createUsuario(payload).subscribe({
+      next: (created: any) => {
+        // La suscripción al observable actualiza la lista automáticamente
+        this.filtrarUsuarios();
+        this.showSuccessToast('Usuario añadido', `User ID: ${created.userId}`);
+        modal.close();
+        this.loading = false;
+      },
+      error: (err: any) => {
+        this.loading = false;
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo crear el usuario.',
+          icon: 'error',
+        });
+      },
+    });
   }
 
   openEliminarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
@@ -527,12 +605,47 @@ export class UsuariosComponent implements OnInit {
   }
 
   openEditarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
-    this.usuarioSeleccionado = { ...usuario };
-    // Si es LDAP, sincronizar login <-> userId para el modal
-    if (this.usuarioSeleccionado.typeAccess === 'LDAP') {
-      this.usuarioSeleccionado.login = this.usuarioSeleccionado.userId;
+    console.log('Editar usuario:', usuario);
+    this.modalLoadingEditar = true;
+    if (usuario.typeAccess === 'LDAP') {
+      this.usuariosService.buscarUsuario(usuario.userId).subscribe({
+        next: (resp: any) => {
+          let user = Array.isArray(resp) ? resp[0] : resp;
+          if (user) {
+            this.usuarioSeleccionado = {
+              ...usuario,
+              userId: user.codigo || usuario.userId,
+              fullName: user.nombreCompleto || user.fullName,
+              email: user.correo || user.email,
+              userStatus: user.estatus === 'A' ? 1 : user.estatus === 'I' ? 0 : usuario.userStatus,
+              descCargo: user.descCargo || '',
+              cedula: user.cedula || null,
+              descGeneral: user.descUnidad || '',
+              descUnidad: user.descUnidad || '',
+              estatus: user.estatus || '',
+              correo: user.correo || '',
+              codigoCargo: user.codigoCargo || '',
+              nombreCompleto: user.nombreCompleto || '',
+              cargo: user.cargo || '',
+              isEditable: false,
+            };
+          } else {
+            this.usuarioSeleccionado = { ...usuario };
+          }
+          this.modalLoadingEditar = false;
+          this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
+        },
+        error: () => {
+          this.usuarioSeleccionado = { ...usuario };
+          this.modalLoadingEditar = false;
+          this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
+        }
+      });
+    } else {
+      this.usuarioSeleccionado = { ...usuario };
+      this.modalLoadingEditar = false;
+      this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
     }
-    this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
   }
 
   procesarStatus(modal: any) {
@@ -565,6 +678,11 @@ export class UsuariosComponent implements OnInit {
 
     const payload: any = {
       userId: this.usuarioSeleccionado.userId,
+      cedula: this.usuarioSeleccionado.cedula,
+      description: this.usuarioSeleccionado.descGeneral,
+      passwordDays: this.usuarioSeleccionado.passwordDays,
+      fullName: this.usuarioSeleccionado.fullName,
+      email: this.usuarioSeleccionado.email,
       userStatus: this.usuarioSeleccionado.userStatus,
     };
 
@@ -601,11 +719,10 @@ export class UsuariosComponent implements OnInit {
   }
 
   openVerRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
-    // fetch roles associated to this user by mscUserId and open modal with only those roles
+    this.modalLoadingVerRoles = true;
     const msc = usuario.mscUserId;
     this.usuariosService.getRolesUsuario(String(msc)).subscribe({
       next: (roles: any) => {
-        // Normalize backend role shape to the UI model (RolUsuario)
         const list = Array.isArray(roles)
           ? roles
           : roles?.data && Array.isArray(roles.data)
@@ -614,14 +731,12 @@ export class UsuariosComponent implements OnInit {
         const normalized = list.map(
           (r: any) =>
             ({
-              // preserve backend original fields (used by the template)
               mscRoleId: r.mscRoleId ?? r.id ?? 0,
               roleName: r.roleName ?? r.alias ?? '',
               description: r.description ?? r.descripcion ?? '',
               inUsoEnRed: r.inUsoEnRed ?? r.tipo ?? '',
               siglasApplic:
                 r.siglasApplic ?? r.aplicacion ?? r.application ?? '',
-              // also provide UI-friendly aliases (backwards compatibility)
               id: r.mscRoleId ?? r.id ?? 0,
               alias: r.roleName ?? r.alias ?? '',
               descripcion: r.description ?? r.descripcion ?? '',
@@ -630,9 +745,11 @@ export class UsuariosComponent implements OnInit {
             } as any)
         );
         this.usuarioSeleccionado = { ...usuario, roles: normalized } as Usuario;
+        this.modalLoadingVerRoles = false;
         this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
       },
       error: (err) => {
+        this.modalLoadingVerRoles = false;
         console.error('Error obteniendo roles', err);
         Swal.fire({
           title: 'Error',
@@ -644,7 +761,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   openAsociarRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
-    // First fetch roles assigned to the user, then fetch all roles and mark selections by mscRoleId
+    this.modalLoadingVincularRoles = true;
     this.usuarioSeleccionado = usuario;
     const msc = usuario.mscUserId;
     this.usuariosService.getRolesUsuario(String(msc)).subscribe({
@@ -659,8 +776,6 @@ export class UsuariosComponent implements OnInit {
             String(ar.mscRoleId ?? ar.id ?? ar.roleId ?? '')
           )
         );
-
-        // fetch all roles
         this.rolesService.consultarRoles({}).subscribe({
           next: (resp: any) => {
             const list = Array.isArray(resp?.data)
@@ -672,7 +787,6 @@ export class UsuariosComponent implements OnInit {
               const idVal = r.mscRoleId ?? r.id ?? 0;
               const idStr = String(idVal);
               return {
-                // preserve backend id and ui aliases
                 mscRoleId: idVal,
                 id: idVal,
                 roleName: r.roleName ?? r.alias ?? r.rol ?? r.name ?? '',
@@ -688,9 +802,11 @@ export class UsuariosComponent implements OnInit {
                 seleccionado: assignedIds.has(idStr),
               } as RolUsuario & { seleccionado?: boolean };
             });
+            this.modalLoadingVincularRoles = false;
             this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
           },
           error: (err) => {
+            this.modalLoadingVincularRoles = false;
             console.error('Error cargando roles disponibles', err);
             Swal.fire({
               title: 'Error',
@@ -701,8 +817,6 @@ export class UsuariosComponent implements OnInit {
         });
       },
       error: (err) => {
-        console.error('Error cargando roles asignados del usuario', err);
-        // fallback: load all roles without pre-selection
         this.rolesService.consultarRoles({}).subscribe({
           next: (resp: any) => {
             const list = Array.isArray(resp?.data)
@@ -722,9 +836,11 @@ export class UsuariosComponent implements OnInit {
                   seleccionado: false,
                 } as RolUsuario & { seleccionado?: boolean })
             );
+            this.modalLoadingVincularRoles = false;
             this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
           },
           error: (err2) => {
+            this.modalLoadingVincularRoles = false;
             console.error('Error cargando roles disponibles', err2);
             Swal.fire({
               title: 'Error',

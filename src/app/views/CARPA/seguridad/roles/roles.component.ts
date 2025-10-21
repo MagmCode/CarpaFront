@@ -48,12 +48,15 @@ export class RolesComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
+    // Suscribirse a la lista de aplicaciones y cargar desde backend
+    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      this.aplicaciones = apps || [];
+    });
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
 
     // request roles from backend and populate the table
-    // the backend responds with { success, message, data: [...] }
     this.loading = true;
-  this.rolesService.consultarRoles({}).subscribe({
+    this.rolesService.consultarRoles({}).subscribe({
       next: (resp: any) => {
         if (resp && Array.isArray(resp.data)) {
           this.roles = resp.data;
@@ -66,7 +69,6 @@ export class RolesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error fetching roles from backend:', err);
-        // keep roles as empty and still run filter to update UI
         this.roles = [];
         this.filtrarRoles();
         this.loading = false;
@@ -139,25 +141,130 @@ export class RolesComponent implements OnInit {
 
   openEditRoleModal(content: TemplateRef<any>, rol: Rol): void {
     this.modalModo = 'editar';
-    this.newRole = { ...rol };
+    // Buscar el id de la aplicación por nombre/siglas
+    let appId = '';
+    if (rol.aplicacion) {
+      const app = this.aplicaciones.find(a => a.siglasApplic === rol.aplicacion || a.description === rol.aplicacion);
+      if (app) appId = String(app.idApplication);
+    }
+    // Normalizar el tipo
+    let tipo = '';
+    if (rol.tipo) {
+      if (rol.tipo.toLowerCase().includes('torre')) tipo = 'usuarios de la torre';
+      else if (rol.tipo.toLowerCase().includes('red')) tipo = 'usuarios de red comercial';
+      else tipo = rol.tipo;
+    }
+    this.newRole = {
+      id: rol.id,
+      rol: rol.rol,
+      descripcion: rol.descripcion,
+      tipo: tipo,
+      aplicacion: appId
+    };
     this.modalService.open(content, { centered: true });
   }
 
   saveRole(modal: any): void {
     if (this.modalModo === 'agregar') {
-      this.roles.push({ ...this.newRole });
+      // Construir el payload para el backend
+      const appObj = this.aplicaciones.find(a => a.idApplication === Number(this.newRole.aplicacion));
+      const payload = {
+        roleName: this.newRole.rol,
+        description: this.newRole.descripcion,
+        inUsoEnRed: this.newRole.tipo === 'usuarios de la torre' ? 0 : 1,
+        idApplication: appObj ? appObj.idApplication : null
+      };
+      this.loading = true;
+      this.rolesService.crearRol(payload).subscribe({
+        next: (resp: any) => {
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Rol creado',
+            text: payload.roleName,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          // Recargar roles desde backend
+          this.rolesService.consultarRoles({}).subscribe({
+            next: (r: any) => {
+              this.roles = Array.isArray(r.data) ? r.data : [];
+              this.filtrarRoles();
+              this.loading = false;
+            },
+            error: () => {
+              this.loading = false;
+            }
+          });
+          modal.close();
+        },
+        error: (err: any) => {
+          this.loading = false;
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Error al crear rol',
+            text: (err && err.message) ? err.message : JSON.stringify(err),
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true
+          });
+        }
+      });
     } else if (this.modalModo === 'editar') {
-      const idx = this.roles.findIndex(r => r === this.rolesPaginados.find(rp => rp === this.newRole));
-      if (idx > -1) {
-        this.roles[idx] = { ...this.newRole };
-      } else {
-        // fallback: buscar por rol, tipo y aplicacion
-        const idx2 = this.roles.findIndex(r => r.rol === this.newRole.rol && r.tipo === this.newRole.tipo && r.aplicacion === this.newRole.aplicacion);
-        if (idx2 > -1) this.roles[idx2] = { ...this.newRole };
-      }
+      // Construir el payload para modificar rol
+      const appObj = this.aplicaciones.find(a => a.idApplication === Number(this.newRole.aplicacion));
+      const payload = {
+        mscRoleId: this.newRole.id,
+        roleName: this.newRole.rol,
+        description: this.newRole.descripcion,
+        inUsoEnRed: this.newRole.tipo === 'usuarios de la torre' ? 0 : 1,
+        idApplication: appObj ? appObj.idApplication : null
+      };
+      this.loading = true;
+      this.rolesService.modificarRol(payload).subscribe({
+        next: (resp: any) => {
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Rol modificado',
+            text: payload.roleName,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          // Recargar roles desde backend
+          this.rolesService.consultarRoles({}).subscribe({
+            next: (r: any) => {
+              this.roles = Array.isArray(r.data) ? r.data : [];
+              this.filtrarRoles();
+              this.loading = false;
+            },
+            error: () => {
+              this.loading = false;
+            }
+          });
+          modal.close();
+        },
+        error: (err: any) => {
+          this.loading = false;
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Error al modificar rol',
+            text: (err && err.message) ? err.message : JSON.stringify(err),
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true
+          });
+        }
+      });
     }
-    this.filtrarRoles();
-    modal.close();
   }
 
   deleteRole(rol: Rol): void {

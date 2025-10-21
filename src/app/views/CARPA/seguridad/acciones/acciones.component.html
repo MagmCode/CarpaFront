@@ -32,7 +32,7 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Eliminar</th>
+            <!-- <th>Eliminar</th> -->
             <th>Editar</th>
             <th (click)="ordenarPor('url')" style="cursor:pointer">
               URL
@@ -56,11 +56,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let accion of accionesPaginadas">
-            <td>
+            <!-- <td>
               <button class="btn btn-danger btn-sm" title="Eliminar" (click)="deleteAccion(accion)">
                 <i class="feather icon-trash-2"></i>
               </button>
-            </td>
+            </td> -->
             <td>
               <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditActionModal(addActionModal, accion)">
                 <i class="feather icon-edit"></i>

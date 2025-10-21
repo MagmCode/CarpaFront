@@ -19,14 +19,22 @@ export interface Usuario {
   seleccionado?: boolean;
   imported?: boolean;
   // Nuevos campos para alta de usuario
-  typeAccess?: '' | 'Local' | 'Directorio Activo' | 'LDAP';
-  login?: string;
+  typeAccess: '' | 'Local' | 'Directorio Activo' | 'LDAP';
   clave?: string;
   encriptamiento?: string;
-  cedula?: number;
-  descCargo?: string;
-  descGeneral?: string;
+  cedula: number;
+  descCargo: string;
+  descGeneral: string;
   passwordDays?: number;
   vigencia?: number; // días
-  isEditable?: boolean;
+  isEditable: boolean;
+
+  // LDAP
+    codigo: string;
+    descUnidad: string;
+    estatus: string;
+    correo: string;
+    codigoCargo: string;
+    nombreCompleto: string;
+    cargo: string;
 }

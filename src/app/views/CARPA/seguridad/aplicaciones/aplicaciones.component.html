@@ -29,7 +29,7 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Eliminar</th>
+            <!-- <th>Eliminar</th> -->
             <th>Editar</th>
             <th (click)="ordenarPor('nombre')" style="cursor:pointer">
               Nombre
@@ -56,11 +56,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let app of aplicacionesPaginadas">
-            <td>
+            <!-- <td>
               <button class="btn btn-danger btn-sm" title="Eliminar" (click)="deleteApplication(app)">
                 <i class="feather icon-trash-2"></i>
               </button>
-            </td>
+            </td> -->
                         <td>
               <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditApplicationModal(appModal, app)">
                 <i class="feather icon-edit"></i>

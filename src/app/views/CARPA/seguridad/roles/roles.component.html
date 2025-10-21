@@ -24,7 +24,7 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Eliminar</th>
+            <!-- <th>Eliminar</th> -->
             <th>Editar</th>
             <th (click)="ordenarPor('rol')" style="cursor:pointer">
               Rol
@@ -45,7 +45,7 @@
               </span>
             </th>
             <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">
-              Aplicación
+              Sistema
               <span *ngIf="sortColumn === 'aplicacion'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </span>
@@ -54,11 +54,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let rol of rolesPaginados">
-            <td>
+            <!-- <td>
               <button class="btn btn-danger btn-sm" title="Eliminar" (click)="deleteRole(rol)">
                 <i class="feather icon-trash-2"></i>
               </button>
-            </td>
+            </td> -->
             <td>
               <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditRoleModal(addRoleModal, rol)">
                 <i class="feather icon-edit"></i>
@@ -140,10 +140,10 @@
         </select>
       </div>
       <div class="mb-3">
-        <label for="aplicacion" class="form-label">Aplicación</label>
+        <label for="aplicacion" class="form-label">Sistema</label>
         <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newRole.aplicacion" required>
-          <option value="" disabled selected>Seleccione una aplicación</option>
-          <option *ngFor="let app of aplicaciones" [value]="app.description">{{ app.description }}</option>
+          <option value="" disabled selected>Seleccione un sistema</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.idApplication">{{ app.siglasApplic }}</option>
         </select>
       </div>
     </div>

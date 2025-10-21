@@ -11,6 +11,35 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root',
 })
 export class RolesService {
+  /**
+   * Crear un rol en el backend (POST /admin/roles/crear)
+   */
+  crearRol(payload: any): Observable<any> {
+    const url = `${this.apiUrl}/admin/roles/crear`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post<any>(url, payload, { headers }).pipe(
+      map((response: any) => response),
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error creando rol:', error);
+        return throwError(() => error.error || { message: error.message || 'Error creando rol' });
+      })
+    );
+  }
+
+  /**
+   * Modificar un rol en el backend (POST /admin/roles/actualizar)
+   */
+  modificarRol(payload: any): Observable<any> {
+    const url = `${this.apiUrl}/admin/roles/actualizar`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post<any>(url, payload, { headers }).pipe(
+      map((response: any) => response),
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error modificando rol:', error);
+        return throwError(() => error.error || { message: error.message || 'Error modificando rol' });
+      })
+    );
+  }
 
 
   private rolesSubject = new BehaviorSubject<any[]>([]);

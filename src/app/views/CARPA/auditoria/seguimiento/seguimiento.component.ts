@@ -1,4 +1,6 @@
 import { Component, OnInit, TemplateRef } from '@angular/core';
+import { LogsService } from 'src/app/services/auditoria/logs.service';
+import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
 import { NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -32,15 +34,15 @@ export class SeguimientoComponent implements OnInit {
     this.actualizarPaginacion();
   }
 
-  constructor(private modalService: NgbModal) { }
+  aplicaciones: Aplicacion[] = [];
+  constructor(
+    private modalService: NgbModal,
+    private logsService: LogsService,
+    private aplicacionesService: AplicacionesService
+  ) {}
   
 
-  // aplicaciones (simuladas) para selector
-  aplicaciones = [
-    { id: 'app1', nombre: 'Aplicación A' },
-    { id: 'app2', nombre: 'Aplicación B' },
-    { id: 'app3', nombre: 'Aplicación C' }
-  ];
+  // aplicaciones: se cargan desde el servicio en ngOnInit
 
   // ejemplo de logs del sistema
   logs: any[] = [];
@@ -80,40 +82,13 @@ export class SeguimientoComponent implements OnInit {
   sortDir: SortDir = 'desc';
 
   ngOnInit(): void {
-    // Generar 50 logs de ejemplo con la fecha de hoy
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const baseDate = `${yyyy}-${mm}-${dd}`;
-    const sources = ['AuthService', 'ReportService', 'SyncJob', 'UserService', 'ApiGateway'];
-    const messages = [
-      'Inicio de sesión iniciado',
-      'Generación de reporte mensual',
-      'Sincronización de productos',
-      'Usuario creado',
-      'Error de conexión',
-      'Actualización de perfil',
-      'Eliminación de usuario',
-      'Consulta de datos',
-      'Exportación de registros',
-      'Cambio de contraseña'
-    ];
-    const statuses = ['completed', 'error', 'in-progress'];
-    const aplicaciones = ['app1', 'app2', 'app3'];
-    this.logs = Array.from({ length: 50 }, (_, i) => {
-      const hour = String(8 + (i % 12)).padStart(2, '0');
-      const min = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-      const sec = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-      return {
-        id: i + 1,
-        timestamp: `${baseDate} ${hour}:${min}:${sec}`,
-        source: sources[i % sources.length],
-        message: messages[i % messages.length],
-        status: statuses[i % statuses.length],
-        details: `Detalle del log #${i + 1}. Operación: ${messages[i % messages.length]}.`,
-        aplicacion: aplicaciones[i % aplicaciones.length]
-      };
+    this.aplicacionesService.loadAplicaciones().subscribe({
+      next: (apps) => {
+        this.aplicaciones = apps;
+      },
+      error: () => {
+        this.aplicaciones = [];
+      }
     });
   }
 
@@ -124,28 +99,18 @@ export class SeguimientoComponent implements OnInit {
 
   // Ejecutar consulta (aplica filtros y muestra tabla)
   consultar() {
-    // filtrar por aplicacion
-    let res = [...this.logs];
-    if (this.filtro.aplicacion) {
-      res = res.filter(l => l.aplicacion === this.filtro.aplicacion);
-    }
-    // filtrar por fecha única si está definida (convertir NgbDateStruct a Date)
+    // Validar fecha
     if (!this.filtro.fecha) {
       Swal.fire('Atención', 'Seleccione una fecha para consultar (máximo 7 días atrás).', 'warning');
       return;
     }
-
     const sel = this.filtro.fecha;
     const selectedDate = new Date(sel.year, sel.month - 1, sel.day);
-    // normalizar horas
-    const startOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0, 0);
-    const endOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 23, 59, 59, 999);
-
     const today = new Date();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
     const minAllowed = new Date(todayStart);
-    minAllowed.setDate(minAllowed.getDate() - 7); // 7 days lookback
-
+    minAllowed.setDate(minAllowed.getDate() - 7);
+    const startOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0, 0);
     if (startOfDay < minAllowed) {
       Swal.fire('Atención', 'La fecha no puede ser anterior a 7 días atrás.', 'warning');
       return;
@@ -155,18 +120,53 @@ export class SeguimientoComponent implements OnInit {
       return;
     }
 
-    res = res.filter(l => {
-      const ts = new Date(l.timestamp);
-      return ts >= startOfDay && ts <= endOfDay;
-    });
+    // Obtener nombreAplicacion y tipoLog
+    let nombreAplicacion = '';
+    let tipoLog = '';
+    if (this.filtro.aplicacion) {
+      const app = this.aplicaciones.find(a => String(a.idApplication) === String(this.filtro.aplicacion) || a.siglasApplic === this.filtro.aplicacion);
+      if (app && app.siglasApplic) {
+        nombreAplicacion = app.siglasApplic.toLowerCase() + '-service';
+        tipoLog = app.siglasApplic.toLowerCase() + '-system';
+      } else {
+        nombreAplicacion = String(this.filtro.aplicacion).toLowerCase() + '-service';
+        tipoLog = String(this.filtro.aplicacion).toLowerCase() + '-system';
+      }
+    } else {
+      // nombreAplicacion = 'carpa-service'; // default if none selected
+      // tipoLog = 'carpa-system';
+      console.warn('No se seleccionó aplicación; se consultarán logs de todas las aplicaciones.');
+    }
 
-    // guardar copia de la consulta para búsquedas no destructivas
-    this.logsQueryResult = [...res];
-    this.logsFiltrados = [...this.logsQueryResult];
-    this.page = 1;
-    this.applySort();
-    this.actualizarPaginacion();
-    this.viewFiltro = false;
+    // Formatear fecha a YYYY-MM-DD
+    const fechaStr = `${sel.year}-${String(sel.month).padStart(2, '0')}-${String(sel.day).padStart(2, '0')}`;
+
+    this.logsService.obtenerLogs(fechaStr, nombreAplicacion, tipoLog).subscribe({
+      next: (resp: any[]) => {
+        // Mapear respuesta a formato de cards
+        this.logs = (resp || []).map((item, idx) => ({
+          id: idx + 1,
+          timestamp: fechaStr,
+          source: item.file,
+          message: item.line,
+          status: '',
+          details: item.line,
+          aplicacion: nombreAplicacion
+        }));
+        this.logsQueryResult = [...this.logs];
+        this.logsFiltrados = [...this.logsQueryResult];
+        this.page = 1;
+        this.applySort();
+        this.actualizarPaginacion();
+        this.viewFiltro = false;
+      },
+      error: (err) => {
+        Swal.fire('Error', 'No se pudieron obtener los logs.', 'error');
+        this.logs = [];
+        this.logsQueryResult = [];
+        this.logsFiltrados = [];
+      }
+    });
   }
 
   regresarAFiltro() {
