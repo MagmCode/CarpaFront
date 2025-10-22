@@ -4,6 +4,7 @@ export interface Accion {
   url: string;
   descripcion: string;
   checked: boolean;
+  applicationName?: string;
 }
 
 import { Component, OnInit } from '@angular/core';
@@ -17,6 +18,7 @@ export interface RolAccion {
   rol: string;
   descripcion: string;
   aplicacion: string;
+  siglasAplic: string;
 }
 
 @Component({
@@ -71,10 +73,11 @@ export class RolesAccionesComponent implements OnInit {
       next: (resp: any) => {
         if (resp && Array.isArray(resp.data)) {
           this.roles = resp.data.map((r: any) => ({
-            id: r.id, // <-- agregar el id del rol
+            id: r.id,
             rol: r.rol || '',
             descripcion: r.descripcion || '',
-            aplicacion: r.aplicacion || ''
+            aplicacion: r.aplicacion || '',
+            siglasAplic: r.siglasAplic || ''
           }));
         } else {
           console.warn('RolesAcciones: unexpected roles payload, using empty list', resp);
@@ -90,6 +93,7 @@ export class RolesAccionesComponent implements OnInit {
         this.filtrarRoles();
         this.filtrarAcciones();
         this.loading = false;
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar los roles.', icon: 'error' });
       }
     });
     this.loading = true;
@@ -204,27 +208,47 @@ export class RolesAccionesComponent implements OnInit {
     this.rolSeleccionado = rol;
     this.asociando = true;
     this.loading = true;
-    // Consultar acciones asociadas al rol
-    this.rolesService.buscarAccionesPorRol({ mscRoleId: rol.id }).subscribe({
+    // Consultar todas las acciones
+    this.accionesService.buscar({}).subscribe({
       next: (resp: any) => {
-        const seleccionados: number[] = Array.isArray(resp?.data) ? resp.data : [];
-        // Marcar como checked las acciones que coincidan con los ids devueltos
-        // Para esto, necesitamos los idAction de cada acción (de backend)
-        const accionesBackend = this.accionesService.getAcciones();
-        for (const accion of this.acciones) {
-          const found = accionesBackend.find((a: any) => a.url === accion.url && a.description === accion.descripcion);
-          accion.checked = !!(found && seleccionados.includes(found.idAction));
+        let accionesFiltradas = resp && resp.data ? resp.data : resp;
+        // Filtrar por siglasAplic directamente
+        const sigla = rol.siglasAplic ? rol.siglasAplic.toLowerCase() : '';
+        if (sigla) {
+          accionesFiltradas = (Array.isArray(accionesFiltradas) ? accionesFiltradas : []).filter(a => (a.applicationName && a.applicationName.toLowerCase() === sigla));
+          console.log('Acciones filtradas por sigla:', sigla, accionesFiltradas);
         }
-        this.filtrarAcciones();
-        this.loading = false;
+        // Consultar acciones asociadas al rol
+        this.rolesService.buscarAccionesPorRol({ mscRoleId: rol.id }).subscribe({
+          next: (accionesResp: any) => {
+            const seleccionados: number[] = Array.isArray(accionesResp?.data) ? accionesResp.data : [];
+            this.acciones = (Array.isArray(accionesFiltradas) ? accionesFiltradas : []).map((a: any) => ({
+              url: a.url,
+              descripcion: a.description,
+              applicationName: a.applicationName,
+              checked: seleccionados.includes(a.idAction)
+            }));
+            this.filtrarAcciones();
+            this.loading = false;
+          },
+          error: () => {
+            this.loading = false;
+            Swal.fire({ title: 'Error', text: 'No se pudieron cargar las acciones asociadas.', icon: 'error' });
+            this.acciones = (Array.isArray(accionesFiltradas) ? accionesFiltradas : []).map((a: any) => ({
+              url: a.url,
+              descripcion: a.description,
+              applicationName: a.applicationName,
+              checked: false
+            }));
+            this.filtrarAcciones();
+          }
+        });
       },
       error: () => {
-        // Si falla la consulta, no marcar nada
-        this.loading = false;
-        for (const accion of this.acciones) {
-          accion.checked = false;
-        }
+        this.acciones = [];
         this.filtrarAcciones();
+        this.loading = false;
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar las acciones.', icon: 'error' });
       }
     });
   }

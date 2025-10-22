@@ -56,24 +56,24 @@ export class AplicacionesService {
   }
 
   /**
-   * Update an aplicacion on the backend (PUT /admin/app/update).
-   * Accepts either the internal Aplicacion shape or the BackendAplicacion shape.
-   * On success it maps the returned backend object to Aplicacion and updates the cached list.
+   * Update an aplicacion on the backend (POST /admin/app/update).
+   * Envia solo los campos necesarios para la actualización.
    */
   updateAplicacion(input: Aplicacion): Observable<Aplicacion> {
     const url = `${this.apiUrl}/admin/app/update`;
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-
-    // build payload directly from the backend-shaped Aplicacion input
-    const payload: Aplicacion = (input as Aplicacion);
-
-    return this.http.put<any>(url, payload, { headers }).pipe(
+    // Solo los campos requeridos
+    const payload = {
+      idApplication: input.idApplication,
+      description: input.description,
+      siglasApplic: input.siglasApplic,
+      comentarios: input.comentarios
+    };
+    return this.http.post<any>(url, payload, { headers }).pipe(
       map((resp: any) => {
-        // backend may return envelope { success, data } or the updated object directly
         const raw = resp && resp.data ? resp.data : resp;
         const backendObj = Array.isArray(raw) ? raw[0] : raw;
         const updated: Aplicacion = backendObj as Aplicacion;
-
         // update cache atomically (compare by idApplication)
         const current = this.aplicacionesSubject.getValue();
         const idx = current.findIndex(a => String(a.idApplication) === String(updated.idApplication));
@@ -84,7 +84,6 @@ export class AplicacionesService {
         } else {
           this.aplicacionesSubject.next([updated, ...current]);
         }
-
         return updated;
       }),
       catchError((error: HttpErrorResponse) => {

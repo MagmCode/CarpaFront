@@ -1,0 +1,31 @@
+# ===== Stage 1: Dependencias =====
+FROM node:16.19-alpine AS deps
+
+WORKDIR /app
+
+# Copiamos package.json y package-lock.json
+COPY package*.json ./
+
+# Instalamos dependencias (incluyendo dev)
+RUN npm install --force 
+
+# ===== Stage 2: Código fuente =====
+FROM node:16.19-alpine AS dev
+
+WORKDIR /app
+
+# Copiamos node_modules desde el stage anterior
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copiamos el resto del proyecto
+COPY . .
+
+# Variables de entorno para desarrollo
+ENV NODE_ENV=development
+ENV CHOKIDAR_USEPOLLING=true
+ENV NG_CLI_ANALYTICS=ci
+
+EXPOSE 4200
+
+# Arrancar en modo desarrollo
+CMD ["npm", "run", "start:docker"]

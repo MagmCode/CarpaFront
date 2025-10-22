@@ -72,6 +72,7 @@ export class RolesComponent implements OnInit {
         this.roles = [];
         this.filtrarRoles();
         this.loading = false;
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar los roles.', icon: 'error' });
       }
     });
   }

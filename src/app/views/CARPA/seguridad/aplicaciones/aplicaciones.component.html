@@ -30,22 +30,22 @@
         <thead class="table-light">
           <tr>
             <!-- <th>Eliminar</th> -->
-            <th>Editar</th>
-            <th (click)="ordenarPor('nombre')" style="cursor:pointer">
+            <th class="fw-semibold">Editar</th>
+            <th (click)="ordenarPor('nombre')" style="cursor:pointer" class="fw-semibold">
               Nombre
               <span *ngIf="sortColumn === 'nombre'">
                 <i class="feather"
                   [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
               </span>
             </th>
-            <th (click)="ordenarPor('siglas')" style="cursor:pointer">
+            <th (click)="ordenarPor('siglas')" style="cursor:pointer" class="fw-semibold">
               Siglas
               <span *ngIf="sortColumn === 'siglas'">
                 <i class="feather"
                   [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
               </span>
             </th>
-            <th (click)="ordenarPor('comentarios')" style="cursor:pointer">
+            <th (click)="ordenarPor('comentarios')" style="cursor:pointer" class="fw-semibold">
               Descripción
               <span *ngIf="sortColumn === 'comentarios'">
                 <i class="feather"
@@ -122,22 +122,40 @@
 <!-- Modal para Agregar/Editar aplicación -->
 <ng-template #appModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Agregar Aplicación' : 'Editar Aplicación' }}</h5>
+    <h5 class="modal-title fw-semibold">{{ modalModo === 'agregar' ? 'Agregar Aplicación' : 'Editar Aplicación' }}</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-  <form (ngSubmit)="saveApplication(modal)">
+  <form #appForm="ngForm" (ngSubmit)="saveApplication(modal)">
     <div class="modal-body">
       <div class="mb-3">
         <label for="nombre" class="form-label">Nombre</label>
-        <input id="nombre" name="nombre" class="form-control" [(ngModel)]="appSeleccionada.description" required>
+        <input id="nombre" name="nombre" class="form-control"
+          [(ngModel)]="appSeleccionada.description" required
+          [ngClass]="{'is-invalid': appForm.submitted && (!appSeleccionada.description || !appSeleccionada.description.trim())}"
+        >
+        <div *ngIf="appForm.submitted && (!appSeleccionada.description || !appSeleccionada.description.trim())" class="invalid-feedback text-start">
+          El nombre no puede estar en blanco.
+        </div>
       </div>
       <div class="mb-3">
         <label for="siglas" class="form-label">Siglas</label>
-        <input id="siglas" name="siglas" class="form-control" [(ngModel)]="appSeleccionada.siglasApplic" required>
+        <input id="siglas" name="siglas" class="form-control"
+          [(ngModel)]="appSeleccionada.siglasApplic" required
+          [ngClass]="{'is-invalid': appForm.submitted && (!appSeleccionada.siglasApplic || !appSeleccionada.siglasApplic.trim())}"
+        >
+        <div *ngIf="appForm.submitted && (!appSeleccionada.siglasApplic || !appSeleccionada.siglasApplic.trim())" class="invalid-feedback text-start">
+          Las siglas no pueden estar en blanco.
+        </div>
       </div>
       <div class="mb-3">
         <label for="comentarios" class="form-label">Descripción</label>
-        <textarea id="comentarios" name="comentarios" class="form-control" [(ngModel)]="appSeleccionada.comentarios"></textarea>
+        <textarea id="comentarios" name="comentarios" class="form-control"
+          [(ngModel)]="appSeleccionada.comentarios" required
+          [ngClass]="{'is-invalid': appForm.submitted && (!appSeleccionada.comentarios || !appSeleccionada.comentarios.trim())}"
+        ></textarea>
+        <div *ngIf="appForm.submitted && (!appSeleccionada.comentarios || !appSeleccionada.comentarios.trim())" class="invalid-feedback text-start">
+          La descripción no puede estar en blanco.
+        </div>
       </div>
     </div>
     <div class="modal-footer">

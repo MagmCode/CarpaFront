@@ -78,7 +78,7 @@ export class AccionesComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        Swal.fire({ title: 'Error', text: 'No se pudieron cargar las acciones.', icon: 'error' });
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar los privilegios.', icon: 'error' });
         this.acciones = [];
         this.filtrarAcciones();
         this.loading = false;
@@ -142,7 +142,7 @@ export class AccionesComponent implements OnInit {
   }
 
   exitMenu(): void {
-    console.log('Salir del menú de acciones');
+    console.log('Salir del menú de privilegios');
   }
 
   openAddActionModal(content: TemplateRef<any>) {
@@ -190,12 +190,12 @@ export class AccionesComponent implements OnInit {
       };
       this.accionesService.crear(payload).subscribe({
         next: () => {
-          Swal.fire({ icon: 'success', title: 'Acción creada', timer: 1200, showConfirmButton: false });
+          Swal.fire({ icon: 'success', title: 'Privilegio Creado', timer: 1200, showConfirmButton: false });
           this.cargarAcciones();
           modal.close();
         },
         error: (err) => {
-          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la acción.' });
+          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear el privilegio.' });
         }
       });
     } else if (this.modalModo === 'editar' && this.accionSeleccionada) {
@@ -207,7 +207,7 @@ export class AccionesComponent implements OnInit {
         idAction = (this.accionSeleccionada as any).idAction;
       }
       if (!idAction) {
-        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo determinar el id de la acción a editar.' });
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo determinar el id del privilegio a editar.' });
         return;
       }
       const payload = {
@@ -219,12 +219,12 @@ export class AccionesComponent implements OnInit {
       };
       this.accionesService.editar(payload).subscribe({
         next: () => {
-          Swal.fire({ icon: 'success', title: 'Acción editada', timer: 1200, showConfirmButton: false });
+          Swal.fire({ icon: 'success', title: 'Privilegio editado', timer: 1200, showConfirmButton: false });
           this.cargarAcciones();
           modal.close();
         },
         error: (err) => {
-          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo editar la acción.' });
+          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo editar el privilegio.' });
         }
       });
     }
@@ -232,7 +232,7 @@ export class AccionesComponent implements OnInit {
 
   deleteAccion(accion: any): void {
     Swal.fire({
-      title: `¿Desea eliminar la acción?`,
+      title: `¿Desea eliminar el privilegio?`,
       text: `URL: ${accion.url}`,
       icon: 'warning',
       showCancelButton: true,
@@ -251,7 +251,7 @@ export class AccionesComponent implements OnInit {
           if (found) idAction = found.idAction;
         }
         if (!idAction) {
-          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo determinar el id de la acción a eliminar.' });
+          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo determinar el id del privilegio a eliminar.' });
           return;
         }
         this.accionesService.eliminar(idAction).subscribe({
@@ -266,7 +266,7 @@ export class AccionesComponent implements OnInit {
             this.cargarAcciones();
           },
           error: (err) => {
-            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar la acción.' });
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el privilegio.' });
           }
         });
       }
@@ -330,8 +330,8 @@ export class AccionesComponent implements OnInit {
       return;
     }
     Swal.fire({
-      title: '¿Está seguro? Puede eliminar varias acciones',
-      text: `Se eliminarán las acciones indicadas en el archivo: ${this.archivoEliminarSeleccionado.name}`,
+      title: '¿Está seguro? Puede eliminar varios privilegios',
+      text: `Se eliminarán los privilegios indicados en el archivo: ${this.archivoEliminarSeleccionado.name}`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',

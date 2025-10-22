@@ -29,7 +29,7 @@
       <table class="table table-bordered align-middle">
         <thead class="table-light">
           <tr>
-            <th class="text-center">Eliminar</th>
+            <!-- <th class="text-center">Eliminar</th> -->
             <th class="text-center">Editar</th>
             <th class="text-center">Submenú</th>
             <th class="text-center">Ver Submenú</th>
@@ -50,10 +50,10 @@
           <ng-template #treeTable let-nodes let-nivel="nivel" let-parent="parent">
             <ng-container *ngFor="let menu of nodes; let i = index">
               <tr>
-                <td class="text-center">
+                <!-- <td class="text-center">
                   <button class="btn btn-danger btn-sm mx-auto" title="Eliminar"
                     (click)="deleteOpcion(menu, parent, i)"><i class="feather icon-trash-2"></i></button>
-                </td>
+                </td> -->
                 <td class="text-center">
                   <button class="btn btn-warning btn-sm mx-auto" title="Editar"
                     (click)="openEditOpcionModal(opcionModal, menu, parent, i)"><i

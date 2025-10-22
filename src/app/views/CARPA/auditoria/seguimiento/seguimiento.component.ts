@@ -13,6 +13,7 @@ type SortDir = 'asc' | 'desc' | null;
   styleUrls: ['./seguimiento.component.scss']
 })
 export class SeguimientoComponent implements OnInit {
+  loading = false;
   statusFiltro: string | null = null;
   filtrarPorStatus(): void {
     let res = [...this.logsQueryResult];
@@ -141,30 +142,75 @@ export class SeguimientoComponent implements OnInit {
     // Formatear fecha a YYYY-MM-DD
     const fechaStr = `${sel.year}-${String(sel.month).padStart(2, '0')}-${String(sel.day).padStart(2, '0')}`;
 
+    this.loading = true;
     this.logsService.obtenerLogs(fechaStr, nombreAplicacion, tipoLog).subscribe({
       next: (resp: any[]) => {
-        // Mapear respuesta a formato de cards
-        this.logs = (resp || []).map((item, idx) => ({
-          id: idx + 1,
-          timestamp: fechaStr,
-          source: item.file,
-          message: item.line,
-          status: '',
-          details: item.line,
-          aplicacion: nombreAplicacion
-        }));
+        // Adaptar mapeo al nuevo formato JSON
+        this.logs = (resp || []).map((item, idx) => {
+          let lineObj: any = {};
+          try {
+            lineObj = item.line ? JSON.parse(item.line) : {};
+          } catch (e) {
+            lineObj = {};
+          }
+          // timestamp: usar epochSecond de la raíz si existe, si no, de lineObj
+          const epochSecond = item.epochSecond || lineObj.instant?.epochSecond;
+          const nanoOfSecond = lineObj.instant?.nanoOfSecond || 0;
+          const timestamp = epochSecond
+            ? new Date(epochSecond * 1000 + Math.floor(nanoOfSecond / 1e6)).toLocaleString()
+            : item.fecha || fechaStr;
+
+          // status: usar status de la raíz, si no, de lineObj
+          const status = item.status || lineObj.status || lineObj.contextMap?.respuesta || lineObj.level || '';
+
+          // statusLabel: si responseStatus es '200', mostrar como success/OK
+          const responseStatus = lineObj.contextMap?.responseStatus || lineObj.responseStatus || item.responseStatus;
+          const respuesta = (status || '').toString().toUpperCase();
+          const level = lineObj.level || item.level || '';
+          const statusLabel = (() => {
+            if (responseStatus === '200') return { type: 'success', text: 'OK' };
+            if (respuesta === 'PROCESSING') return { type: 'primary', text: respuesta };
+            if (respuesta === 'OK') return { type: 'success', text: respuesta };
+            if (respuesta === 'ERROR') return { type: 'danger', text: respuesta };
+            // Si no hay responseStatus, usar level
+            if (!responseStatus && level) {
+              if (level === 'INFO') return { type: 'info', text: 'INFO' };
+              if (level === 'WARN') return { type: 'warning', text: 'WARN' };
+              return { type: 'secondary', text: level };
+            }
+            return { type: 'secondary', text: 'Sin estado' };
+          })();
+
+          return {
+            id: idx + 1,
+            timestamp,
+            source: item.service || lineObj.serviceName || lineObj.loggerName || '',
+            message: item.message || lineObj.message || '',
+            status,
+            statusLabel,
+            details: lineObj ? JSON.stringify(lineObj, null, 2) : '',
+            aplicacion: item.service || lineObj.serviceName || nombreAplicacion || '',
+            userId: item.user || lineObj.userId || lineObj.contextMap?.userId || '',
+            roleName: lineObj.roleId || lineObj.contextMap?.roleName || '',
+            clientIp: lineObj.clientIp || lineObj.contextMap?.clientIp || '',
+            action: lineObj.action || lineObj.contextMap?.action || '',
+            traceId: lineObj.traceId || lineObj.contextMap?.traceId || ''
+          };
+        });
         this.logsQueryResult = [...this.logs];
         this.logsFiltrados = [...this.logsQueryResult];
         this.page = 1;
         this.applySort();
         this.actualizarPaginacion();
         this.viewFiltro = false;
+        this.loading = false;
       },
       error: (err) => {
         Swal.fire('Error', 'No se pudieron obtener los logs.', 'error');
         this.logs = [];
         this.logsQueryResult = [];
         this.logsFiltrados = [];
+        this.loading = false;
       }
     });
   }
