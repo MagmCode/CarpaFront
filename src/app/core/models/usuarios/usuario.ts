@@ -1,9 +1,11 @@
 export interface RolUsuario {
-  id: number;
-  alias: string;
-  descripcion: string;
-  tipo: string;
-  aplicacion: string;
+  // backend fields
+  mscRoleId?: number;
+  roleName?: string;
+  description?: string;
+  inUsoEnRed?: string;
+  idApplication?: number | string;
+  siglasApplic?: string;
   seleccionado?: boolean;
 }
 
@@ -14,5 +16,25 @@ export interface Usuario {
   email: string;
   userStatus: number;
   roles: RolUsuario[];
-  imported?: boolean; // indica si el usuario fue importado desde un archivo
+  seleccionado?: boolean;
+  imported?: boolean;
+  // Nuevos campos para alta de usuario
+  typeAccess: '' | 'Local' | 'Directorio Activo' | 'LDAP';
+  clave?: string;
+  encriptamiento?: string;
+  cedula: number;
+  descCargo: string;
+  descGeneral: string;
+  passwordDays?: number;
+  vigencia?: number; // días
+  isEditable: boolean;
+
+  // LDAP
+    codigo: string;
+    descUnidad: string;
+    estatus: string;
+    correo: string;
+    codigoCargo: string;
+    nombreCompleto: string;
+    cargo: string;
 }

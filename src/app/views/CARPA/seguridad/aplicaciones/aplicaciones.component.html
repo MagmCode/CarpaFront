@@ -1,8 +1,10 @@
 <div class="card">
   <div class="card-header">
-    <h6 class="card-title fw-semibold">Seguridad / Aplicaciones</h6>
+    <h6 class="card-title fw-semibold">Accesos / Sistemas </h6>
   </div>
   <div class="card-body" style="position: relative;">
+          <app-local-loading [loading]="loading"></app-local-loading>
+
     <div class="row mb-4 align-items-end">
       <div class="d-flex justify-content-end">
         <strong>Total de registros:&nbsp;</strong>  {{ aplicacionesFiltradas.length}}
@@ -13,12 +15,8 @@
         <button class="btn btn-success" (click)="openAddApplicationModal(appModal)">
           <i class="mdi mdi-plus"></i> Agregar
         </button>
-        <!-- <button class="btn btn-danger" (click)="exitMenu()">
-          <i class="mdi mdi-arrow-left"></i>
-          Salir
-        </button> -->
       </div>
-      <div>
+      <div >
         <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
           [(ngModel)]="searchTerm" (input)="filtrarAplicaciones()">
       </div>
@@ -31,10 +29,10 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Eliminar</th>
+            <!-- <th>Eliminar</th> -->
             <th>Editar</th>
             <th (click)="ordenarPor('nombre')" style="cursor:pointer">
-              Nombre de Aplicación
+              Nombre
               <span *ngIf="sortColumn === 'nombre'">
                 <i class="feather"
                   [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
@@ -48,7 +46,7 @@
               </span>
             </th>
             <th (click)="ordenarPor('comentarios')" style="cursor:pointer">
-              Comentarios
+              Descripción
               <span *ngIf="sortColumn === 'comentarios'">
                 <i class="feather"
                   [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
@@ -58,18 +56,18 @@
         </thead>
         <tbody>
           <tr *ngFor="let app of aplicacionesPaginadas">
-            <td>
+            <!-- <td>
               <button class="btn btn-danger btn-sm" title="Eliminar" (click)="deleteApplication(app)">
                 <i class="feather icon-trash-2"></i>
               </button>
-            </td>
+            </td> -->
                         <td>
               <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditApplicationModal(appModal, app)">
                 <i class="feather icon-edit"></i>
               </button>
             </td>
-            <td>{{ app.nombre }}</td>
-            <td>{{ app.siglas }}</td>
+            <td>{{ app.description }}</td>
+            <td>{{ app.siglasApplic }}</td>
             <td>{{ app.comentarios }}</td>
           </tr>
         </tbody>
@@ -131,14 +129,14 @@
     <div class="modal-body">
       <div class="mb-3">
         <label for="nombre" class="form-label">Nombre</label>
-        <input id="nombre" name="nombre" class="form-control" [(ngModel)]="appSeleccionada.nombre" required>
+        <input id="nombre" name="nombre" class="form-control" [(ngModel)]="appSeleccionada.description" required>
       </div>
       <div class="mb-3">
         <label for="siglas" class="form-label">Siglas</label>
-        <input id="siglas" name="siglas" class="form-control" [(ngModel)]="appSeleccionada.siglas" required>
+        <input id="siglas" name="siglas" class="form-control" [(ngModel)]="appSeleccionada.siglasApplic" required>
       </div>
       <div class="mb-3">
-        <label for="comentarios" class="form-label">Comentarios</label>
+        <label for="comentarios" class="form-label">Descripción</label>
         <textarea id="comentarios" name="comentarios" class="form-control" [(ngModel)]="appSeleccionada.comentarios"></textarea>
       </div>
     </div>

@@ -1,23 +1,27 @@
 <div class="card">
 	<div class="card-header d-flex justify-content-between align-items-center">
-		<h6 class="card-title fw-semibold mb-0">Reportes por Aplicación</h6>
-		<div>
+		<h6 class="card-title fw-semibold mb-0">Reportes por Sistema</h6>
+		<div class="d-flex align-items-center gap-2">
+						<button *ngIf="selectedApp" class="btn btn-outline-secondary volver" (click)="regresarAFiltro()">
+				<i class="icon-bdv-icon-back-m me-2" aria-hidden="true"></i>Volver
+			</button>
 			<select class="form-select" [(ngModel)]="selectedApp" (change)="onAppSelected()" style="width: 280px">
-				<option [ngValue]="null">-- Seleccione una aplicación --</option>
-				<option *ngFor="let a of aplicaciones" [ngValue]="a.id">{{ a.nombre }}</option>
+				<option [ngValue]="null">Seleccione un sistema</option>
+				<option *ngFor="let a of aplicaciones" [ngValue]="a.idApplication">{{ a.siglasApplic }}</option>
 			</select>
 		</div>
 	</div>
 	<div class="card-body">
+		<app-local-loading [loading]="loading"></app-local-loading>
 		<div *ngIf="!selectedApp" class="text-center py-5">
-			<p class="mb-0">Por favor seleccione una aplicación para consultar sus usuarios, acciones y roles.</p>
+			<h4 class="mb-0 text-primary fw-semibold">Por favor seleccione un sistema para consultar.</h4>
 		</div>
 
 		<!-- Dashboard style: three top cards -->
 		<div *ngIf="selectedApp">
 			<div class="row mb-4">
-				<div class="col-md-4 grid-margin stretch-card">
-					<div class="card">
+				<div class="col-md-4 grid-margin stretch-card"> 
+					<div class="card card-options" [ngClass]="{'focused-card-usuarios': view==='usuarios'}">
 						<div class="card-body">
 							<div class="d-flex justify-content-between align-items-baseline">
 								<h6 class="card-title mb-0 fw-semibold">Usuarios</h6>
@@ -31,11 +35,11 @@
 								<div class="col-6 col-md-12 col-xl-5">
 									  <h3 class="mb-2">{{ getUsuariosCount() }}</h3>
 									<div class="d-flex align-items-baseline">
-										<p class="text-muted small mb-0">Usuarios registrados en {{ selectedApp }}</p>
+										<p class="text-muted small mb-0">Usuarios registrados en {{ getSelectedAppName() }}</p>
 									</div>
 								</div>
 								<div class="col-6 col-md-12 col-xl-7 d-flex align-items-center justify-content-center">
-									<button class="btn btn-outline-primary" (click)="setView('usuarios')">Ver Usuarios</button>
+									<button class="btn btn-primary" (click)="setView('usuarios')">Ver Usuarios</button>
 								</div>
 							</div>
 						</div>
@@ -43,10 +47,10 @@
 				</div>
 
 				<div class="col-md-4 grid-margin stretch-card">
-					<div class="card">
+					<div class="card card-options" [ngClass]="{'focused-card-acciones': view==='acciones'}">
 						<div class="card-body">
 							<div class="d-flex justify-content-between align-items-baseline">
-								<h6 class="card-title mb-0 fw-semibold">Acciones</h6>
+								<h6 class="card-title mb-0 fw-semibold">Privilegios</h6>
 								<div ngbDropdown class="mb-2">
 									<button ngbDropdownToggle class="btn p-0 no-dropdown-toggle-icon" type="button">
 										<i class="icon-lg text-muted pb-3px" data-feather="more-horizontal" appFeatherIcon></i>
@@ -58,11 +62,11 @@
 								<div class="col-6 col-md-12 col-xl-5">
 									  <h3 class="mb-2">{{ getAccionesCount() }}</h3>
 									<div class="d-flex align-items-baseline">
-										<p class="text-muted small mb-0">Acciones disponibles  en {{ selectedApp }}</p>
+										  <p class="text-muted small mb-0">Privilegios disponibles  en {{ getSelectedAppName() }}</p>
 									</div>
 								</div>
 								<div class="col-6 col-md-12 col-xl-7 d-flex align-items-center justify-content-center">
-									<button class="btn btn-outline-primary" (click)="setView('acciones')">Ver Acciones</button>
+									<button class="btn btn-info" (click)="setView('acciones')">Ver Privilegios</button>
 								</div>
 							</div>
 						</div>
@@ -70,7 +74,7 @@
 				</div>
 
 				<div class="col-md-4 grid-margin stretch-card">
-					<div class="card">
+					<div class="card card-options" [ngClass]="{'focused-card-roles': view==='roles'}">
 						<div class="card-body">
 							<div class="d-flex justify-content-between align-items-baseline">
 								<h6 class="card-title mb-0 fw-semibold">Roles</h6>
@@ -85,11 +89,11 @@
 								<div class="col-6 col-md-12 col-xl-5">
 									  <h3 class="mb-2">{{ getRolesCount() }}</h3>
 									<div class="d-flex align-items-baseline">
-										<p class="text-muted small mb-0">Roles definidos  en {{ selectedApp }}</p>
+										  <p class="text-muted small mb-0">Roles definidos  en {{ getSelectedAppName() }}</p>
 									</div>
 								</div>
 								<div class="col-6 col-md-12 col-xl-7 d-flex align-items-center justify-content-center">
-									<button class="btn btn-outline-primary" (click)="setView('roles')">Ver Roles</button>
+									<button class="btn btn-warning text-white" (click)="setView('roles')">Ver Roles</button>
 								</div>
 							</div>
 						</div>
@@ -102,54 +106,55 @@
 				<div class="col-12 grid-margin stretch-card">
 					<div class="card overflow-hidden">
 						<div class="card-body">
+							
 							<div class="d-flex justify-content-between align-items-baseline mb-4 mb-md-3">
-								<h6 class="card-title fw-semibold mb-0">{{ view === 'usuarios' ? 'Usuarios' : (view === 'acciones' ? 'Acciones' : 'Roles') }} de {{ selectedApp }}</h6>
+								<h6 class="card-title fw-semibold mb-0">{{ view === 'usuarios' ? 'Usuarios' : (view === 'acciones' ? 'Acciones' : 'Roles') }} de {{ getSelectedAppName() }}</h6>
 								<div class="d-flex align-items-center gap-2">
 									<input class="form-control" style="width:260px;" placeholder="Buscar..." [(ngModel)]="searchTerm" (input)="updateList()">
 								
 								</div>
                                 
 							</div>
-                            	<button class="btn btn-outline-success mb-4" (click)="exportCsv()"><i class="feather icon-download"></i> Exportar</button>
+                            	<button class="btn btn-success mb-4" (click)="exportCsv()"><i class="feather icon-download"></i> Exportar</button>
 
 							<div class="table-responsive">
 								<table class="table table-bordered align-middle text-center">
 									<thead class="table-light">
 										<tr *ngIf="view==='usuarios'">
-											<th>Usuario ID</th>
-											<th>Rol</th>
-											<th class="text-start">Nombres</th>
-											<th class="text-start">Apellidos</th>
+											<th>ID</th>
+											<th>Nombre Completo</th>
+											<th>Usuario</th>
 											<th>Email</th>
-											<th>Estatus</th>
 										</tr>
 										<tr *ngIf="view==='acciones'">
-											<th>Rol</th>
-											<th>Acción</th>
-											<th class="text-start">Descripción</th>
+											<th>ID</th>
+											<th>URL</th>
+											<th>Descripción</th>
+											<th>Secured</th>
 										</tr>
 										<tr *ngIf="view==='roles'">
-											<th>Rol</th>
-											<th class="text-start">Descripción</th>
+											<th>ID</th>
 											<th>Tipo</th>
+											<th>Rol</th>
+											<th>Descripción</th>
 										</tr>
 									</thead>
 									<tbody>
 										<tr *ngFor="let it of itemsPaginados">
-											<td *ngIf="view==='usuarios'">{{ it.usuarioId }}</td>
-											<td *ngIf="view==='usuarios'">{{ it.rol }}</td>
-											<td *ngIf="view==='usuarios'" class="text-start">{{ it.nombres }}</td>
-											<td *ngIf="view==='usuarios'" class="text-start">{{ it.apellidos }}</td>
+											<td *ngIf="view==='usuarios'">{{ it.mscUserId }}</td>
+											<td *ngIf="view==='usuarios'">{{ it.fullName }}</td>
+											<td *ngIf="view==='usuarios'">{{ it.userId }}</td>
 											<td *ngIf="view==='usuarios'">{{ it.email }}</td>
-											<td *ngIf="view==='usuarios'">{{ it.estatus }}</td>
 
-											<td *ngIf="view==='acciones'">{{ it.rol }}</td>
-											<td *ngIf="view==='acciones'">{{ it.accion }}</td>
-											<td *ngIf="view==='acciones'" class="text-start">{{ it.descripcion }}</td>
+											<td *ngIf="view==='acciones'">{{ it.idAction }}</td>
+											<td *ngIf="view==='acciones'">{{ it.url }}</td>
+											<td *ngIf="view==='acciones'">{{ it.description }}</td>
+											<td *ngIf="view==='acciones'">{{ it.secured }}</td>
 
-											<td *ngIf="view==='roles'">{{ it.rol }}</td>
-											<td *ngIf="view==='roles'" class="text-start">{{ it.descripcion }}</td>
+											<td *ngIf="view==='roles'">{{ it.mscRoleId }}</td>
 											<td *ngIf="view==='roles'">{{ it.tipo }}</td>
+											<td *ngIf="view==='roles'">{{ it.rol }}</td>
+											<td *ngIf="view==='roles'">{{ it.descripcion }}</td>
 										</tr>
 									</tbody>
 								</table>
@@ -172,14 +177,4 @@
 										<li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p"><button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button></li>
 									</ng-container>
 									<li class="page-item" [class.disabled]="page === totalPages"><button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button></li>
-								</ul>
-							</div>
-
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-	</div>
-</div>
+							

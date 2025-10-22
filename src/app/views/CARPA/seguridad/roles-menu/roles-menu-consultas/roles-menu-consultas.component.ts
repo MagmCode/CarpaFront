@@ -52,7 +52,7 @@ export class RolesMenuConsultasComponent implements OnInit {
       id: 1, 
       alias: 'ADMIN', 
       descripcion: 'Administrador del sistema', 
-      aplicacion: this.aplicaciones[0]?.nombre || '',
+      aplicacion: this.aplicaciones[0]?.description || '',
       opcionesMenu: [
         { nombre: 'Dashboard', seleccionado: false },
         { nombre: 'Reportes', seleccionado: false },
@@ -64,7 +64,7 @@ export class RolesMenuConsultasComponent implements OnInit {
       id: 2, 
       alias: 'INV', 
       descripcion: 'Gestor de Inventario', 
-      aplicacion: this.aplicaciones[1]?.nombre ||'', 
+      aplicacion: this.aplicaciones[1]?.description ||'', 
       opcionesMenu: [
         { nombre: 'Dashboard', seleccionado: false },
         { nombre: 'Reportes', seleccionado: false },

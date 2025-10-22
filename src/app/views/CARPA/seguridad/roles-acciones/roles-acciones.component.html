@@ -1,11 +1,12 @@
 <div *ngIf="!asociando" class="card">
   <div class="card-header">
-    <h6 class="card-title fw-semibold">Seguridad / Roles-Acciones</h6>
+    <h6 class="card-title fw-semibold">Accesos / Roles - Privilegios</h6>
   </div>
   <div class="card-body" style="position: relative;">
+        <app-local-loading [loading]="loading"></app-local-loading>
     <div class="row mb-4 align-items-end">
       <div class="fw-bold d-flex justify-content-end">
-        <span class="fw-semibold">Total de registros: </span> {{ rolesFiltrados.length }}
+        <span class="fw-semibold">Total de registros:&nbsp;</span> {{ rolesFiltrados.length }}
       </div>
     </div>
     <div class="d-flex justify-content-between mb-4">
@@ -33,7 +34,7 @@
               </span>
             </th>
             <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">
-              Aplicación
+              Sistema
               <span *ngIf="sortColumn === 'aplicacion'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </span>
@@ -43,7 +44,7 @@
         <tbody>
           <tr *ngFor="let rol of rolesPaginados">
             <td>
-              <button class="btn btn-primary btn-sm" title="Asociar acciones" (click)="asociarAcciones(rol)">
+              <button class="btn btn-primary btn-sm" title="Asociar privilegios" (click)="asociarAcciones(rol)">
                 <i class="mdi mdi-link-variant"></i>
               </button>
             </td>
@@ -100,14 +101,15 @@
 <!-- Vista de asociación de acciones -->
 <div *ngIf="asociando" class="card">
   <div class="card-header d-flex justify-content-between">
-    <h6 class="card-title fw-semibold">Asociar Acciones a Rol</h6>
-            <button class="btn btn-outline-secondary btn-sm" (click)="cancelarAsociacion()">Cancelar</button>
+    <h6 class="card-title fw-semibold">Asociar Privilegios a Rol</h6>
+    <button class="btn btn-outline-secondary btn-sm" (click)="cancelarAsociacion()">Cancelar</button>
 
   </div>
   <div class="card-body">
+    <app-local-loading [loading]="loading"></app-local-loading>
     <div class="mb-3">
       <strong>Rol:</strong> {{ rolSeleccionado?.rol }}<br>
-      <strong>Aplicación:</strong> {{ rolSeleccionado?.aplicacion }}
+      <strong>Sistema:</strong> {{ rolSeleccionado?.aplicacion }}
     </div>
 
     <div class="d-flex justify-content-between mb-3">
@@ -121,7 +123,7 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Checklist</th>
+            <th>Seleccione</th>
             <th>URL</th>
             <th>Descripción</th>
           </tr>

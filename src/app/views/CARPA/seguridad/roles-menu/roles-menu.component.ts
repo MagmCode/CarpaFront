@@ -1,12 +1,16 @@
 import { Component, OnInit, TemplateRef } from '@angular/core';
+import Swal from 'sweetalert2';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
+import { RolesService } from 'src/app/services/roles/roles.service';
 import { Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MenuService } from 'src/app/services/menu/menu.service';
 
 export interface RolMenu {
   id: number;
   rol: string;
   descripcion: string;
+  tipo: string;
   aplicacion: string;
 }
 
@@ -34,12 +38,10 @@ export interface MenuOption {
 })
 export class RolesMenuComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
+  loading = false;
 
   roles: RolMenu[] = [
-    { id: 1, rol: 'Administrador', descripcion: 'Acceso total', aplicacion: 'Gestión Usuarios' },
-    { id: 2, rol: 'Operador', descripcion: 'Acceso limitado', aplicacion: 'Inventario' },
-    { id: 3, rol: 'Consulta', descripcion: 'Solo lectura', aplicacion: 'Gestión Usuarios' },
-    { id: 4, rol: 'Supervisor', descripcion: 'Supervisa operaciones', aplicacion: 'Inventario' }
+    // will be populated from backend
   ];
 
   // Paginación y búsqueda para la tabla principal
@@ -60,62 +62,62 @@ export class RolesMenuComponent implements OnInit {
 
   // Opciones de menú jerárquicas para la asociación
   menuOptions: MenuOption[] = [
-    {
-      id: 1,
-      nombreMenu: 'Dashboard',
-      url: '/dashboard',
-      orden: 1,
-      aplicaciones: 'Gestión Usuarios',
-      checked: false,
-      hijos: [
-        { id: 11, nombreMenu: 'Inicio', url: '/dashboard/home', orden: 1, aplicaciones: 'Gestión Usuarios', checked: false },
-        // Profundidad 4 de ejemplo: 1 -> 1.2 -> 1.2.1 -> 1.2.1.2
-        {
-          id: 12,
-          nombreMenu: '1.2',
-          url: '/dashboard/1.2',
-          orden: 2,
-          aplicaciones: 'Gestión Usuarios',
-          checked: false,
-          hijos: [
-            {
-              id: 121,
-              nombreMenu: '1.2.1',
-              url: '/dashboard/1.2/1.2.1',
-              orden: 1,
-              aplicaciones: 'Gestión Usuarios',
-              checked: false,
-              hijos: [
-                { id: 1212, nombreMenu: '1.2.1.2', url: '/dashboard/1.2/1.2.1/1.2.1.2', orden: 1, aplicaciones: 'Gestión Usuarios', checked: false }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: 2,
-      nombreMenu: 'Usuarios',
-      url: '/usuarios',
-      orden: 2,
-      aplicaciones: 'Gestión Usuarios',
-      checked: false,
-      hijos: [
-        { id: 21, nombreMenu: 'Listado', url: '/usuarios/list', orden: 1, aplicaciones: 'Gestión Usuarios', checked: false },
-        { id: 22, nombreMenu: 'Crear', url: '/usuarios/create', orden: 2, aplicaciones: 'Gestión Usuarios', checked: false }
-      ]
-    },
-    {
-      id: 3,
-      nombreMenu: 'Inventario',
-      url: '/inventario',
-      orden: 3,
-      aplicaciones: 'Inventario',
-      checked: false,
-      hijos: [
-        { id: 31, nombreMenu: 'Productos', url: '/inventario/productos', orden: 1, aplicaciones: 'Inventario', checked: false },
-      ]
-    }
+    // {
+    //   id: 1,
+    //   nombreMenu: 'Dashboard',
+    //   url: '/dashboard',
+    //   orden: 1,
+    //   aplicaciones: 'Gestión Usuarios',
+    //   checked: false,
+    //   hijos: [
+    //     { id: 11, nombreMenu: 'Inicio', url: '/dashboard/home', orden: 1, aplicaciones: 'Gestión Usuarios', checked: false },
+    //     // Profundidad 4 de ejemplo: 1 -> 1.2 -> 1.2.1 -> 1.2.1.2
+    //     {
+    //       id: 12,
+    //       nombreMenu: '1.2',
+    //       url: '/dashboard/1.2',
+    //       orden: 2,
+    //       aplicaciones: 'Gestión Usuarios',
+    //       checked: false,
+    //       hijos: [
+    //         {
+    //           id: 121,
+    //           nombreMenu: '1.2.1',
+    //           url: '/dashboard/1.2/1.2.1',
+    //           orden: 1,
+    //           aplicaciones: 'Gestión Usuarios',
+    //           checked: false,
+    //           hijos: [
+    //             { id: 1212, nombreMenu: '1.2.1.2', url: '/dashboard/1.2/1.2.1/1.2.1.2', orden: 1, aplicaciones: 'Gestión Usuarios', checked: false }
+    //           ]
+    //         }
+    //       ]
+    //     }
+    //   ]
+    // },
+    // {
+    //   id: 2,
+    //   nombreMenu: 'Usuarios',
+    //   url: '/usuarios',
+    //   orden: 2,
+    //   aplicaciones: 'Gestión Usuarios',
+    //   checked: false,
+    //   hijos: [
+    //     { id: 21, nombreMenu: 'Listado', url: '/usuarios/list', orden: 1, aplicaciones: 'Gestión Usuarios', checked: false },
+    //     { id: 22, nombreMenu: 'Crear', url: '/usuarios/create', orden: 2, aplicaciones: 'Gestión Usuarios', checked: false }
+    //   ]
+    // },
+    // {
+    //   id: 3,
+    //   nombreMenu: 'Inventario',
+    //   url: '/inventario',
+    //   orden: 3,
+    //   aplicaciones: 'Inventario',
+    //   checked: false,
+    //   hijos: [
+    //     { id: 31, nombreMenu: 'Productos', url: '/inventario/productos', orden: 1, aplicaciones: 'Inventario', checked: false },
+    //   ]
+    // }
   ];
 
   // newRole para el modal de añadir/editar
@@ -133,13 +135,47 @@ export class RolesMenuComponent implements OnInit {
   constructor(
     private aplicacionesService: AplicacionesService,
     private router: Router,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private rolesService: RolesService,
+    private menuService: MenuService
   ) { }
 
   ngOnInit(): void {
     this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
-    this.filtrarRoles();
-    this.filtrarMenu();
+
+    this.loading = true;
+    // load roles from backend and map to RolMenu[] (generate numeric ids)
+    this.rolesService.consultarRoles({}).subscribe({
+      next: (resp: any) => {
+        if (resp && Array.isArray(resp.data)) {
+          this.roles = resp.data.map((r: any, idx: number) => ({
+            id: r.id,
+            rol: r.rol || '',
+            descripcion: r.descripcion || '',
+            aplicacion: r.aplicacion || ''
+          }));
+        } else {
+          console.warn('RolesMenu: unexpected roles payload, using empty list', resp);
+          this.roles = [];
+        }
+        this.filtrarRoles();
+        this.filtrarMenu();
+        this.loading = false;
+      },
+      error: (err: any) => {
+        console.error('RolesMenu: error loading roles', err);
+        this.loading = false;
+        // fallback to local defaults to keep UI usable in dev
+        this.roles = [
+          // { id: 1, rol: 'Administrador', descripcion: 'Acceso total', aplicacion: 'Gestión Usuarios' },
+          // { id: 2, rol: 'Operador', descripcion: 'Acceso limitado', aplicacion: 'Inventario' },
+          // { id: 3, rol: 'Consulta', descripcion: 'Solo lectura', aplicacion: 'Gestión Usuarios' },
+          // { id: 4, rol: 'Supervisor', descripcion: 'Supervisa operaciones', aplicacion: 'Inventario' }
+        ];
+        this.filtrarRoles();
+        this.filtrarMenu();
+      }
+    });
   }
 
   // Tabla principal
@@ -201,9 +237,97 @@ export class RolesMenuComponent implements OnInit {
   asociarAcciones(rol: RolMenu): void {
     this.rolSeleccionado = rol;
     this.asociando = true;
-    // aquí podrías cargar asociaciones del backend
-    // inicializar el filtro de menú cuando se abre la vista
-    this.filtrarMenu();
+    this.loading = true;
+    // 1. Consultar todos los menús
+    this.menuService.OpcionesMenu().subscribe({
+      next: (resp: any[]) => {
+        // 2. Consultar los menús asociados al rol
+        this.rolesService.buscarMenuPorRol({ mscRoleId: rol.id }).subscribe({
+          next: (menuResp: any) => {
+            const seleccionados: number[] = Array.isArray(menuResp?.data) ? menuResp.data : [];
+            // Mapea la respuesta a la estructura MenuOption (jerárquica)
+            const buildTree = (items: any[]): MenuOption[] => {
+              const byId = new Map<number, MenuOption>();
+              for (const it of items) {
+                byId.set(it.id, {
+                  id: it.id,
+                  nombreMenu: it.nombre ?? it.nombreMenu ?? '',
+                  url: it.ruta ?? it.url ?? '',
+                  orden: Number(it.orden ?? 0),
+                  aplicaciones: it.siglasAplicacion ?? it.aplicaciones ?? '',
+                  checked: seleccionados.includes(it.id),
+                  hijos: [],
+                  expanded: false
+                });
+              }
+              const roots: MenuOption[] = [];
+              for (const node of Array.from(byId.values())) {
+                const pid = items.find((i: any) => i.id === node.id)?.idPadre;
+                if (pid === null || pid === undefined || pid === 0) {
+                  if (node.hijos && node.hijos.length === 0) delete node.hijos;
+                  roots.push(node);
+                } else {
+                  const parent = byId.get(pid);
+                  if (parent) {
+                    parent.hijos = parent.hijos || [];
+                    parent.hijos.push(node);
+                  } else {
+                    roots.push(node);
+                  }
+                }
+              }
+              return roots;
+            };
+            this.menuOptions = buildTree(resp);
+            this.filtrarMenu();
+            this.loading = false;
+          },
+          error: () => {
+            // Si falla la consulta de menús asociados, mostrar todos sin selección
+            const buildTree = (items: any[]): MenuOption[] => {
+              const byId = new Map<number, MenuOption>();
+              for (const it of items) {
+                byId.set(it.id, {
+                  id: it.id,
+                  nombreMenu: it.nombre ?? it.nombreMenu ?? '',
+                  url: it.ruta ?? it.url ?? '',
+                  orden: Number(it.orden ?? 0),
+                  aplicaciones: it.siglasAplicacion ?? it.aplicaciones ?? '',
+                  checked: false,
+                  hijos: [],
+                  expanded: false
+                });
+              }
+              const roots: MenuOption[] = [];
+              for (const node of Array.from(byId.values())) {
+                const pid = items.find((i: any) => i.id === node.id)?.idPadre;
+                if (pid === null || pid === undefined || pid === 0) {
+                  if (node.hijos && node.hijos.length === 0) delete node.hijos;
+                  roots.push(node);
+                } else {
+                  const parent = byId.get(pid);
+                  if (parent) {
+                    parent.hijos = parent.hijos || [];
+                    parent.hijos.push(node);
+                  } else {
+                    roots.push(node);
+                  }
+                }
+              }
+              return roots;
+            };
+            this.menuOptions = buildTree(resp);
+            this.filtrarMenu();
+            this.loading = false;
+          }
+        });
+      },
+      error: () => {
+        this.menuOptions = [];
+        this.filtrarMenu();
+        this.loading = false;
+      }
+    });
   }
 
   cancelarAsociacion(): void {
@@ -212,7 +336,37 @@ export class RolesMenuComponent implements OnInit {
   }
 
   guardarAsociacion(): void {
-    // Guardar en backend si aplica
+    // Obtiene todos los ids de menú seleccionados (checked)
+    const getCheckedIds = (items: MenuOption[]): number[] => {
+      let ids: number[] = [];
+      for (const item of items) {
+        if (item.checked) ids.push(item.id);
+        if (item.hijos && item.hijos.length) {
+          ids = ids.concat(getCheckedIds(item.hijos));
+        }
+      }
+      return ids;
+    };
+    const idMenus = getCheckedIds(this.menuOptions);
+    const idRole = this.rolSeleccionado?.id;
+    if (!idRole) return;
+    const payload = { idRole, idMenus };
+    this.rolesService.rolesmenu(payload).subscribe({
+      next: (resp) => {
+        console.log('Sincronización exitosa:', resp);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Asociación realizada con éxito',
+          showConfirmButton: false,
+          timer: 2500
+        });
+      },
+      error: (err) => {
+        console.error('Error al sincronizar:', err);
+      }
+    });
     this.asociando = false;
     this.rolSeleccionado = null;
   }

@@ -2,13 +2,9 @@ import { Component, OnInit, TemplateRef } from '@angular/core';
 import Swal from 'sweetalert2';
 import { DataTable } from "simple-datatables";
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
 
 
-export interface Aplicacion {
-  nombre: string;
-  siglas: string;
-  comentarios: string;
-}
 
 @Component({
   selector: 'app-aplicaciones',
@@ -17,69 +13,9 @@ export interface Aplicacion {
 })
 export class AplicacionesComponent implements OnInit {
 
-  aplicaciones: Aplicacion[] = [
-    {
-      nombre: 'Gestión Usuarios',
-      siglas: 'GU',
-      comentarios: 'Permite administrar usuarios del sistema'
-    },
-    {
-      nombre: 'Inventario',
-      siglas: 'INV',
-      comentarios: 'Control de inventario de activos'
-    },
-     {
-      nombre: 'Gestión Usuarios',
-      siglas: 'GU',
-      comentarios: 'Permite administrar usuarios del sistema'
-    },
-    {
-      nombre: 'Inventario',
-      siglas: 'INV',
-      comentarios: 'Control de inventario de activos'
-    },
-     {
-      nombre: 'Gestión Usuarios',
-      siglas: 'GU',
-      comentarios: 'Permite administrar usuarios del sistema'
-    },
-    {
-      nombre: 'Inventario',
-      siglas: 'INV',
-      comentarios: 'Control de inventario de activos'
-    },
-     {
-      nombre: 'Gestión Usuarios',
-      siglas: 'GU',
-      comentarios: 'Permite administrar usuarios del sistema'
-    },
-    {
-      nombre: 'Inventario',
-      siglas: 'INV',
-      comentarios: 'Control de inventario de activos'
-    },
-     {
-      nombre: 'Gestión Usuarios',
-      siglas: 'GU',
-      comentarios: 'Permite administrar usuarios del sistema'
-    },
-    {
-      nombre: 'Inventario',
-      siglas: 'INV',
-      comentarios: 'Control de inventario de activos'
-    },
-     {
-      nombre: 'Gestión Usuarios',
-      siglas: 'GU',
-      comentarios: 'Permite administrar usuarios del sistema'
-    },
-    {
-      nombre: 'Inventario',
-      siglas: 'INV',
-      comentarios: 'Control de inventario de activos'
-    }
-    // Puedes agregar más datos de prueba aquí
-  ];
+  loading = false;
+
+  aplicaciones: Aplicacion[] = [];
 
 
 
@@ -97,14 +33,41 @@ export class AplicacionesComponent implements OnInit {
 
   // Modal y edición
   modalModo: 'agregar' | 'editar' = 'agregar';
-  appSeleccionada: Aplicacion = { nombre: '', siglas: '', comentarios: '' };
+  // idApplication is numeric per backend DTO; initialize with 0 for new records
+  appSeleccionada: Aplicacion = { idApplication: 0, description: '', siglasApplic: '', comentarios: '' } as Aplicacion;
 
   constructor(
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private aplicacionesService: AplicacionesService
   ) { }
 
   ngOnInit(): void {
-    this.filtrarAplicaciones();
+    
+    // NOTE: temporalmente comentamos la suscripción al servicio backend
+    // para permitir trabajo offline / datos ficticios.
+    // subscribe to apps coming from the service
+    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      
+      this.aplicaciones = apps || [];
+      this.filtrarAplicaciones();
+    });
+    this.loading = true;
+    // trigger load from backend (non-blocking)
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {
+      this.loading = false;
+    }, error: () => {} });
+
+    // Si el arreglo está vacío, llenar con datos ficticios (no modifica la lógica de filtrado)
+    // if (!this.aplicaciones || this.aplicaciones.length === 0) {
+    //   this.aplicaciones = [
+    //     { idApplication: 101, description: 'Sistema de Ventas', siglasApplic: 'VEN', comentarios: 'Aplicación principal de ventas' },
+    //     { idApplication: 102, description: 'Portal Clientes', siglasApplic: 'CLI', comentarios: 'Acceso de clientes externos' },
+    //     { idApplication: 103, description: 'API Interna', siglasApplic: 'API', comentarios: 'Servicios internos y microservicios' },
+    //     { idApplication: 104, description: 'Admin Backoffice', siglasApplic: 'ADM', comentarios: 'Administración y configuración' },
+    //     { idApplication: 105, description: 'Reporting', siglasApplic: 'REP', comentarios: 'Generación de informes' }
+    //   ];
+    //   this.filtrarAplicaciones();
+    // }
   }
   ngAfterViewInit(): void {
     // Inicializa DataTable después de que la vista esté lista (opcional, si usas simple-datatables)
@@ -116,9 +79,9 @@ export class AplicacionesComponent implements OnInit {
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.trim().toLowerCase();
       this.aplicacionesFiltradas = this.aplicaciones.filter(app =>
-        app.nombre.toLowerCase().includes(term) ||
-        app.siglas.toLowerCase().includes(term) ||
-        app.comentarios.toLowerCase().includes(term)
+        app.description.toLowerCase().includes(term) ||
+        app.siglasApplic.toLowerCase().includes(term) ||
+        (app.comentarios || '').toLowerCase().includes(term)
       );
     } else {
       this.aplicacionesFiltradas = [...this.aplicaciones];
@@ -174,7 +137,7 @@ export class AplicacionesComponent implements OnInit {
 
   openAddApplicationModal(content: TemplateRef<any>): void {
     this.modalModo = 'agregar';
-    this.appSeleccionada = { nombre: '', siglas: '', comentarios: '' };
+    this.appSeleccionada = { idApplication: 0, description: '', siglasApplic: '', comentarios: '' };
     this.modalService.open(content, { centered: true });
   }
 
@@ -187,24 +150,84 @@ export class AplicacionesComponent implements OnInit {
 
   saveApplication(modal: any): void {
     if (this.modalModo === 'agregar') {
-      this.aplicaciones.push({ ...this.appSeleccionada });
+      // Call backend to create application
+      this.aplicacionesService.createAplicacion(this.appSeleccionada).subscribe({
+        next: (created) => {
+          // service already prepended to cache; ensure local view reflects it
+          this.aplicaciones = this.aplicacionesService.getAplicaciones();
+          this.filtrarAplicaciones();
+          Swal.fire({
+            toast: true,
+            position: 'top-start',
+            icon: 'success',
+            title: 'Aplicación creada',
+            text: `${created.description}`,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          modal.close();
+        },
+        error: (err) => {
+          console.error('Error creating aplicacion', err);
+          Swal.fire({
+            toast: true,
+            position: 'top-start',
+            icon: 'error',
+            title: 'Error al crear',
+            text: (err && err.message) ? err.message : JSON.stringify(err),
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true
+          });
+        }
+      });
     } else if (this.modalModo === 'editar') {
-      const idx = this.aplicaciones.findIndex(a => a === this.aplicacionesPaginadas.find(ap => ap === this.appSeleccionada));
-      if (idx > -1) {
-        this.aplicaciones[idx] = { ...this.appSeleccionada };
-      } else {
-        // fallback: buscar por nombre y siglas
-        const idx2 = this.aplicaciones.findIndex(a => a.nombre === this.appSeleccionada.nombre && a.siglas === this.appSeleccionada.siglas);
-        if (idx2 > -1) this.aplicaciones[idx2] = { ...this.appSeleccionada };
-      }
+      // Call backend to update the application and update local cache on success
+      this.aplicacionesService.updateAplicacion(this.appSeleccionada).subscribe({
+        next: (updated) => {
+          // the service updates the BehaviorSubject; make sure local array reflects change
+          const idx = this.aplicaciones.findIndex(a => String(a.idApplication) === String(updated.idApplication));
+          if (idx > -1) {
+            this.aplicaciones[idx] = updated;
+          } else {
+            this.aplicaciones.unshift(updated);
+          }
+          this.filtrarAplicaciones();
+          // show toast success in top-left
+          Swal.fire({
+            toast: true,
+            position: 'top-start',
+            icon: 'success',
+            title: 'Aplicación actualizada',
+            text: `${updated.description}`,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          modal.close();
+        },
+        error: (err) => {
+          console.error('Error updating aplicacion', err);
+          Swal.fire({
+            toast: true,
+            position: 'top-start',
+            icon: 'error',
+            title: 'Error al actualizar',
+            text: (err && err.message) ? err.message : JSON.stringify(err),
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true
+          });
+        }
+      });
     }
-    this.filtrarAplicaciones();
-    modal.close();
+    // Note: add flow is handled by the service call above and closes the modal on success.
   }
 
   deleteApplication(app: Aplicacion): void {
     Swal.fire({
-      title: `¿Desea eliminar la aplicación "${app.nombre}"?`,
+      title: `¿Desea eliminar la aplicación "${app.description}"?`,
       text: 'Esta acción no se puede deshacer.',
       icon: 'warning',
       showCancelButton: true,
@@ -213,14 +236,34 @@ export class AplicacionesComponent implements OnInit {
       reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.aplicaciones = this.aplicaciones.filter(a => a !== app);
-        this.filtrarAplicaciones();
-        Swal.fire({
-          title: 'Eliminado',
-          text: `La aplicación "${app.nombre}" ha sido eliminada.`,
-          icon: 'success',
-          timer: 1500,
-          showConfirmButton: false
+        // call backend
+        this.aplicacionesService.deleteAplicacion(app.idApplication).subscribe({
+          next: () => {
+            // local cache already updated by service; refresh view
+            this.aplicaciones = this.aplicacionesService.getAplicaciones();
+            this.filtrarAplicaciones();
+            Swal.fire({
+              toast: true,
+              position: 'top-start',
+              icon: 'success',
+              title: 'Eliminado',
+              text: `La aplicación "${app.description}" ha sido eliminada.`,
+              showConfirmButton: false,
+              timer: 2000
+            });
+          },
+          error: (err) => {
+            console.error('Error deleting aplicacion', err);
+            Swal.fire({
+              toast: true,
+              position: 'top-start',
+              icon: 'error',
+              title: 'Error al eliminar',
+              text: (err && err.message) ? err.message : JSON.stringify(err),
+              showConfirmButton: false,
+              timer: 4000
+            });
+          }
         });
       }
     });

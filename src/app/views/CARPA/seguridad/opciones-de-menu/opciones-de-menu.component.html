@@ -1,137 +1,136 @@
-<div class="row">
-  <div class="col-md-12 stretch-card">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="card-title fw-semibold">Seguridad / Opciones de Menú</h6>
-        <div class="row mb-4 align-items-end">
-          <div class="fw-bold d-flex justify-content-end">
-            <span class="fw-semibold">Total de registros: </span> {{ opcionesFiltradas.length }}
-          </div>
-        </div>
-        <div class="d-flex justify-content-between mb-4">
-          <div class="d-flex gap-3">
-            <button class="btn btn-success" (click)="openAddOpcionModal(opcionModal)">
-              <i class="mdi mdi-plus"></i> Agregar
-            </button>
-            <!-- <button class="btn btn-danger" (click)="exitMenu()">
+<div class="card">
+  <div class="card-header">
+    <h6 class="card-title fw-semibold">Accesos / Opciones de Menú</h6>
+  </div>
+  <div class="card-body" style="position: relative;">
+    <app-local-loading [loading]="loading"></app-local-loading>
+    <div class="row mb-4 align-items-end">
+      <div class="fw-bold d-flex justify-content-end">
+        <span class="fw-semibold">Total de registros: </span> {{ opcionesFiltradas.length }}
+      </div>
+    </div>
+    <div class="d-flex justify-content-between mb-4">
+      <div class="d-flex gap-3">
+        <button class="btn btn-success" (click)="openAddOpcionModal(opcionModal)">
+          <i class="mdi mdi-plus"></i> Agregar
+        </button>
+        <!-- <button class="btn btn-danger" (click)="exitMenu()">
               <i class="mdi mdi-arrow-left"></i>
               Salir
             </button> -->
-          </div>
-          <div class="d-flex gap-3">
-            <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
-              [(ngModel)]="searchTerm" (input)="filtrarOpciones()">
-          </div>
-        </div>
-        <!-- Tabla tipo árbol NobleUI -->
-        <div class="table-responsive">
-          <table class="table table-bordered align-middle">
-            <thead class="table-light">
-              <tr>
-                <th class="text-center">Eliminar</th>
-                <th class="text-center">Editar</th>
-                <th class="text-center">Submenú</th>
-                <th class="text-center">Ver Submenú</th>
-                <th>Nombre</th>
-                <th>URL</th>
-                <th>Padre</th>
-                <th>Nivel</th>
-                <th>Orden</th>
-                <th style="cursor:pointer" (click)="ordenarPor('aplicaciones')">
-                  Aplicación
-                  <span *ngIf="sortColumn === 'aplicaciones'">
-                    <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
-                  </span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <ng-template #treeTable let-nodes let-nivel="nivel" let-parent="parent">
-                <ng-container *ngFor="let menu of nodes; let i = index">
-                  <tr>
-                    <td class="text-center">
-                      <button class="btn btn-danger btn-sm mx-auto" title="Eliminar"
-                        (click)="deleteOpcion(menu, parent, i)"><i class="feather icon-trash-2"></i></button>
-                    </td>
-                    <td class="text-center">
-                      <button class="btn btn-warning btn-sm mx-auto" title="Editar"
-                        (click)="openEditOpcionModal(opcionModal, menu, parent, i)"><i
-                          class="feather icon-edit"></i></button>
-                    </td>
-                    <td class="text-center">
-                      <button class="btn btn-primary btn-sm mx-auto" title="Añadir submenú"
-                        (click)="openAddOpcionModal(opcionModal, menu)"><i class="mdi mdi-plus"></i></button>
-                    </td>
-                    <td style="width:32px" class="text-center">
-                      <button *ngIf="menu.hijos && menu.hijos.length" class="btn btn-info btn-sm mx-auto"
-                        (click)="menu._expandido = !menu._expandido" title="Ver submenús">
-                        <i class="mdi mdi-eye"></i>
-                      </button>
-                    </td>
-                    <td>
-                      <span [style.padding-left.px]="(nivel || 0) * 24">
-                        {{ menu.nombreMenu }}
-                      </span>
-                    </td>
-                    <td>{{ menu.url }}</td>
-                    <td>{{ parent?.nombreMenu || '-' }}</td>
-                    <td>{{ nivel || 0 }}</td>
-                    <td>{{ menu.orden }}</td>
-                    <td>{{ menu.aplicaciones }}</td>
-                  </tr>
-                  <ng-container *ngIf="menu.hijos && menu.hijos.length && menu._expandido">
-                    <ng-container
-                      *ngTemplateOutlet="treeTable; context: { $implicit: menu.hijos, nivel: (nivel || 0) + 1, parent: menu }"></ng-container>
-                  </ng-container>
-                </ng-container>
-              </ng-template>
-              <ng-container
-                *ngTemplateOutlet="treeTable; context: { $implicit: opcionesFiltradas, nivel: 0, parent: null }"></ng-container>
-            </tbody>
-          </table>
-        </div>
-        <!-- Paginación NobleUI/Bootstrap -->
-        <nav>
-          <div class="d-flex justify-content-between align-items-center mt-3">
-            <div class="d-flex align-items-center gap-2">
-              <select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize"
-                (change)="cambiarPageSize(pageSize)">
-                <option [ngValue]="5">5</option>
-                <option [ngValue]="10">10</option>
-                <option [ngValue]="25">25</option>
-                <option [ngValue]="50">50</option>
-              </select>
-              <label class="me-2 mb-0">registros por página</label>
-            </div>
-            <ul class="pagination mb-0">
-              <li class="page-item" [class.disabled]="page === 1">
-                <button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button>
-              </li>
-              <li class="page-item" [class.active]="page === 1">
-                <button class="page-link" (click)="cambiarPagina(1)">1</button>
-              </li>
-              <li class="page-item disabled" *ngIf="page > 4">
-                <span class="page-link">...</span>
-              </li>
-              <ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
-                <li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p">
-                  <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
-                </li>
-              </ng-container>
-              <li class="page-item disabled" *ngIf="page < totalPages - 3">
-                <span class="page-link">...</span>
-              </li>
-              <li class="page-item" *ngIf="totalPages > 1" [class.active]="page === totalPages">
-                <button class="page-link" (click)="cambiarPagina(totalPages)">{{ totalPages }}</button>
-              </li>
-              <li class="page-item" [class.disabled]="page === totalPages">
-                <button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button>
-              </li>
-            </ul>
-          </div>
-        </nav>
+      </div>
+      <div class="d-flex gap-3">
+        <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
+          [(ngModel)]="searchTerm" (input)="filtrarOpciones()">
       </div>
     </div>
+    <!-- Tabla tipo árbol NobleUI -->
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center">Eliminar</th>
+            <th class="text-center">Editar</th>
+            <th class="text-center">Submenú</th>
+            <th class="text-center">Ver Submenú</th>
+            <th>Nombre</th>
+            <th>URL</th>
+            <th>Padre</th>
+            <th>Nivel</th>
+            <th>Orden</th>
+            <th style="cursor:pointer" (click)="ordenarPor('aplicaciones')">
+              Sistema
+              <span *ngIf="sortColumn === 'aplicaciones'">
+                <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-template #treeTable let-nodes let-nivel="nivel" let-parent="parent">
+            <ng-container *ngFor="let menu of nodes; let i = index">
+              <tr>
+                <td class="text-center">
+                  <button class="btn btn-danger btn-sm mx-auto" title="Eliminar"
+                    (click)="deleteOpcion(menu, parent, i)"><i class="feather icon-trash-2"></i></button>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-warning btn-sm mx-auto" title="Editar"
+                    (click)="openEditOpcionModal(opcionModal, menu, parent, i)"><i
+                      class="feather icon-edit"></i></button>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-primary btn-sm mx-auto" title="Añadir submenú"
+                    (click)="openAddOpcionModal(opcionModal, menu)"><i class="mdi mdi-plus"></i></button>
+                </td>
+                <td style="width:32px" class="text-center">
+                  <button *ngIf="menu.hijos && menu.hijos.length" class="btn btn-info btn-sm mx-auto"
+                    (click)="menu._expandido = !menu._expandido" title="Ver submenús">
+                    <i class="mdi mdi-eye"></i>
+                  </button>
+                </td>
+                <td>
+                  <span [style.padding-left.px]="(nivel || 0) * 24">
+                    {{ menu.nombre }}
+                  </span>
+                </td>
+                <td>{{ menu.ruta }}</td>
+                <td>{{ parent?.nombre || '-' }}</td>
+                <td>{{ nivel || 0 }}</td>
+                <td>{{ menu.orden }}</td>
+                <td>{{ menu.siglasAplicacion }}</td>
+              </tr>
+              <ng-container *ngIf="menu.hijos && menu.hijos.length && menu._expandido">
+                <ng-container
+                  *ngTemplateOutlet="treeTable; context: { $implicit: menu.hijos, nivel: (nivel || 0) + 1, parent: menu }"></ng-container>
+              </ng-container>
+            </ng-container>
+          </ng-template>
+          <ng-container
+            *ngTemplateOutlet="treeTable; context: { $implicit: opcionesFiltradas, nivel: 0, parent: null }"></ng-container>
+        </tbody>
+      </table>
+    </div>
+    <!-- Paginación NobleUI/Bootstrap -->
+    <nav>
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="d-flex align-items-center gap-2">
+          <select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize"
+            (change)="cambiarPageSize(pageSize)">
+            <option [ngValue]="5">5</option>
+            <option [ngValue]="10">10</option>
+            <option [ngValue]="25">25</option>
+            <option [ngValue]="50">50</option>
+          </select>
+          <label class="me-2 mb-0">registros por página</label>
+        </div>
+        <ul class="pagination mb-0">
+          <li class="page-item" [class.disabled]="page === 1">
+            <button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button>
+          </li>
+          <li class="page-item" [class.active]="page === 1">
+            <button class="page-link" (click)="cambiarPagina(1)">1</button>
+          </li>
+          <li class="page-item disabled" *ngIf="page > 4">
+            <span class="page-link">...</span>
+          </li>
+          <ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
+            <li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p">
+              <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+            </li>
+          </ng-container>
+          <li class="page-item disabled" *ngIf="page < totalPages - 3">
+            <span class="page-link">...</span>
+          </li>
+          <li class="page-item" *ngIf="totalPages > 1" [class.active]="page === totalPages">
+            <button class="page-link" (click)="cambiarPagina(totalPages)">{{ totalPages }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="page === totalPages">
+            <button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button>
+          </li>
+        </ul>
+      </div>
+    </nav>
   </div>
 </div>
 
@@ -148,19 +147,19 @@
     <div class="modal-body">
       <div class="mb-3">
         <label for="nombreMenu" class="form-label">Nombre</label>
-        <input id="nombreMenu" name="nombreMenu" class="form-control" [(ngModel)]="opcionSeleccionada.nombreMenu"
-          required>
+        <input id="nombreMenu" name="nombreMenu" class="form-control" [(ngModel)]="opcionSeleccionada.nombre" required>
       </div>
       <div class="mb-3">
         <label for="url" class="form-label">URL</label>
-        <input id="url" name="url" class="form-control" [(ngModel)]="opcionSeleccionada.url" required>
+        <input id="url" name="url" class="form-control" [(ngModel)]="opcionSeleccionada.ruta" required>
       </div>
       <div class="mb-3">
-        <label for="aplicaciones" class="form-label">Aplicación</label>
-        <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="opcionSeleccionada.aplicaciones"
-          required>
-          <option value="" disabled selected>Seleccione una aplicación</option>
-          <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+        <label for="aplicaciones" class="form-label">Sistema</label>
+        <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="opcionSeleccionada.idAplicacion"
+          required [disabled]="modalModo === 'editar' || !!parentForSubmenu">
+          <option [ngValue]="null">Seleccione un sistema</option>
+          <option *ngFor="let app of aplicaciones" [ngValue]="app.idApplication">{{ app.siglasApplic || app.description
+            }}</option>
         </select>
       </div>
       <div class="mb-3">

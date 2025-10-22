@@ -3,8 +3,10 @@ import { Component, OnInit, TemplateRef } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
+import { RolesService } from 'src/app/services/roles/roles.service';
 
 export interface Rol {
+  id: number;
   rol: string;
   descripcion: string;
   tipo: string;
@@ -17,21 +19,11 @@ export interface Rol {
   styleUrls: ['./roles.component.scss']
 })
 export class RolesComponent implements OnInit {
+
+  loading = false;
   aplicaciones: Aplicacion[] = [];
-  roles: Rol[] = [
-    { rol: 'Administrador', descripcion: 'Acceso total al sistema', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Operador', descripcion: 'Acceso limitado', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Consulta', descripcion: 'Solo lectura', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Supervisor', descripcion: 'Supervisa operaciones', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Auditor', descripcion: 'Auditoría de acciones', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Soporte', descripcion: 'Soporte técnico', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Invitado', descripcion: 'Acceso restringido', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Analista', descripcion: 'Análisis de datos', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Desarrollador', descripcion: 'Desarrollo de software', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Tester', descripcion: 'Pruebas de sistema', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' },
-    { rol: 'Líder', descripcion: 'Liderazgo de equipo', tipo: 'usuarios de la torre', aplicacion: 'Gestión Usuarios' },
-    { rol: 'Usuario', descripcion: 'Usuario estándar', tipo: 'usuarios de red comercial', aplicacion: 'Inventario' }
-  ];
+  // roles will be loaded from backend via RolesService
+  roles: Rol[] = [];
 
   // Paginación y búsqueda
   page: number = 1;
@@ -47,16 +39,41 @@ export class RolesComponent implements OnInit {
 
   // Modal y edición
   modalModo: 'agregar' | 'editar' = 'agregar';
-  newRole: Rol = { rol: '', descripcion: '', tipo: '', aplicacion: '' };
+  newRole: Rol = { id: 0, rol: '', descripcion: '', tipo: '', aplicacion: '' };
 
   constructor(
     private aplicacionesService: AplicacionesService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private rolesService: RolesService
   ) { }
 
   ngOnInit(): void {
-    this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
-    this.filtrarRoles();
+    // Suscribirse a la lista de aplicaciones y cargar desde backend
+    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      this.aplicaciones = apps || [];
+    });
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
+
+    // request roles from backend and populate the table
+    this.loading = true;
+    this.rolesService.consultarRoles({}).subscribe({
+      next: (resp: any) => {
+        if (resp && Array.isArray(resp.data)) {
+          this.roles = resp.data;
+        } else {
+          console.warn('RolesService returned unexpected payload, falling back to empty list', resp);
+          this.roles = [];
+        }
+        this.filtrarRoles();
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching roles from backend:', err);
+        this.roles = [];
+        this.filtrarRoles();
+        this.loading = false;
+      }
+    });
   }
 
   filtrarRoles(): void {
@@ -118,31 +135,136 @@ export class RolesComponent implements OnInit {
 
   openAddRoleModal(content: TemplateRef<any>): void {
     this.modalModo = 'agregar';
-    this.newRole = { rol: '', descripcion: '', tipo: '', aplicacion: '' };
+    this.newRole = { id: 0, rol: '', descripcion: '', tipo: '', aplicacion: '' };
     this.modalService.open(content, { centered: true });
   }
 
   openEditRoleModal(content: TemplateRef<any>, rol: Rol): void {
     this.modalModo = 'editar';
-    this.newRole = { ...rol };
+    // Buscar el id de la aplicación por nombre/siglas
+    let appId = '';
+    if (rol.aplicacion) {
+      const app = this.aplicaciones.find(a => a.siglasApplic === rol.aplicacion || a.description === rol.aplicacion);
+      if (app) appId = String(app.idApplication);
+    }
+    // Normalizar el tipo
+    let tipo = '';
+    if (rol.tipo) {
+      if (rol.tipo.toLowerCase().includes('torre')) tipo = 'usuarios de la torre';
+      else if (rol.tipo.toLowerCase().includes('red')) tipo = 'usuarios de red comercial';
+      else tipo = rol.tipo;
+    }
+    this.newRole = {
+      id: rol.id,
+      rol: rol.rol,
+      descripcion: rol.descripcion,
+      tipo: tipo,
+      aplicacion: appId
+    };
     this.modalService.open(content, { centered: true });
   }
 
   saveRole(modal: any): void {
     if (this.modalModo === 'agregar') {
-      this.roles.push({ ...this.newRole });
+      // Construir el payload para el backend
+      const appObj = this.aplicaciones.find(a => a.idApplication === Number(this.newRole.aplicacion));
+      const payload = {
+        roleName: this.newRole.rol,
+        description: this.newRole.descripcion,
+        inUsoEnRed: this.newRole.tipo === 'usuarios de la torre' ? 0 : 1,
+        idApplication: appObj ? appObj.idApplication : null
+      };
+      this.loading = true;
+      this.rolesService.crearRol(payload).subscribe({
+        next: (resp: any) => {
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Rol creado',
+            text: payload.roleName,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          // Recargar roles desde backend
+          this.rolesService.consultarRoles({}).subscribe({
+            next: (r: any) => {
+              this.roles = Array.isArray(r.data) ? r.data : [];
+              this.filtrarRoles();
+              this.loading = false;
+            },
+            error: () => {
+              this.loading = false;
+            }
+          });
+          modal.close();
+        },
+        error: (err: any) => {
+          this.loading = false;
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Error al crear rol',
+            text: (err && err.message) ? err.message : JSON.stringify(err),
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true
+          });
+        }
+      });
     } else if (this.modalModo === 'editar') {
-      const idx = this.roles.findIndex(r => r === this.rolesPaginados.find(rp => rp === this.newRole));
-      if (idx > -1) {
-        this.roles[idx] = { ...this.newRole };
-      } else {
-        // fallback: buscar por rol, tipo y aplicacion
-        const idx2 = this.roles.findIndex(r => r.rol === this.newRole.rol && r.tipo === this.newRole.tipo && r.aplicacion === this.newRole.aplicacion);
-        if (idx2 > -1) this.roles[idx2] = { ...this.newRole };
-      }
+      // Construir el payload para modificar rol
+      const appObj = this.aplicaciones.find(a => a.idApplication === Number(this.newRole.aplicacion));
+      const payload = {
+        mscRoleId: this.newRole.id,
+        roleName: this.newRole.rol,
+        description: this.newRole.descripcion,
+        inUsoEnRed: this.newRole.tipo === 'usuarios de la torre' ? 0 : 1,
+        idApplication: appObj ? appObj.idApplication : null
+      };
+      this.loading = true;
+      this.rolesService.modificarRol(payload).subscribe({
+        next: (resp: any) => {
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Rol modificado',
+            text: payload.roleName,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          // Recargar roles desde backend
+          this.rolesService.consultarRoles({}).subscribe({
+            next: (r: any) => {
+              this.roles = Array.isArray(r.data) ? r.data : [];
+              this.filtrarRoles();
+              this.loading = false;
+            },
+            error: () => {
+              this.loading = false;
+            }
+          });
+          modal.close();
+        },
+        error: (err: any) => {
+          this.loading = false;
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Error al modificar rol',
+            text: (err && err.message) ? err.message : JSON.stringify(err),
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true
+          });
+        }
+      });
     }
-    this.filtrarRoles();
-    modal.close();
   }
 
   deleteRole(rol: Rol): void {

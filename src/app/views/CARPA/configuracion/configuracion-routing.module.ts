@@ -1,10 +1,14 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ServiciosWebBcvComponent } from './servicios-web-bcv/servicios-web-bcv.component';
+import { ParametrosSistemaComponent } from '../seguridad/parametros-sistema/parametros-sistema.component';
 
 const routes: Routes = [
   {
-    path: 'servicios-web-bcv', component: ServiciosWebBcvComponent
+    path: 'conexiones', component: ServiciosWebBcvComponent
+  },
+  {
+    path: 'criterios', component: ParametrosSistemaComponent
   },
 ];
 

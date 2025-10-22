@@ -18,18 +18,10 @@ interface RegistroBCV {
 export class ServiciosWebBcvComponent implements OnInit {
 
   registros: RegistroBCV[] = [
-    { sistema: 'SISCON', usuario: 'admin', clave: '********', claveReal: 'admin123' },
-    { sistema: 'PAGOS', usuario: 'usuario1', clave: '********', claveReal: 'pagos456' },
-    { sistema: 'TESORERIA', usuario: 'tesorero', clave: '********', claveReal: 'teso789' },
-    { sistema: 'CONTABILIDAD', usuario: 'conta', clave: '********', claveReal: 'conta001' },
-    { sistema: 'NOMINA', usuario: 'nomina', clave: '********', claveReal: 'nom123' },
-    { sistema: 'FACTURACION', usuario: 'factu', clave: '********', claveReal: 'fac987' },
-    { sistema: 'ALMACEN', usuario: 'almacen', clave: '********', claveReal: 'alm555' },
-    { sistema: 'VENTAS', usuario: 'ventas', clave: '********', claveReal: 'ven321' },
-    { sistema: 'COMPRAS', usuario: 'compras', clave: '********', claveReal: 'com222' },
-    { sistema: 'RRHH', usuario: 'rrhh', clave: '********', claveReal: 'rrhh999' },
-    { sistema: 'REPORTES', usuario: 'reportes', clave: '********', claveReal: 'rep444' },
-    { sistema: 'PRODUCCION', usuario: 'prod', clave: '********', claveReal: 'prod007' }
+    { sistema: 'NOTINFI', usuario: 'Menudeo', clave: '********', claveReal: 'admin123' },
+    { sistema: 'NOTINFI', usuario: 'Mesa de Cambio', clave: '********', claveReal: 'admin123' },
+    { sistema: 'NOTINFI', usuario: 'Intervencion', clave: '********', claveReal: 'admin123' },
+   
   ];
 
   nuevoRegistro: any = {};

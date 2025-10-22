@@ -1,12 +1,13 @@
 <!-- Tabla principal de Roles-Menu -->
 <div *ngIf="!asociando" class="card">
   <div class="card-header">
-    <h6 class="card-title fw-semibold">Seguridad / Roles-Menu</h6>
+    <h6 class="card-title fw-semibold">Accesos / Roles - Menu</h6>
   </div>
   <div class="card-body">
+        <app-local-loading [loading]="loading"></app-local-loading>
     <div class="row mb-4 align-items-end">
       <div class="fw-bold d-flex justify-content-end">
-        <span class="fw-semibold">Total de registros: </span> {{ rolesFiltrados.length }}
+        <span class="fw-semibold">Total de registros:&nbsp;</span> {{ rolesFiltrados.length }}
       </div>
     </div>
     <div class="d-flex justify-content-end mb-4">
@@ -27,7 +28,7 @@
             <th>Asociar</th>
             <th (click)="ordenarPor('rol')" style="cursor:pointer">Rol</th>
             <th (click)="ordenarPor('descripcion')" style="cursor:pointer">Descripción</th>
-            <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">Aplicación</th>
+            <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">Sistema</th>
           </tr>
         </thead>
         <tbody>
@@ -93,11 +94,12 @@
     <button class="btn btn-outline-secondary btn-sm" (click)="cancelarAsociacion()">Cancelar</button>
   </div>
   <div class="card-body">
+            <app-local-loading [loading]="loading"></app-local-loading>
     <div class="mb-3">
         <strong>ID Rol:</strong> {{ rolSeleccionado?.id }}<br>
         <strong>Rol:</strong> {{ rolSeleccionado?.rol }}<br>
         <strong>Descripción:</strong> {{ rolSeleccionado?.descripcion }}<br>
-        <strong>Aplicación:</strong> {{ rolSeleccionado?.aplicacion }}
+        <strong>Sistema:</strong> {{ rolSeleccionado?.aplicacion }}
       </div>
 
       <div class="d-flex justify-content-between mb-3">
@@ -116,7 +118,7 @@
               <th style="width:120px" class="text-center">Seleccione</th>
               <th>Nombre</th>
               <th>URL</th>
-              <th (click)="ordenarMenuPor('aplicaciones')" style="cursor:pointer">Aplicación
+              <th (click)="ordenarMenuPor('aplicaciones')" style="cursor:pointer">Sistema
                 <span *ngIf="menuSortColumn === 'aplicaciones'">
                   <i class="mdi" [ngClass]="menuSortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
                 </span>
@@ -226,10 +228,10 @@
         </select>
       </div>
       <div class="mb-3">
-        <label for="aplicacion" class="form-label">Aplicación</label>
+        <label for="aplicacion" class="form-label">Sistema</label>
   <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newRole.aplicacion">
-          <option value="" disabled selected>Seleccione una aplicación</option>
-          <option *ngFor="let app of aplicaciones" [value]="app.nombre">{{ app.nombre }}</option>
+          <option value="" disabled selected>Seleccione un sistema</option>
+          <option *ngFor="let app of aplicaciones" [value]="app.idApplication">{{ app.description }}</option>
         </select>
       </div>
     </div>

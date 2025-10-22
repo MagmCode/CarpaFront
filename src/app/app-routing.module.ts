@@ -5,6 +5,7 @@ import { AuthGuard } from './core/guard/auth.guard';
 import { ErrorPageComponent } from './views/pages/error-page/error-page.component';
 import { UsuariosComponent } from './views/CARPA/seguridad/usuarios/usuarios.component';
 import { UsuariosResolver } from './core/resolvers/usuarios.resolver';
+import { ExampleComponent } from './features/example/example/example.component';
 
 const routes: Routes = [
   { path:'auth', loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule) },
@@ -23,7 +24,7 @@ const routes: Routes = [
       },
 
       {
-        path: 'seguridad', 
+        path: 'accesos', 
         loadChildren: () => import('./views/CARPA/seguridad/seguridad.module').then(m => m.SeguridadModule)
       },
 
@@ -71,6 +72,9 @@ const routes: Routes = [
   {
     path: 'error/:type',
     component: ErrorPageComponent
+  },
+  {
+    path: 'example', component: ExampleComponent
   },
   { path: '**', redirectTo: 'error', pathMatch: 'full' }
 ];

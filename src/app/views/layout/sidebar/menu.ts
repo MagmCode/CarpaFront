@@ -11,48 +11,50 @@ export const MENU: MenuItem[] = [
     link: '/inicio',
   },
   {
-    label: 'Seguridad',
+    label: 'Accesos',
     icon: 'icon-bdv-icon-cypher-l',
     subItems: [
       {
-        label: 'Aplicaciones',
-        link: '/seguridad/aplicaciones',
-      },
-      {
-        label: 'Opciones del Menú',
-        link: '/seguridad/opciones-menu',
-      },
-      {
-        label: 'Acciones',
-        link: '/seguridad/acciones',
-      },
-      {
-        label: 'Roles',
-        link: '/seguridad/roles',
-      },
-      {
-        label: 'Roles - Acciones',
-        link: '/seguridad/roles-acciones',
-      },
-      {
-        label: 'Roles - Menú',
-        link: '/seguridad/roles-menu',
+        label: 'Sistemas',
+        link: '/accesos/sistemas',
       },
       {
         label: 'Usuarios',
-        link: '/seguridad/usuarios',
+        link: '/accesos/usuarios',
       },
+      {
+        label: 'Opciones del Menú',
+        link: '/accesos/opciones-menu',
+      },
+      {
+        label: 'Roles',
+        link: '/accesos/roles',
+      },
+      {
+        label: 'Privilegios',
+        link: '/accesos/privilegios',
+      },
+
+      {
+        label: 'Roles - Menú',
+        link: '/accesos/roles-menu',
+      },
+      {
+        label: 'Roles - Privilegios',
+        link: '/accesos/roles-privilegios',
+      },
+
       // {
       //   label: 'Consultas',
-      //   link: '/seguridad/consultas',
+      //   link: '/accesos/consultas',
       //   subItems: [
       //   {
       //     label: 'Opciones de Menú por Rol',
-      //     link: '/seguridad/consultas/opciones-menu-por-rol',
+      //     link: '/accesos/consultas/opciones-menu-por-rol',
       //   },
       //   {
       //     label: 'Opciones de Menú por URL',
-      //     link: '/seguridad/consultas/opciones-menu-por-url',
+      //     link: '/accesos/consultas/opciones-menu-por-url',
       //   },
       //   ]
       // }
@@ -63,12 +65,12 @@ export const MENU: MenuItem[] = [
     icon: 'icon-bdv-icon-config-m',
     subItems: [
       {
-        label: 'Servicios Web BCV',
-        link: '/configuracion/servicios-web-bcv',
+        label: 'Conexiones',
+        link: '/configuracion/conexiones',
       },
       {
-        label: 'Parámetros',
-        link: '/seguridad/parametros-sistema',
+        label: 'Criterios',
+        link: '/configuracion/criterios',
       },
     ],
   },
@@ -96,23 +98,23 @@ export const MENU: MenuItem[] = [
       },
     ],
   },
-  {
-    label: 'Administrador',
-    icon: 'icon-bdv-icon-configclient-m',
-    subItems: [
-      {
-        label: 'Conexiones',
-        subItems: [
-          {
-            label: 'Equipos',
-            link: '/administrador/conexiones/equipos',
-          },
-          {
-            label: 'Drivers',
-            link: '/administrador/conexiones/drivers',
-          },
-        ],
-      },
-    ],
-  },
+  // {
+  //   label: 'Administrador',
+  //   icon: 'icon-bdv-icon-configclient-m',
+  //   subItems: [
+  //     {
+  //       label: 'Conexiones',
+  //       subItems: [
+  //         {
+  //           label: 'Equipos',
+  //           link: '/administrador/conexiones/equipos',
+  //         },
+  //         {
+  //           label: 'Drivers',
+  //           link: '/administrador/conexiones/drivers',
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
 ];

@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { NotificationService, Notificacion } from 'src/app/core/services/notification.service';
 import { DateUtilsServiceTsService } from 'src/app/core/services/date-utils.service';
-import { LogoutService } from 'src/app/core/services/logout.service';
+import { LogoutService } from 'src/app/services/logout.service';
 import { environment } from 'src/environments/environment';
 
 @Component({

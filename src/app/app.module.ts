@@ -19,7 +19,7 @@ import { NgbTimepickerModule } from '@ng-bootstrap/ng-bootstrap';
 import { ConfiguracionModule } from './views/CARPA/configuracion/configuracion.module';
 
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-// import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 
 @NgModule({
   declarations: [
@@ -39,7 +39,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
   ],
   providers: [
     AuthGuard,
-    // { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     {
       provide: 
       HIGHLIGHT_OPTIONS, // https://www.npmjs.com/package/ngx-highlightjs
