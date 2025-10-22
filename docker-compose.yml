@@ -1,0 +1,16 @@
+services:
+  carpa-dev:
+    image: carpa-dev:latest
+    container_name: carpa-dev
+    ports:
+      - "4200:4200"
+    environment:
+      - CHOKIDAR_USEPOLLING=1
+      - NODE_ENV=development
+    restart: unless-stopped
+    networks:
+      - stack-net
+
+networks:
+  stack-net:
+    external: true

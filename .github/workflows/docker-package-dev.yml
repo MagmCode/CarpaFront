@@ -1,0 +1,33 @@
+name: Build and Publish Dev Docker image artifact
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-dev-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build dev Docker image
+        run: |
+          docker build -f Dockerfile.dev -t carpa-dev .
+
+      - name: Save dev image as tar and include compose
+        run: |
+          mkdir -p artifact_dev
+          docker save -o artifact_dev/carpa-dev.tar carpa-dev
+          cp docker-compose.yml artifact_dev/ || true
+          cp Dockerfile.dev artifact_dev/ || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: carpa-dev-image
+          path: artifact_dev
