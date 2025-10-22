@@ -55,7 +55,9 @@ export class AplicacionesComponent implements OnInit {
     // trigger load from backend (non-blocking)
     this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {
       this.loading = false;
-    }, error: () => {} });
+    }, error: () => {
+      this.loading = false;
+    } });
 
     // Si el arreglo está vacío, llenar con datos ficticios (no modifica la lógica de filtrado)
     // if (!this.aplicaciones || this.aplicaciones.length === 0) {
@@ -149,11 +151,25 @@ export class AplicacionesComponent implements OnInit {
 
 
   saveApplication(modal: any): void {
+    // Validaciones de campos obligatorios
+    const { description, siglasApplic, comentarios } = this.appSeleccionada;
+    if (!description || !description.trim() || !siglasApplic || !siglasApplic.trim() || !comentarios || !comentarios.trim()) {
+      Swal.fire({
+        toast: true,
+        position: 'top-start',
+        icon: 'warning',
+        title: 'Campos obligatorios',
+        text: 'Debes completar el nombre, las siglas y la descripción antes de guardar.',
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true
+      });
+      return;
+    }
+
     if (this.modalModo === 'agregar') {
-      // Call backend to create application
       this.aplicacionesService.createAplicacion(this.appSeleccionada).subscribe({
         next: (created) => {
-          // service already prepended to cache; ensure local view reflects it
           this.aplicaciones = this.aplicacionesService.getAplicaciones();
           this.filtrarAplicaciones();
           Swal.fire({
@@ -183,10 +199,8 @@ export class AplicacionesComponent implements OnInit {
         }
       });
     } else if (this.modalModo === 'editar') {
-      // Call backend to update the application and update local cache on success
       this.aplicacionesService.updateAplicacion(this.appSeleccionada).subscribe({
         next: (updated) => {
-          // the service updates the BehaviorSubject; make sure local array reflects change
           const idx = this.aplicaciones.findIndex(a => String(a.idApplication) === String(updated.idApplication));
           if (idx > -1) {
             this.aplicaciones[idx] = updated;
@@ -194,7 +208,6 @@ export class AplicacionesComponent implements OnInit {
             this.aplicaciones.unshift(updated);
           }
           this.filtrarAplicaciones();
-          // show toast success in top-left
           Swal.fire({
             toast: true,
             position: 'top-start',
