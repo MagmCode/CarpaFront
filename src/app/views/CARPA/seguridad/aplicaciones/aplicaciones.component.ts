@@ -56,6 +56,7 @@ export class AplicacionesComponent implements OnInit {
     this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {
       this.loading = false;
     }, error: () => {
+       Swal.fire({ title: 'Error', text: 'No se pudieron cargar los sistemas.', icon: 'error' });
       this.loading = false;
     } });
 

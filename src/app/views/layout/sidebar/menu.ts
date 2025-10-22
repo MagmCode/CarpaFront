@@ -98,23 +98,23 @@ export const MENU: MenuItem[] = [
       },
     ],
   },
-  // {
-  //   label: 'Administrador',
-  //   icon: 'icon-bdv-icon-configclient-m',
-  //   subItems: [
-  //     {
-  //       label: 'Conexiones',
-  //       subItems: [
-  //         {
-  //           label: 'Equipos',
-  //           link: '/administrador/conexiones/equipos',
-  //         },
-  //         {
-  //           label: 'Drivers',
-  //           link: '/administrador/conexiones/drivers',
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
+  {
+    label: 'Administrador',
+    icon: 'icon-bdv-icon-configclient-m',
+    subItems: [
+      {
+        label: 'Conexiones',
+        subItems: [
+          {
+            label: 'Equipos',
+            link: '/administrador/conexiones/equipos',
+          },
+          {
+            label: 'Drivers',
+            link: '/administrador/conexiones/drivers',
+          },
+        ],
+      },
+    ],
+  },
 ];

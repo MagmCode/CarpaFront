@@ -7,6 +7,7 @@
 
 	</div>
 	<div class="card-body">
+		<app-local-loading [loading]="loading"></app-local-loading>
 
 		<!-- VISTA 1: FORMULARIO DE FILTRO -->
 		<div *ngIf="viewFiltro">
@@ -48,9 +49,11 @@
 						   Exportar</button> -->
 					   <select class="form-select" style="width:150px;" [(ngModel)]="statusFiltro" (change)="filtrarPorStatus()">
 						   <option [ngValue]="null">Todos</option>
-						   <option value="completed">Completado</option>
-						   <option value="error">Error</option>
-						   <option value="in-progress">En progreso</option>
+						   <option value="200">OK</option>
+						   <option value="PROCESSING">Procesando</option>
+						   <option value="ERROR">Error</option>
+						   <option value="INFO">Info</option>
+						   <option value="WARN">Warn</option>
 					   </select>
 					   <input class="form-control" style="width:260px;" placeholder="Buscar..." [(ngModel)]="searchTerm"
 						   (input)="filtrarBusqueda()">
@@ -86,6 +89,17 @@
 															</span>
 														</div>
 														<div class="mb-2">
+															<span *ngIf="l.statusLabel" class="badge px-2 py-1 mb-1"
+																[ngClass]="{
+																	'bg-warning ': l.statusLabel.type === 'warning',
+																	'bg-success': l.statusLabel.type === 'success',
+																	'bg-danger': l.statusLabel.type === 'danger',
+																	'bg-info': l.statusLabel.type === 'info',
+																	'bg-secondary': l.statusLabel.type === 'secondary',
+																	'bg-primary': l.statusLabel.type === 'primary'
+																}">
+																{{ l.statusLabel.text }}
+															</span><br>
 															<strong class="text-dark">Aplicación:</strong>
 															<span class="text-primary fw-semibold">{{ l.aplicacion }}</span>
 														</div>

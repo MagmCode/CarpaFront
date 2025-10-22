@@ -217,6 +217,10 @@ export class UsuariosComponent implements OnInit {
       next: () => {
         this.loading = false;
       },
+      error: () => {
+        this.loading = false;
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar los usuarios.', icon: 'error' });
+      }
     });
   }
 

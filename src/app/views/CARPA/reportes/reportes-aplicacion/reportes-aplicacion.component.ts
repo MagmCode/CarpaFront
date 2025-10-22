@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
 import { ReportesService } from 'src/app/services/auditoria/reportes.service';
+import Swal from 'sweetalert2';
 
 type ViewMode = 'usuarios' | 'acciones' | 'roles';
 
@@ -93,6 +94,7 @@ export class ReportesAplicacionComponent implements OnInit {
           this.roles = [];
           this.updateList();
           this.loading = false;
+          Swal.fire({ title: 'Error', text: 'No se pudieron cargar los reportes para la aplicación seleccionada.', icon: 'error' });
         }
       });
     } else {

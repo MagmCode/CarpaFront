@@ -120,6 +120,8 @@ export class OpcionesDeMenuComponent implements OnInit {
       error: (err) => {
         console.error('Error cargando opciones de menú', err);
         this.filtrarOpciones();
+        this.loading = false;
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar las opciones de menú.', icon: 'error' });
       }
     });
   }

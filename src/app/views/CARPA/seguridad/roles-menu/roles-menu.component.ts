@@ -12,6 +12,7 @@ export interface RolMenu {
   descripcion: string;
   tipo: string;
   aplicacion: string;
+  siglasAplic: string;
 }
 
 export interface Accion {
@@ -152,7 +153,8 @@ export class RolesMenuComponent implements OnInit {
             id: r.id,
             rol: r.rol || '',
             descripcion: r.descripcion || '',
-            aplicacion: r.aplicacion || ''
+            aplicacion: r.aplicacion || '',
+            siglasAplic: r.siglasAplic || ''
           }));
         } else {
           console.warn('RolesMenu: unexpected roles payload, using empty list', resp);
@@ -167,10 +169,8 @@ export class RolesMenuComponent implements OnInit {
         this.loading = false;
         // fallback to local defaults to keep UI usable in dev
         this.roles = [
-          // { id: 1, rol: 'Administrador', descripcion: 'Acceso total', aplicacion: 'Gestión Usuarios' },
-          // { id: 2, rol: 'Operador', descripcion: 'Acceso limitado', aplicacion: 'Inventario' },
-          // { id: 3, rol: 'Consulta', descripcion: 'Solo lectura', aplicacion: 'Gestión Usuarios' },
-          // { id: 4, rol: 'Supervisor', descripcion: 'Supervisa operaciones', aplicacion: 'Inventario' }
+          // { id: 1, rol: 'Administrador', descripcion: 'Acceso total', aplicacion: 'Gestión Usuarios', siglasAplic: 'GESTUSU' },
+          // { id: 2, rol: 'Operador', descripcion: 'Acceso limitado', aplicacion: 'Inventario', siglasAplic: 'INVENT' },
         ];
         this.filtrarRoles();
         this.filtrarMenu();
@@ -185,7 +185,8 @@ export class RolesMenuComponent implements OnInit {
       this.rolesFiltrados = this.roles.filter(r =>
         r.rol.toLowerCase().includes(term) ||
         r.descripcion.toLowerCase().includes(term) ||
-        r.aplicacion.toLowerCase().includes(term)
+        r.aplicacion.toLowerCase().includes(term) ||
+        r.siglasAplic.toLowerCase().includes(term)
       );
     } else {
       this.rolesFiltrados = [...this.roles];
@@ -241,6 +242,12 @@ export class RolesMenuComponent implements OnInit {
     // 1. Consultar todos los menús
     this.menuService.OpcionesMenu().subscribe({
       next: (resp: any[]) => {
+        // Filtrar menús por la siglasAplicacion correspondiente a la aplicación del rol
+        let menusFiltrados = resp;
+        let sigla = rol.siglasAplic ? rol.siglasAplic.toLowerCase() : '';
+        if (sigla) {
+          menusFiltrados = resp.filter(m => (m.siglasAplicacion && m.siglasAplicacion.toLowerCase() === sigla));
+        }
         // 2. Consultar los menús asociados al rol
         this.rolesService.buscarMenuPorRol({ mscRoleId: rol.id }).subscribe({
           next: (menuResp: any) => {
@@ -278,11 +285,13 @@ export class RolesMenuComponent implements OnInit {
               }
               return roots;
             };
-            this.menuOptions = buildTree(resp);
+            this.menuOptions = buildTree(menusFiltrados);
             this.filtrarMenu();
             this.loading = false;
           },
           error: () => {
+            this.loading = false;
+            Swal.fire({ title: 'Error', text: 'No se pudieron cargar los menús asociados.', icon: 'error' });
             // Si falla la consulta de menús asociados, mostrar todos sin selección
             const buildTree = (items: any[]): MenuOption[] => {
               const byId = new Map<number, MenuOption>();
@@ -316,7 +325,7 @@ export class RolesMenuComponent implements OnInit {
               }
               return roots;
             };
-            this.menuOptions = buildTree(resp);
+            this.menuOptions = buildTree(menusFiltrados);
             this.filtrarMenu();
             this.loading = false;
           }
@@ -326,6 +335,7 @@ export class RolesMenuComponent implements OnInit {
         this.menuOptions = [];
         this.filtrarMenu();
         this.loading = false;
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar las opciones de menú.', icon: 'error' });
       }
     });
   }
