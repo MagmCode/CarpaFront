@@ -19,7 +19,6 @@ import { Usuario, RolUsuario } from 'src/app/core/models/usuarios/usuario';
   providedIn: 'root',
 })
 export class UsuariosService {
-
   private apiUrl = environment.Url;
   private usuariosSubject = new BehaviorSubject<any[]>([]);
   usuarios$ = this.usuariosSubject.asObservable();
@@ -32,7 +31,7 @@ export class UsuariosService {
     return raw;
   }
 
-    /**
+  /**
    * Buscar usuario por userId en el backend (POST /admin/users/search)
    * Retorna datos del usuario para autocompletar campos en el formulario.
    */
@@ -44,8 +43,13 @@ export class UsuariosService {
     return this.http.post<any>(url, body, { headers }).pipe(
       map((resp: any) => this.normalizeRaw<any>(resp)),
       catchError((error: HttpErrorResponse) => {
-        console.error('Error buscando usuario', { status: error.status, error: error.error });
-        return throwError(() => error.error || error.message || 'Error buscando usuario');
+        console.error('Error buscando usuario', {
+          status: error.status,
+          error: error.error,
+        });
+        return throwError(
+          () => error.error || error.message || 'Error buscando usuario'
+        );
       })
     );
   }
@@ -65,7 +69,9 @@ export class UsuariosService {
         return list;
       }),
       catchError((error: HttpErrorResponse) => {
-        return throwError(() => error.error || error.message || 'Error consultando usuarios');
+        return throwError(
+          () => error.error || error.message || 'Error consultando usuarios'
+        );
       })
     );
   }
@@ -84,7 +90,11 @@ export class UsuariosService {
       tap((updated: Usuario) => {
         try {
           const current = this.usuariosSubject.getValue();
-          const idx = current.findIndex(u => String(u.userId || u.mscUserId) === String(updated.userId || updated.mscUserId));
+          const idx = current.findIndex(
+            (u) =>
+              String(u.userId || u.mscUserId) ===
+              String(updated.userId || updated.mscUserId)
+          );
           if (idx > -1) {
             const copy = [...current];
             copy[idx] = updated;
@@ -95,8 +105,13 @@ export class UsuariosService {
         }
       }),
       catchError((error: HttpErrorResponse) => {
-        console.error('Error updating usuario', { status: error.status, error: error.error });
-        return throwError(() => error.error || error.message || 'Error actualizando usuario');
+        console.error('Error updating usuario', {
+          status: error.status,
+          error: error.error,
+        });
+        return throwError(
+          () => error.error || error.message || 'Error actualizando usuario'
+        );
       })
     );
   }
@@ -121,8 +136,13 @@ export class UsuariosService {
         }
       }),
       catchError((error: HttpErrorResponse) => {
-        console.error('Error creating usuario', { status: error.status, error: error.error });
-        return throwError(() => error.error || error.message || 'Error creando usuario');
+        console.error('Error creating usuario', {
+          status: error.status,
+          error: error.error,
+        });
+        return throwError(
+          () => error.error || error.message || 'Error creando usuario'
+        );
       })
     );
   }
@@ -140,7 +160,9 @@ export class UsuariosService {
       tap(() => {
         try {
           const current = this.usuariosSubject.getValue();
-          const idx = current.findIndex(u => String(u.userId || u.mscUserId) === String(id));
+          const idx = current.findIndex(
+            (u) => String(u.userId || u.mscUserId) === String(id)
+          );
           if (idx > -1) {
             const copy = [...current];
             copy.splice(idx, 1);
@@ -151,8 +173,13 @@ export class UsuariosService {
         }
       }),
       catchError((error: HttpErrorResponse) => {
-        console.error('Error deleting usuario', { status: error.status, error: error.error });
-        return throwError(() => error.error || error.message || 'Error eliminando usuario');
+        console.error('Error deleting usuario', {
+          status: error.status,
+          error: error.error,
+        });
+        return throwError(
+          () => error.error || error.message || 'Error eliminando usuario'
+        );
       })
     );
   }
@@ -168,8 +195,13 @@ export class UsuariosService {
     return this.http.post<any>(url, payload, { headers }).pipe(
       map((resp: any) => this.normalizeRaw<any>(resp)),
       catchError((error: HttpErrorResponse) => {
-        console.error('Error asignando roles', { status: error.status, error: error.error });
-        return throwError(() => error.error || error.message || 'Error asignando roles');
+        console.error('Error asignando roles', {
+          status: error.status,
+          error: error.error,
+        });
+        return throwError(
+          () => error.error || error.message || 'Error asignando roles'
+        );
       })
     );
   }
@@ -188,25 +220,55 @@ export class UsuariosService {
         return Array.isArray(raw) ? raw : [];
       }),
       catchError((error: HttpErrorResponse) => {
-        console.error('Error obteniendo roles de usuario', { status: error.status, error: error.error });
-        return throwError(() => error.error || error.message || 'Error obteniendo roles');
+        console.error('Error obteniendo roles de usuario', {
+          status: error.status,
+          error: error.error,
+        });
+        return throwError(
+          () => error.error || error.message || 'Error obteniendo roles'
+        );
       })
     );
   }
 
-    /**
-     * Editar estatus masivo de usuarios via POST /admin/users/update/batch
-     * Recibe payload { userId: string[], userStatus: number }
-     */
-    editarEstatusMasivo(payload: { userId: string[]; userStatus: number }): Observable<any> {
-      const url = `${this.apiUrl}/admin/users/update/batch`;
-      const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-      return this.http.post<any>(url, payload, { headers }).pipe(
-        map((resp: any) => this.normalizeRaw<any>(resp)),
-        catchError((error: HttpErrorResponse) => {
-          console.error('Error en edición masiva de estatus', { status: error.status, error: error.error });
-          return throwError(() => error.error || error.message || 'Error editando estatus masivo');
-        })
-      );
-    }
+  /**
+   * Editar estatus masivo de usuarios via POST /admin/users/update/batch
+   * Recibe payload { userId: string[], userStatus: number }
+   */
+  editarEstatusMasivo(payload: {
+    userId: string[];
+    userStatus: number;
+  }): Observable<any> {
+    const url = `${this.apiUrl}/admin/users/update/batch`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post<any>(url, payload, { headers }).pipe(
+      map((resp: any) => this.normalizeRaw<any>(resp)),
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error en edición masiva de estatus', {
+          status: error.status,
+          error: error.error,
+        });
+        return throwError(
+          () => error.error || error.message || 'Error editando estatus masivo'
+        );
+      })
+    );
+  }
+
+  // Stub para cambio de contraseña
+  cambiarPassword(payload: {
+    userId: string;
+    actualPassword: string;
+    nuevaPassword: string;
+  }) {
+    // Aquí iría la llamada real al backend
+    return {
+      subscribe: (handlers: any) => {
+        // Simula éxito inmediato
+        if (handlers && handlers.next) {
+          handlers.next({ success: true });
+        }
+      },
+    };
+  }
 }

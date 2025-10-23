@@ -10,6 +10,12 @@ let sessionExpiredAlertShown = false;
 export class AuthInterceptor implements HttpInterceptor {
 	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 		const token = localStorage.getItem('token');
+		if (token === 'fake-token') {
+			// En modo demo, nunca mostrar error de sesión expirada ni bloquear petición
+			console.warn('[AUTH-INTERCEPTOR] Bypass: fake-token, no se muestra error de sesión expirada');
+			return next.handle(request);
+		}
+
 		if (token) {
 			request = request.clone({
 				setHeaders: {
