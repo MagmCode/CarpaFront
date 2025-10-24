@@ -6,9 +6,16 @@
     <div class="card-body" style="position: relative;">
       <app-local-loading
         [loading]="loading || modalLoadingEditar || modalLoadingVerRoles || modalLoadingVincularRoles"></app-local-loading>
-      <div class="row mb-4 align-items-end">
-        <div class="fw-bold d-flex justify-content-end">
-          <strong>Total de registros:&nbsp;</strong> {{ usuariosFiltrados.length}}
+      <div class=" mb-4 d-flex align-items-between justify-content-between">
+        <div >
+          <select class="form-select form-select-sm w-auto d-inline-block" [(ngModel)]="filtroTipoAcceso" (change)="filtrarUsuarios()">
+            <option value="">Todos</option>
+            <option value="LOCAL">Local</option>
+            <option value="LDAP">Directorio Activo</option>
+          </select>
+          </div>
+        <div class="fw-bold">
+          <strong>Total de registros:&nbsp;</strong> {{ usuariosFiltrados.length }}
         </div>
       </div>
       <div class="d-flex justify-content-between mb-4">
@@ -39,7 +46,7 @@
                     (change)="toggleSelectAll($event)">
                 </div>
               </th>
-              <th class="text-center">Editar</th>
+              <th class="text-center">Detalles</th>
               <th class="text-center">Password</th>
               <th class="text-center">Ver Roles</th>
               <th class="text-center">Vincular Roles</th>
@@ -71,11 +78,12 @@
               </td>
               <td class="text-center align-middle">
                 <button class="btn btn-sm btn-warning" (click)="openEditarModal(usuario, editarModal)">
-                  <i class="feather icon-edit"></i>
+                  <i *ngIf="usuario.isEditable" class="feather icon-edit"></i>
+                  <i *ngIf="!usuario.isEditable" class="feather icon-eye"></i>
                 </button>
               </td>
               <td class="text-center align-middle">
-                <button class="btn btn-secondary btn-sm" (click)="openPasswordModal(usuario, passwordModal)">
+                <button *ngIf="usuario.isEditable" class="btn btn-secondary btn-sm" (click)="openPasswordModal(usuario, passwordModal)">
                   <i class="mdi mdi-lock"></i>
                 </button>
               </td>
@@ -168,7 +176,8 @@
   <!-- Modal 2: Editar usuario (usa el mismo formulario que agregar) -->
   <ng-template #editarModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Editar Usuario</h5>
+      <h5 *ngIf="usuarioSeleccionado?.isEditable" class="modal-title"> Editar Usuario</h5>
+      <h5 *ngIf="!usuarioSeleccionado?.isEditable" class="modal-title">Detalles del Usuario</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close(); limpiarFormularioNuevoUsuario()"></button>
     </div>
     <!-- Loading overlay for Editar -->
@@ -209,16 +218,16 @@
                 autocomplete="off">
             </div>
             <!-- Estatus -->
-            <div class="col-md-4">
+            <!-- <div class="col-md-4">
               <label for="editUserStatus" class="form-label">Estatus</label>
               <select id="editUserStatus" name="editUserStatus" class="form-select"
                 [(ngModel)]="usuarioSeleccionado.userStatus" [disabled]="!usuarioSeleccionado.isEditable" required>
                 <option [ngValue]="1">Activo</option>
                 <option [ngValue]="0">Inactivo</option>
               </select>
-            </div>
+            </div> -->
             <!-- Vigencia -->
-            <div class="col-md-4">
+            <div *ngIf="usuarioSeleccionado.isEditable" class="col-md-4">
               <label for="editVigencia" class="form-label">Vigencia</label>
               <select id="editVigencia" name="editVigencia" class="form-select"
                 [(ngModel)]="usuarioSeleccionado.vigencia" [disabled]="!usuarioSeleccionado.isEditable" required>
@@ -244,12 +253,12 @@
                 [disabled]="!usuarioSeleccionado.isEditable" required disabled="true">
             </div>
             <!-- Clave -->
-            <div class="col-md-4">
+            <!-- <div class="col-md-4">
               <label for="editClave" class="form-label">Clave</label>
               <input id="editClave" name="editClave" type="password" class="form-control"
                 [(ngModel)]="usuarioSeleccionado.clave" [disabled]="!usuarioSeleccionado.isEditable" required
                 autocomplete="new-password">
-            </div>
+            </div> -->
             <!-- Cédula -->
             <div class="col-md-4">
               <label for="editCedula" class="form-label">Cédula</label>
@@ -281,16 +290,16 @@
                 autocomplete="off">
             </div>
             <!-- Estatus -->
-            <div class="col-md-4">
+            <!-- <div class="col-md-4">
               <label for="editUserStatus" class="form-label">Estatus</label>
               <select id="editUserStatus" name="editUserStatus" class="form-select"
                 [(ngModel)]="usuarioSeleccionado.userStatus" [disabled]="!usuarioSeleccionado.isEditable" required>
                 <option [ngValue]="1">Activo</option>
                 <option [ngValue]="0">Inactivo</option>
               </select>
-            </div>
+            </div> -->
             <!-- Vigencia -->
-            <div class="col-md-4">
+            <!-- <div class="col-md-4">
               <label for="editVigencia" class="form-label">Vigencia</label>
               <select id="editVigencia" name="editVigencia" class="form-select"
                 [(ngModel)]="usuarioSeleccionado.vigencia" [disabled]="!usuarioSeleccionado.isEditable" required>
@@ -299,13 +308,13 @@
                 <option [ngValue]="90">90 días</option>
                 <option [ngValue]="180">180 días</option>
               </select>
-            </div>
+            </div> -->
 
           </ng-template>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-success" type="submit" [disabled]="!usuarioSeleccionado.isEditable">Guardar</button>
+        <button class="btn btn-success" type="submit" [hidden]="!usuarioSeleccionado.isEditable">Guardar</button>
         <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
       </div>
     </form>
@@ -328,7 +337,7 @@
               <th>Rol (Alias corto)</th>
               <th>Descripción</th>
               <th>Tipo</th>
-              <th>Aplicación</th>
+              <th>Sistema</th>
             </tr>
           </thead>
           <tbody>
@@ -354,21 +363,30 @@
       <h5 class="modal-title">Vincular Roles a {{ usuarioSeleccionado?.fullName }}</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
-    <!-- Loading overlay for Vincular Roles -->
-    <!-- Spinner now shown in card-body, not here -->
     <div class="modal-body" *ngIf="!modalLoadingVincularRoles">
-      <div class="table-responsive">
+      <!-- Combo de aplicaciones -->
+      <div class="mb-3">
+        <label for="aplicacionRolesModal" class="form-label">Sistema</label>
+        <select id="aplicacionRolesModal" class="form-select" [(ngModel)]="aplicacionSeleccionadaRolesModal" (change)="filtrarRolesPorAplicacion()">
+          <option [ngValue]="null">Seleccione una aplicación</option>
+          <option *ngFor="let app of aplicaciones" [ngValue]="app.siglasApplic">{{ app.siglasApplic }}</option>
+        </select>
+      </div>
+      <div class="table-responsive" *ngIf="aplicacionSeleccionadaRolesModal">
         <table class="table table-bordered">
           <thead class="table-light">
             <tr>
               <th class="text-center">Seleccionar</th>
               <th class="text-center">Rol (Alias corto)</th>
               <th class="text-center">Descripción</th>
-              <th class="text-center">Aplicación</th>
+              <th class="text-center">Sistema</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let rol of rolesDisponibles; let i = index">
+            <tr *ngIf="rolesFiltradosModal.length === 0">
+              <td class="text-center text-muted" colspan="4">No hay roles asociados a este sistema</td>
+            </tr>
+            <tr *ngFor="let rol of rolesFiltradosModal; let i = index">
               <td class="text-center">
                 <div class="form-check d-flex justify-content-center align-items-center">
                   <input class="form-check-input" type="checkbox" [(ngModel)]="rol.seleccionado"
@@ -376,16 +394,17 @@
                   <label class="form-check-label" [for]="'rolSeleccionado' + i"></label>
                 </div>
               </td>
-              <td class="text-center">{{ rol.roleName ?? rol.roleName }}</td>
-              <td class="text-center">{{ rol.description ?? rol.description }}</td>
-              <td class="text-center">{{ rol.siglasApplic ?? rol.siglasApplic }}</td>
+              <td class="text-center">{{ rol.roleName }}</td>
+              <td class="text-center">{{ rol.description }}</td>
+              <td class="text-center">{{ rol.siglasAplic }}</td>
             </tr>
           </tbody>
         </table>
       </div>
+      <div *ngIf="!aplicacionSeleccionadaRolesModal" class="text-muted">Seleccione una aplicación para ver los roles disponibles.</div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-success" (click)="guardarAsociacionRoles(usuarioSeleccionado!, modal)">Guardar</button>
+      <button class="btn btn-success" (click)="guardarAsociacionRoles(usuarioSeleccionado!, modal)" [disabled]="!aplicacionSeleccionadaRolesModal">Guardar</button>
       <button class="btn btn-secondary" (click)="modal.close()">Salir</button>
     </div>
   </ng-template>
@@ -621,7 +640,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-success">Agregar</button>
+        <button type="submit" class="btn btn-success" [disabled]="(nuevoTypeAccess === 'Directorio Activo' && !ldapUsuarioBuscado)">Agregar</button>
         <button type="button" class="btn btn-secondary"
           (click)="modal.close(); limpiarFormularioNuevoUsuario()">Cerrar</button>
       </div>
@@ -729,7 +748,7 @@
     </div>
   <form #passwordForm="ngForm" (ngSubmit)="passwordFormSubmitted = true; cambiarPassword(modal)">
       <div class="modal-body">
-        <div class="mb-3">
+        <!-- <div class="mb-3">
           <label for="actualPassword" class="form-label">Contraseña actual</label>
           <div class="input-group">
             <input id="actualPassword" name="actualPassword" [type]="showActualPassword ? 'text' : 'password'" class="form-control" maxlength="8"
@@ -743,11 +762,11 @@
               La contraseña actual no puede estar vacía.
             </div>
           </div>
-        </div>
+        </div> -->
         <div class="mb-3">
           <label for="nuevaPassword" class="form-label">Contraseña nueva</label>
           <div class="input-group">
-            <input id="nuevaPassword" name="nuevaPassword" [type]="showNuevaPassword ? 'text' : 'password'" class="form-control" maxlength="8"
+            <input id="nuevaPassword" name="nuevaPassword" [type]="showNuevaPassword ? 'text' : 'password'" class="form-control" maxlength="8" autocomplete="false"
               [(ngModel)]="passwordNueva" required
               [ngClass]="{'is-invalid': passwordForm.submitted && (passwordNueva === '' || !validarClave(passwordNueva))}"
             >
@@ -765,7 +784,7 @@
         <div class="mb-3">
           <label for="repitePassword" class="form-label">Repita contraseña</label>
           <div class="input-group">
-            <input id="repitePassword" name="repitePassword" [type]="showRepitePassword ? 'text' : 'password'" class="form-control" maxlength="8"
+            <input id="repitePassword" name="repitePassword" [type]="showRepitePassword ? 'text' : 'password'" class="form-control" maxlength="8" autocomplete="false"
               [(ngModel)]="passwordRepite" required
               [ngClass]="{'is-invalid': passwordForm.submitted && (passwordRepite === '' || passwordRepite !== passwordNueva)}"
             >
@@ -779,6 +798,16 @@
               Las contraseñas no coinciden.
             </div>
           </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="passwordVigencia" class="form-label">Vigencia</label>
+          <select id="passwordVigencia" name="passwordVigencia" class="form-select" [(ngModel)]="passwordVigencia" required>
+            <option [ngValue]="30">30 días</option>
+            <option [ngValue]="60">60 días</option>
+            <option [ngValue]="90">90 días</option>
+            <option [ngValue]="180">180 días</option>
+          </select>
         </div>
       </div>
       <div class="modal-footer">

@@ -54,6 +54,25 @@ export class UsuariosService {
     );
   }
 
+    buscarUsuarioLocal(userId: string): Observable<any> {
+    // const url = `${this.apiUrl}/admin/users/search`;
+    const url = `${this.apiUrl}/admin/users/search`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    const body = { userId };
+    return this.http.post<any>(url, body, { headers }).pipe(
+      map((resp: any) => this.normalizeRaw<any>(resp)),
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error buscando usuario', {
+          status: error.status,
+          error: error.error,
+        });
+        return throwError(
+          () => error.error || error.message || 'Error buscando usuario'
+        );
+      })
+    );
+  }
+
   consultarUsuarios(): Observable<Usuario[]> {
     const url = `${this.apiUrl}/admin/users/all`;
     return this.http.get<any>(url).pipe(
@@ -255,20 +274,28 @@ export class UsuariosService {
     );
   }
 
-  // Stub para cambio de contraseña
-  cambiarPassword(payload: {
-    userId: string;
-    actualPassword: string;
-    nuevaPassword: string;
-  }) {
-    // Aquí iría la llamada real al backend
-    return {
-      subscribe: (handlers: any) => {
-        // Simula éxito inmediato
-        if (handlers && handlers.next) {
-          handlers.next({ success: true });
-        }
-      },
-    };
+  /**
+   * Cambiar contraseña de usuario
+   * POST /admin/users/change-password
+   * Body: { userId, passwordOld, passwordNew, passwordDays }
+   */
+  changePassword(payload: { userId: string; password: string; passwordDays: number }): Observable<any> {
+    const url = `${this.apiUrl}/admin/users/change-password`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post<any>(url, payload, { headers }).pipe(
+      map((resp: any) => this.normalizeRaw<any>(resp)),
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error cambiando contraseña', {
+          status: error.status,
+          error: error.error,
+        });
+        return throwError(
+          () => error.error || error.message || 'Error cambiando contraseña'
+        );
+      })
+    );
   }
+
+  // Stub para cambio de contraseña
+
 }
