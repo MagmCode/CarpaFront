@@ -2,9 +2,6 @@
 	<div class="card-header d-flex justify-content-between align-items-center">
 		<h6 class="card-title fw-semibold mb-0">Reportes por Sistema</h6>
 		<div class="d-flex align-items-center gap-2">
-						<button *ngIf="selectedApp" class="btn btn-outline-secondary volver" (click)="regresarAFiltro()">
-				<i class="icon-bdv-icon-back-m me-2" aria-hidden="true"></i>Volver
-			</button>
 			<select class="form-select" [(ngModel)]="selectedApp" (change)="onAppSelected()" style="width: 280px">
 				<option [ngValue]="null">Seleccione un sistema</option>
 				<option *ngFor="let a of aplicaciones" [ngValue]="a.idApplication">{{ a.siglasApplic }}</option>
@@ -13,12 +10,9 @@
 	</div>
 	<div class="card-body">
 		<app-local-loading [loading]="loading"></app-local-loading>
-		<div *ngIf="!selectedApp" class="text-center py-5">
-			<h4 class="mb-0 text-primary fw-semibold">Por favor seleccione un sistema para consultar.</h4>
-		</div>
 
 		<!-- Dashboard style: three top cards -->
-		<div *ngIf="selectedApp">
+		<div >
 			<div class="row mb-4">
 				<div class="col-md-4 grid-margin stretch-card"> 
 					<div class="card card-options" [ngClass]="{'focused-card-usuarios': view==='usuarios'}">

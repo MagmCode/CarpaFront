@@ -42,10 +42,16 @@ export class ReportesAplicacionComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
-      this.aplicaciones = apps || [];
-    });
-    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
+      this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+        this.aplicaciones = apps || [];
+        // Seleccionar por defecto la app con siglasApplic 'carpa' si existe
+        const carpaApp = this.aplicaciones.find(a => a.siglasApplic?.toLowerCase() === 'carpa');
+        if (carpaApp) {
+          this.selectedApp = carpaApp.idApplication;
+          this.onAppSelected();
+        }
+      });
+      this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
   }
 
   // helpers para el template: contar por aplicacion (evita arrow functions inline en el template)
