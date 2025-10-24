@@ -26,6 +26,7 @@ export interface OpcionMenu {
   styleUrls: ['./opciones-de-menu.component.scss']
 })
 export class OpcionesDeMenuComponent implements OnInit {
+  public submitted = false;
 
   loading = false;
 
@@ -276,6 +277,7 @@ export class OpcionesDeMenuComponent implements OnInit {
   openAddOpcionModal(content: TemplateRef<any>, parent?: OpcionMenu): void {
     this.modalModo = 'agregar';
     this.parentForSubmenu = parent || null;
+  this.submitted = false;
     let preselectedAppId: number | null = null;
     if (parent) {
       // Si el padre tiene idAplicacion, úsalo; si no, busca por siglasAplicacion
@@ -304,6 +306,7 @@ export class OpcionesDeMenuComponent implements OnInit {
   openEditOpcionModal(content: TemplateRef<any>, opcion: OpcionMenu, parent?: OpcionMenu, index?: number): void {
     this.modalModo = 'editar';
     // Asegura que la lista de aplicaciones esté cargada antes de abrir el modal
+  this.submitted = false;
     if (!this.aplicaciones || this.aplicaciones.length === 0) {
       this.aplicacionesService.loadAplicaciones().subscribe({
         next: () => this._openEditOpcionModal(content, opcion, parent, index),
@@ -335,7 +338,10 @@ export class OpcionesDeMenuComponent implements OnInit {
     this.modalService.open(content, { centered: true });
   }
 
-  saveOpcion(modal: any): void {
+  saveOpcion(modal: any, opcionForm: any): void {
+    if (!opcionForm.valid) {
+      return;
+    }
     if (this.modalModo === 'agregar') {
       // Ensure an application is selected. If adding a submenu and the parent has an appId,
       // prefer that. Do not silently fallback to the first application.
@@ -345,10 +351,7 @@ export class OpcionesDeMenuComponent implements OnInit {
         // if parent exists, try to use its appId
         if (this.parentForSubmenu && (this.parentForSubmenu as any).idAplicacion != null) {
           idAplicacion = Number((this.parentForSubmenu as any).idAplicacion);
-        } else {
-          Swal.fire({ title: 'Seleccione una aplicación', text: 'Debe seleccionar el sistema al que pertenece la opción.', icon: 'warning' });
-          return;
-        }
+        } 
       } else {
         idAplicacion = Number(selectedApp);
       }
