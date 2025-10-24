@@ -18,7 +18,7 @@ export const environment = {
   // Url: 'http://180.183.67.212:8081/api',
   // Url: 'http://180.183.67.228:8081/api',
 
-  Url: 'http://80.183.67.228:8081/api',
+  Url: 'http://180.183.67.228:8081/api',
   // Url: 'http://DLNTFI01.banvendes.corp:8081/api',
   
   API: '/api/',
