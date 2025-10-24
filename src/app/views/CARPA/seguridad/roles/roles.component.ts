@@ -11,6 +11,7 @@ export interface Rol {
   descripcion: string;
   tipo: string;
   aplicacion: string;
+  siglasAplic?: string;
 }
 
 @Component({
@@ -19,6 +20,8 @@ export interface Rol {
   styleUrls: ['./roles.component.scss']
 })
 export class RolesComponent implements OnInit {
+
+  public submitted = false;
 
   loading = false;
   aplicaciones: Aplicacion[] = [];
@@ -165,7 +168,10 @@ export class RolesComponent implements OnInit {
     this.modalService.open(content, { centered: true });
   }
 
-  saveRole(modal: any): void {
+  saveRole(modal: any, roleForm: any): void {
+    if (!roleForm.valid) {
+      return;
+    }
     if (this.modalModo === 'agregar') {
       // Construir el payload para el backend
       const appObj = this.aplicaciones.find(a => a.idApplication === Number(this.newRole.aplicacion));
@@ -203,6 +209,19 @@ export class RolesComponent implements OnInit {
         },
         error: (err: any) => {
           this.loading = false;
+          if (err && err.message.includes('El rol ya existe')) {
+            Swal.fire({
+            toast: false,
+            position: 'center',
+            icon: 'warning',
+            title: 'Rol ya existe',
+            text: "Este rol ya existe para la aplicación seleccionada.",
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: false
+          });
+          } else {
+
           Swal.fire({
             toast: true,
             position: 'top-end',
@@ -210,9 +229,10 @@ export class RolesComponent implements OnInit {
             title: 'Error al crear rol',
             text: (err && err.message) ? err.message : JSON.stringify(err),
             showConfirmButton: false,
-            timer: 4000,
+            timer: 2000,
             timerProgressBar: true
           });
+        }
         }
       });
     } else if (this.modalModo === 'editar') {

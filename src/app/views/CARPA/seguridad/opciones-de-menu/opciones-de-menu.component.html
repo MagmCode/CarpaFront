@@ -30,15 +30,15 @@
         <thead class="table-light">
           <tr>
             <!-- <th class="text-center">Eliminar</th> -->
-            <th class="text-center">Editar</th>
-            <th class="text-center">Submenú</th>
-            <th class="text-center">Ver Submenú</th>
-            <th>Nombre</th>
-            <th>URL</th>
-            <th>Padre</th>
-            <th>Nivel</th>
-            <th>Orden</th>
-            <th style="cursor:pointer" (click)="ordenarPor('aplicaciones')">
+            <th class="text-center fw-semibold">Editar</th>
+            <th class="text-center fw-semibold">Submenú</th>
+            <th class="text-center fw-semibold">Ver Submenú</th>
+            <th class="text-center fw-semibold">Nombre</th>
+            <th class="text-center fw-semibold">URL</th>
+            <th class="text-center fw-semibold">Padre</th>
+            <th class="text-center fw-semibold">Nivel</th>
+            <th class="text-center fw-semibold">Orden</th>
+            <th class="text-center fw-semibold" style="cursor:pointer" (click)="ordenarPor('aplicaciones')">
               Sistema
               <span *ngIf="sortColumn === 'aplicaciones'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
@@ -70,15 +70,16 @@
                   </button>
                 </td>
                 <td>
-                  <span [style.padding-left.px]="(nivel || 0) * 24">
+                  <span [style.padding-left.px]="(nivel || 0) * 24" 
+                        [ngClass]="{'fw-semibold': (menu.hijos && menu.hijos.length) || (!menu.hijos && (!parent || !parent.id))}">
                     {{ menu.nombre }}
                   </span>
                 </td>
                 <td>{{ menu.ruta }}</td>
-                <td>{{ parent?.nombre || '-' }}</td>
-                <td>{{ nivel || 0 }}</td>
-                <td>{{ menu.orden }}</td>
-                <td>{{ menu.siglasAplicacion }}</td>
+                <td class="text-center">{{ parent?.nombre || '-' }}</td>
+                <td class="text-center">{{ nivel || 0 }}</td>
+                <td class="text-center">{{ menu.orden }}</td>
+                <td class="text-center">{{ menu.siglasAplicacion }}</td>
               </tr>
               <ng-container *ngIf="menu.hijos && menu.hijos.length && menu._expandido">
                 <ng-container
@@ -140,39 +141,59 @@
 <!-- Modal para Agregar/Editar opción de menú -->
 <ng-template #opcionModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Agregar Opción de Menú' : 'Editar Opción de Menú' }}</h5>
+    <h5 class="modal-title fw-semibold">{{ modalModo === 'agregar' ? 'Agregar Opción de Menú' : 'Editar Opción de Menú' }}</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-  <form (ngSubmit)="saveOpcion(modal)">
+  <form #opcionForm="ngForm" (ngSubmit)="submitted = true; saveOpcion(modal, opcionForm)">
     <div class="modal-body">
       <div class="mb-3">
         <label for="nombreMenu" class="form-label">Nombre</label>
-        <input id="nombreMenu" name="nombreMenu" class="form-control" [(ngModel)]="opcionSeleccionada.nombre" required>
+        <input id="nombreMenu" name="nombreMenu" class="form-control"
+          [(ngModel)]="opcionSeleccionada.nombre" required
+          [ngClass]="{'is-invalid': submitted && (!opcionSeleccionada.nombre || !opcionSeleccionada.nombre.trim())}">
+  <div *ngIf="submitted && (!opcionSeleccionada.nombre || !opcionSeleccionada.nombre.trim())" class="invalid-feedback text-start">
+          El nombre no puede estar vacio.
+        </div>
       </div>
       <div class="mb-3">
         <label for="url" class="form-label">URL</label>
-        <input id="url" name="url" class="form-control" [(ngModel)]="opcionSeleccionada.ruta" required>
+        <input id="url" name="url" class="form-control"
+          [(ngModel)]="opcionSeleccionada.ruta"
+          [ngClass]="{'is-invalid': false}">
+        <!-- URL es opcional, nunca muestra error -->
       </div>
       <div class="mb-3">
         <label for="aplicaciones" class="form-label">Sistema</label>
-        <select id="aplicaciones" name="aplicaciones" class="form-select" [(ngModel)]="opcionSeleccionada.idAplicacion"
-          required [disabled]="modalModo === 'editar' || !!parentForSubmenu">
+        <select id="aplicaciones" name="aplicaciones" class="form-select"
+          [(ngModel)]="opcionSeleccionada.idAplicacion" required
+          [disabled]="modalModo === 'editar' || !!parentForSubmenu"
+          [ngClass]="{'is-invalid': submitted && (opcionSeleccionada.idAplicacion === null || opcionSeleccionada.idAplicacion === undefined)}">
           <option [ngValue]="null">Seleccione un sistema</option>
-          <option *ngFor="let app of aplicaciones" [ngValue]="app.idApplication">{{ app.siglasApplic || app.description
-            }}</option>
+          <option *ngFor="let app of aplicaciones" [ngValue]="app.idApplication">{{ app.siglasApplic || app.description }}</option>
         </select>
+  <div *ngIf="submitted && (opcionSeleccionada.idAplicacion === null || opcionSeleccionada.idAplicacion === undefined)" class="invalid-feedback text-start">
+          Debe seleccionar una opcion.
+        </div>
       </div>
       <div class="mb-3">
         <label for="orden" class="form-label">Orden</label>
-        <input id="orden" name="orden" type="number" class="form-control" [(ngModel)]="opcionSeleccionada.orden"
-          required>
+        <input id="orden" name="orden" type="number" class="form-control"
+          [(ngModel)]="opcionSeleccionada.orden" required
+          [ngClass]="{'is-invalid': submitted && (!opcionSeleccionada.orden && opcionSeleccionada.orden !== 0)}">
+  <div *ngIf="submitted && (!opcionSeleccionada.orden && opcionSeleccionada.orden !== 0)" class="invalid-feedback text-start">
+          El orden no puede estar vacio.
+        </div>
       </div>
       <div class="mb-3">
         <label for="habilitar" class="form-label">Habilitar</label>
-        <select id="habilitar" name="habilitar" class="form-select" [(ngModel)]="opcionSeleccionada.checked">
+        <select id="habilitar" name="habilitar" class="form-select" [(ngModel)]="opcionSeleccionada.checked" required
+          [ngClass]="{'is-invalid': submitted && (opcionSeleccionada.checked === null || opcionSeleccionada.checked === undefined)}">
           <option [ngValue]="true">Sí</option>
           <option [ngValue]="false">No</option>
         </select>
+  <div *ngIf="submitted && (opcionSeleccionada.checked === null || opcionSeleccionada.checked === undefined)" class="invalid-feedback text-start">
+          Debe seleccionar si la opción está habilitada.
+        </div>
       </div>
     </div>
     <div class="modal-footer">

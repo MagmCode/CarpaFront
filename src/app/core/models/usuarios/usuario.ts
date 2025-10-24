@@ -5,6 +5,7 @@ export interface RolUsuario {
   description?: string;
   inUsoEnRed?: string;
   idApplication?: number | string;
+  siglasAplic?: string;
   siglasApplic?: string;
   seleccionado?: boolean;
 }

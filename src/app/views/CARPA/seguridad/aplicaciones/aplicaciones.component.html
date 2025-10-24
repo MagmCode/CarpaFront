@@ -31,16 +31,16 @@
           <tr>
             <!-- <th>Eliminar</th> -->
             <th class="fw-semibold">Editar</th>
-            <th (click)="ordenarPor('nombre')" style="cursor:pointer" class="fw-semibold">
+            <th (click)="ordenarPor('description')" style="cursor:pointer" class="fw-semibold">
               Nombre
-              <span *ngIf="sortColumn === 'nombre'">
+              <span *ngIf="sortColumn === 'description'">
                 <i class="feather"
                   [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
               </span>
             </th>
-            <th (click)="ordenarPor('siglas')" style="cursor:pointer" class="fw-semibold">
+            <th (click)="ordenarPor('siglasApplic')" style="cursor:pointer" class="fw-semibold">
               Siglas
-              <span *ngIf="sortColumn === 'siglas'">
+              <span *ngIf="sortColumn === 'siglasApplic'">
                 <i class="feather"
                   [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
               </span>

@@ -1,4 +1,5 @@
 import { Component, OnInit, TemplateRef } from '@angular/core';
+import { ViewChild } from '@angular/core';
 import {
   AplicacionesService,
   Aplicacion,
@@ -18,13 +19,121 @@ import { RolesService } from 'src/app/services/roles/roles.service';
   styleUrls: ['./usuarios.component.scss'],
 })
 export class UsuariosComponent implements OnInit {
+  // Para el modal de asociar roles
+  aplicacionSeleccionadaRolesModal:  Aplicacion['siglasApplic'] | null = null;
+  rolesFiltradosModal: RolUsuario[] = [];
+
+  filtrarRolesPorAplicacion() {
+    if (!this.aplicacionSeleccionadaRolesModal) {
+      this.rolesFiltradosModal = [];
+      return;
+    }
+    this.rolesFiltradosModal = (this.rolesDisponibles || []).filter(r => r.siglasAplic === this.aplicacionSeleccionadaRolesModal);
+  }
+  passwordFormSubmitted = false;
+  showActualPassword: boolean = false;
+  showNuevaPassword: boolean = false;
+  showRepitePassword: boolean = false;
+  @ViewChild('addUserForm') addUserFormRef: any;
+  // Referencia al formulario de agregar usuario
+  // Limita el campo cédula a 9 dígitos numéricos
+  limitarCedula(event: any) {
+    const input = event.target as HTMLInputElement;
+    let valor = input.value.replace(/\D/g, '');
+    if (valor.length > 9) valor = valor.slice(0, 9);
+    input.value = valor;
+    this.nuevoCedula = valor;
+  }
+  // Validaciones NobleUI
+  validarCedula(cedula: string | number | null | undefined): boolean {
+    if (cedula === null || cedula === undefined) return false;
+    const ced = String(cedula);
+    return /^\d{6,9}$/.test(ced);
+  }
+
+  validarClave(clave: string): boolean {
+    // Mínimo 8 caracteres, al menos una mayúscula, una minúscula, un número y un símbolo
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(clave);
+  }
+
+  validarCorreo(correo: string): boolean {
+    // Debe tener @ y terminar en .com, .gob, .net, .org, .ve, etc
+    return /^[\w.-]+@[\w.-]+\.(com|gob|net|org|ve|edu|info|biz)$/i.test(correo);
+  }
+  // Campos para el cambio de contraseña
+  passwordActual: string = '';
+  passwordNueva: string = '';
+  passwordRepite: string = '';
+
+  // Abrir modal de cambio de contraseña
+  openPasswordModal(usuario: Usuario, template: any) {
+    this.usuarioSeleccionado = usuario;
+    this.passwordNueva = '';
+    this.passwordRepite = '';
+    this.modalService.open(template, { centered: true });
+  }
+
+  // --- Password Modal ---
+  passwordVigencia: number = 180;
+
+  // Procesar cambio de contraseñavige
+  cambiarPassword(modal: any) {
+    if (!this.usuarioSeleccionado) {
+      modal?.close();
+      return;
+    }
+    if ( !this.passwordNueva || !this.passwordRepite) {
+      this.passwordFormSubmitted = true;
+      return;
+    }
+    if (!this.validarClave(this.passwordNueva)) {
+      this.passwordFormSubmitted = true;
+      return;
+    }
+    this.passwordFormSubmitted = false;
+    if (this.passwordNueva !== this.passwordRepite) {
+      Swal.fire({
+        title: 'Error',
+        text: 'Las contraseñas nuevas no coinciden.',
+        icon: 'error',
+      });
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (token === 'fake-token') {
+      modal?.close();
+      this.showSuccessToast('Contraseña cambiada (local)', `Usuario: ${this.usuarioSeleccionado.userId}`);
+      return;
+    }
+    // Llamar servicio real de cambio de contraseña
+    const payload = {
+      userId: this.usuarioSeleccionado.userId,
+      password: this.passwordNueva,
+      passwordDays: this.passwordVigencia
+    };
+    this.usuariosService.changePassword(payload).subscribe({
+      next: (resp: any) => {
+        modal?.close();
+        this.showSuccessToast('Contraseña cambiada', `Usuario: ${this.usuarioSeleccionado?.userId}`);
+      },
+      error: (err: any) => {
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo cambiar la contraseña.',
+          icon: 'error',
+        });
+      },
+    });
+  }
   // Loading states for modals
   modalLoadingEditar: boolean = false;
   modalLoadingVerRoles: boolean = false;
   modalLoadingVincularRoles: boolean = false;
   ldapLoading: boolean = false;
+  ldapUsuarioBuscado: boolean = false;
   buscarUsuarioLDAP(login: string) {
     this.ldapLoading = true;
+    this.ldapUsuarioBuscado = false;
     this.usuariosService.buscarUsuario(login).subscribe({
       next: (resp: any) => {
         let user = resp;
@@ -40,6 +149,7 @@ export class UsuariosComponent implements OnInit {
           this.nuevoDescCargo = user.cargo || 'error';
           this.nuevoCedula = user.cedula || null;
           this.nuevoDescGeneral = user.descUnidad || 'error';
+          this.ldapUsuarioBuscado = true;
         } else {
           this.nuevoLogin = login;
           this.nuevoFullName = '';
@@ -49,7 +159,7 @@ export class UsuariosComponent implements OnInit {
           this.nuevoDescCargo = '';
           this.nuevoCedula = null;
           this.nuevoDescGeneral = '';
-
+          this.ldapUsuarioBuscado = false;
           Swal.fire({
             title: 'No encontrado',
             text: 'No se encontró el usuario en el directorio activo.',
@@ -63,11 +173,24 @@ export class UsuariosComponent implements OnInit {
         this.nuevoEmail = '';
         this.nuevoEstatus = 1;
         this.ldapLoading = false;
-        Swal.fire({
-          title: 'Error',
-          text: 'Ocurrió un error al buscar el usuario. Vuelva a intentar.',
-          icon: 'error',
-        });
+        this.nuevoDescCargo = '';
+        this.nuevoCedula = null;
+        this.nuevoDescGeneral = '';
+        this.ldapUsuarioBuscado = false;
+        if (err && err.message === 'no existe el usuario en Active directory') {
+          Swal.fire({
+            title: 'No encontrado',
+            text: 'No se encontró el usuario en el directorio activo.',
+            icon: 'info',
+          });
+        } else {
+          console.error('Error buscando usuario en LDAP:', err);
+          Swal.fire({
+            title: 'Error',
+            text: 'Ocurrió un error al buscar el usuario. Vuelva a intentar.',
+            icon: 'error',
+          });
+        }
       },
     });
   }
@@ -77,31 +200,52 @@ export class UsuariosComponent implements OnInit {
   // Nuevos campos para el formulario según requerimiento
   nuevoDescCargo: string = '';
   nuevoDescGeneral: string = '';
-  nuevoVigencia: number = 30; // passwordDays
+  nuevoVigencia: number = 180; // passwordDays
   limpiarFormularioNuevoUsuario() {
-    this.nuevoLogin = '';
-    this.nuevoClave = '';
-    this.nuevoEncriptamiento = '';
-    this.nuevoCedula = null;
-    this.nuevoDescripcion = '';
-    this.nuevoVigencia = 30;
-    this.nuevoFullName = '';
-    this.nuevoEmail = '';
-    this.nuevoEstatus = 1;
-    this.datosDirectorioActivo = null;
+  this.nuevoTypeAccess = '';
+  this.nuevoLogin = '';
+  this.nuevoClave = '';
+  this.nuevoEncriptamiento = '';
+  this.nuevoCedula = null;
+  this.nuevoDescripcion = '';
+  this.nuevoVigencia = 180;
+  this.nuevoFullName = '';
+  this.nuevoEmail = '';
+  this.nuevoEstatus = 1;
+  this.datosDirectorioActivo = null;
+  this.nuevoDescCargo = '';
+  this.nuevoDescGeneral = '';
+  }
+
+  limpiarType(){
+      this.nuevoLogin = '';
+  this.nuevoClave = '';
+  this.nuevoEncriptamiento = '';
+  this.nuevoCedula = null;
+  this.nuevoDescripcion = '';
+  this.nuevoVigencia = 180;
+  this.nuevoFullName = '';
+  this.nuevoEmail = '';
+  this.nuevoEstatus = 1;
+  this.datosDirectorioActivo = null;
+  this.nuevoDescCargo = '';
+  this.nuevoDescGeneral = '';
   }
 
   onChangeNuevoTypeAccess() {
-    this.limpiarFormularioNuevoUsuario();
+    this.limpiarType();
+    if (this.nuevoTypeAccess === 'Directorio Activo') {
+      this.ldapUsuarioBuscado = false;
+    }
   }
   // Campos para el formulario de alta de usuario
   nuevoTypeAccess: '' | 'Local' | 'Directorio Activo' = '';
   nuevoLogin: string = '';
   nuevoClave: string = '';
   nuevoEncriptamiento: string = '';
-  nuevoCedula: number | null = null;
+  nuevoCedula: string | number | null = null;
   nuevoDescripcion: string = '';
-  passwordDays: number = 30;
+  passwordDays: number = 180;
   nuevoFullName: string = '';
   nuevoEmail: string = '';
   nuevoEstatus: number | null = 1;
@@ -193,35 +337,40 @@ export class UsuariosComponent implements OnInit {
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
+  // Filtro para tipo de acceso (Local, Directorio Activo, Todos)
+  filtroTipoAcceso: string = '';
+
   ngOnInit(): void {
-    this.aplicaciones = this.aplicacionesService.getAplicaciones();
-    // Suscribirse al observable de usuarios para actualización automática
-    this.usuariosService.usuarios$.subscribe((data) => {
-      // Solo usar datos del backend, no cargar registros de ejemplo locales
-      // const hasData = Array.isArray(data) && data.length > 0;
-      // if (hasData) {
-      //   localStorage.setItem('usuariosConsultados', JSON.stringify(data));
-      //   this.usuarios = this.mapBackendUsuarios(data);
-      // } else {
-      //   const sample = this.generateSampleUsuarios(20);
-      //   localStorage.setItem('usuariosConsultados', JSON.stringify(sample));
-      //   this.usuarios = this.mapBackendUsuarios(sample);
-      // }
-      this.usuarios = this.mapBackendUsuarios(data);
+    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      this.aplicaciones = apps || [];
+    });
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
+    // Detectar token
+    const token = localStorage.getItem('token');
+    if (token === 'fake-token') {
+      // Modo offline: mostrar datos ficticios
+      this.usuarios = this.mapBackendUsuarios(this.generateSampleUsuarios(40));
       this.filtrarUsuarios();
       this.loading = false;
-    });
-    // Disparar la consulta inicial
-    this.loading = true;
-    this.usuariosService.consultarUsuarios().subscribe({
-      next: () => {
+    } else {
+      // Suscribirse al observable de usuarios para actualización automática
+      this.usuariosService.usuarios$.subscribe((data) => {
+        this.usuarios = this.mapBackendUsuarios(data);
+        this.filtrarUsuarios();
         this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        Swal.fire({ title: 'Error', text: 'No se pudieron cargar los usuarios.', icon: 'error' });
-      }
-    });
+      });
+      // Disparar la consulta inicial
+      this.loading = true;
+      this.usuariosService.consultarUsuarios().subscribe({
+        next: () => {
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+          Swal.fire({ title: 'Error', text: 'No se pudieron cargar los usuarios.', icon: 'error' });
+        }
+      });
+    }
   }
 
   // --- Batch file handling state ---
@@ -385,10 +534,10 @@ export class UsuariosComponent implements OnInit {
       isEditable: u.isEditable ?? true,
       // agregar flag seleccionado para la selección de filas
       seleccionado: false as any,
-      cedula: this.nuevoCedula || 0,
+      cedula: typeof this.nuevoCedula === 'string' ? Number(this.nuevoCedula) || 0 : this.nuevoCedula || 0,
       descCargo: this.nuevoDescCargo || '',
       descGeneral: this.nuevoDescGeneral || '',
-      passwordDays: this.nuevoVigencia || 30,
+      passwordDays: this.nuevoVigencia || 180,
       codigo: this.nuevoCodigo || '',
       descUnidad: this.nuevoDescUnidad || '',
       estatus:
@@ -424,33 +573,25 @@ export class UsuariosComponent implements OnInit {
       (u) =>
         (!this.usuarioId ||
           u.userId.toLowerCase().includes(this.usuarioId.toLowerCase())) &&
-        // (!this.userStatus || u.userStatus === this.userStatus) &&
         (!this.aplicacion ||
-          u.roles.some((r) => r.siglasApplic === this.aplicacion)) &&
+          u.roles.some((r) => r.siglasAplic === this.aplicacion)) &&
         (this.listaTodos === 'todos' ||
           u.roles.some((r) => r.roleName === this.listaTodos)) &&
         (term === '' ||
           u.userId.toLowerCase().includes(term) ||
           u.fullName.toLowerCase().includes(term) ||
-          u.email.toLowerCase().includes(term))
+          u.email.toLowerCase().includes(term)) &&
+        (this.filtroTipoAcceso === '' || u.typeAccess === this.filtroTipoAcceso)
     );
 
     // apply sorting if requested
     if (this.sortColumn) {
       const col = this.sortColumn as keyof Usuario;
       this.usuariosFiltrados.sort((a, b) => {
-        let valA: any = a[col] as any;
-        let valB: any = b[col] as any;
-        if (valA === undefined || valA === null) valA = '';
-        if (valB === undefined || valB === null) valB = '';
-        // numeric compare for userStatus
-        if (col === 'userStatus') {
-          return this.sortDirection === 'asc' ? valA - valB : valB - valA;
-        }
-        valA = valA.toString().toLowerCase();
-        valB = valB.toString().toLowerCase();
-        if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
-        if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
+        const aValue = a[col] ?? '';
+        const bValue = b[col] ?? '';
+        if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
         return 0;
       });
     }
@@ -482,16 +623,80 @@ export class UsuariosComponent implements OnInit {
     this.nuevoFullName = '';
     this.nuevoEmail = '';
     this.nuevoAplicacion = '';
-    this.modalService.open(content, { centered: true });
+    this.ldapUsuarioBuscado = false;
+    const modalRef = this.modalService.open(content, { centered: true });
+    // Limpia el formulario en cualquier tipo de cierre (close, dismiss, X, backdrop, ESC)
+    modalRef.result.finally(() => {
+      this.limpiarFormularioNuevoUsuario();
+      this.ldapUsuarioBuscado = false;
+    });
   }
 
   // Template in some views calls openAddApplicationModal — provide a wrapper
   openAddApplicationModal(content: any) {
     // this.openAddUserModal(content);
-    this.modalService.open(content, { centered: true, size: 'lg' });
+    const modalRef = this.modalService.open(content, { centered: true, size: 'lg' });
+    modalRef.result.finally(() => {
+      this.limpiarFormularioNuevoUsuario();
+    });
   }
 
   addUser(modal: any) {
+    // Validar solo los campos relevantes según el tipo de acceso
+    if (this.nuevoTypeAccess === 'Local') {
+      // Validar campos de Local
+      if (!this.nuevoLogin || !this.nuevoFullName || !this.nuevoEmail || !this.nuevoClave || !this.nuevoCedula) {
+        Swal.fire({
+          title: 'Campos requeridos',
+          text: 'Complete todos los campos obligatorios para usuario Local.',
+          icon: 'warning',
+        });
+        return;
+      }
+      if (!this.validarCedula(this.nuevoCedula)) {
+        Swal.fire({
+          title: 'Cédula inválida',
+          text: 'La cédula debe tener entre 6 y 9 dígitos.',
+          icon: 'warning',
+        });
+        return;
+      }
+      if (!this.validarClave(this.nuevoClave)) {
+        Swal.fire({
+          title: 'Clave insegura',
+          text: 'La clave debe tener al menos 8 caracteres, mayúsculas, minúsculas, números y símbolos.',
+          icon: 'warning',
+        });
+        return;
+      }
+      if (!this.validarCorreo(this.nuevoEmail)) {
+        Swal.fire({
+          title: 'Correo inválido',
+          text: 'Ingrese un correo válido.',
+          icon: 'warning',
+        });
+        return;
+      }
+    } else if (this.nuevoTypeAccess === 'Directorio Activo') {
+      // Validar campos de LDAP
+      if (!this.nuevoLogin) {
+        Swal.fire({
+          title: 'Login requerido',
+          text: 'Ingrese el login de usuario para Directorio Activo.',
+          icon: 'warning',
+        });
+        return;
+      }
+    } else {
+      // fallback: do nothing if type not selected
+      Swal.fire({
+        title: 'Tipo de acceso requerido',
+        text: 'Seleccione Local o Directorio Activo',
+        icon: 'warning',
+      });
+      return;
+    }
+
     let payload: any;
     if (this.nuevoTypeAccess === 'Local') {
       payload = {
@@ -510,15 +715,8 @@ export class UsuariosComponent implements OnInit {
         userId: this.nuevoLogin,
         typeAccess: 'LDAP',
       };
-    } else {
-      // fallback: do nothing if type not selected
-      Swal.fire({
-        title: 'Tipo de acceso requerido',
-        text: 'Seleccione Local o Directorio Activo',
-        icon: 'warning',
-      });
-      return;
     }
+
     this.loading = true;
     this.usuariosService.createUsuario(payload).subscribe({
       next: (created: any) => {
@@ -526,15 +724,29 @@ export class UsuariosComponent implements OnInit {
         this.filtrarUsuarios();
         this.showSuccessToast('Usuario añadido', `User ID: ${created.userId}`);
         modal.close();
+        this.limpiarFormularioNuevoUsuario();
         this.loading = false;
       },
       error: (err: any) => {
         this.loading = false;
-        Swal.fire({
-          title: 'Error',
-          text: 'No se pudo crear el usuario.',
-          icon: 'error',
-        });
+
+        if (err && err.message.includes('El usuario ya existe')) {
+          Swal.fire({
+            title: 'Usuario existente',
+            text: 'Ya existe un usuario con el mismo ID.',
+            icon: 'warning',
+            showConfirmButton: false,
+            timer: 2000,
+          });
+        } else {
+           Swal.fire({
+            title: 'Error',
+            text: (err && err.message) ? err.message : JSON.stringify(err),
+            icon: 'error',
+            showConfirmButton: false,
+            timer: 2000,
+          });
+        }
       },
     });
   }
@@ -611,45 +823,44 @@ export class UsuariosComponent implements OnInit {
   openEditarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
     console.log('Editar usuario:', usuario);
     this.modalLoadingEditar = true;
-    if (usuario.typeAccess === 'LDAP') {
-      this.usuariosService.buscarUsuario(usuario.userId).subscribe({
+    const openModal = () => {
+      const modalRef = this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
+      modalRef.result.finally(() => {
+        this.limpiarFormularioNuevoUsuario();
+      });
+    };
+    // if (usuario.typeAccess === 'LDAP') {
+      this.usuariosService.buscarUsuarioLocal(usuario.userId).subscribe({
         next: (resp: any) => {
           let user = Array.isArray(resp) ? resp[0] : resp;
           if (user) {
             this.usuarioSeleccionado = {
               ...usuario,
-              userId: user.codigo || usuario.userId,
-              fullName: user.nombreCompleto || user.fullName,
-              email: user.correo || user.email,
-              userStatus: user.estatus === 'A' ? 1 : user.estatus === 'I' ? 0 : usuario.userStatus,
-              descCargo: user.descCargo || '',
-              cedula: user.cedula || null,
-              descGeneral: user.descUnidad || '',
-              descUnidad: user.descUnidad || '',
-              estatus: user.estatus || '',
-              correo: user.correo || '',
-              codigoCargo: user.codigoCargo || '',
-              nombreCompleto: user.nombreCompleto || '',
-              cargo: user.cargo || '',
-              isEditable: false,
+              userId:  user.userId,
+              fullName: user.fullName,
+              email:  user.email,
+              userStatus: user.userStatus,
+              cargo: user.descCargo,
+              cedula: user.cedula,
+              descGeneral: user.descGeneral,
             };
           } else {
             this.usuarioSeleccionado = { ...usuario };
           }
           this.modalLoadingEditar = false;
-          this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
+          openModal();
         },
         error: () => {
           this.usuarioSeleccionado = { ...usuario };
           this.modalLoadingEditar = false;
-          this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
+          openModal();
         }
       });
-    } else {
-      this.usuarioSeleccionado = { ...usuario };
-      this.modalLoadingEditar = false;
-      this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
-    }
+    // } else {
+    //   this.usuarioSeleccionado = { ...usuario };
+    //   this.modalLoadingEditar = false;
+    //   openModal();
+    // }
   }
 
   procesarStatus(modal: any) {
@@ -765,10 +976,12 @@ export class UsuariosComponent implements OnInit {
   }
 
   openAsociarRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
-    this.modalLoadingVincularRoles = true;
-    this.usuarioSeleccionado = usuario;
-    const msc = usuario.mscUserId;
-    this.usuariosService.getRolesUsuario(String(msc)).subscribe({
+  this.modalLoadingVincularRoles = true;
+  this.usuarioSeleccionado = usuario;
+  this.aplicacionSeleccionadaRolesModal = null;
+  this.rolesFiltradosModal = [];
+  const msc = usuario.mscUserId;
+  this.usuariosService.getRolesUsuario(String(msc)).subscribe({
       next: (assigned: any) => {
         const assignedList = Array.isArray(assigned)
           ? assigned
@@ -799,13 +1012,14 @@ export class UsuariosComponent implements OnInit {
                 descripcion: r.description ?? r.descripcion ?? '',
                 inUsoEnRed: r.inUsoEnRed ?? r.tipo ?? r.type ?? '',
                 tipo: r.inUsoEnRed ?? r.tipo ?? r.type ?? '',
-                siglasApplic:
-                  r.siglasApplic ?? r.aplicacion ?? r.application ?? '',
+                siglasAplic:
+                  r.siglasAplic ?? '',
                 aplicacion:
-                  r.siglasApplic ?? r.aplicacion ?? r.application ?? '',
+                  r.aplicacion ?? '',
                 seleccionado: assignedIds.has(idStr),
               } as RolUsuario & { seleccionado?: boolean };
             });
+            console.log('Roles disponibles para asignar:', this.rolesDisponibles);
             this.modalLoadingVincularRoles = false;
             this.modalService.open(TemplateRef, { centered: true, size: 'xl' });
           },
@@ -880,7 +1094,7 @@ export class UsuariosComponent implements OnInit {
             roleName: r.roleName,
             description: r.description,
             inUsoEnRed: r.inUsoEnRed,
-            siglasAplic: r.siglasApplic,
+            siglasAplic: r.siglasAplic,
           }));
         }
         this.filtrarUsuarios();
@@ -968,7 +1182,7 @@ export class UsuariosComponent implements OnInit {
       });
       return;
     }
-    this.nuevoEstatusMasivo = 1;
+    this.nuevoEstatusMasivo = null;
     this.modalService.open(template, { centered: true });
   }
 
@@ -984,27 +1198,41 @@ export class UsuariosComponent implements OnInit {
     }
     const userIds = seleccionados.map((u) => u.userId);
     const nuevoStatus = Number(this.nuevoEstatusMasivo);
-    this.usuariosService
-      .editarEstatusMasivo({ userId: userIds, userStatus: nuevoStatus })
-      .subscribe({
-        next: (resp: any) => {
-          // Actualizar localmente los usuarios seleccionados
-          seleccionados.forEach((u) => (u.userStatus = nuevoStatus));
-          this.filtrarUsuarios();
-          modal.close();
-          this.showSuccessToast(
-            'Estatus actualizado',
-            `${seleccionados.length} usuario(s) actualizados.`
-          );
-        },
-        error: (err: any) => {
-          Swal.fire({
-            title: 'Error',
-            text: 'No se pudo actualizar el estatus masivo.',
-            icon: 'error',
-          });
-        },
-      });
+    const token = localStorage.getItem('token');
+    if (token === 'fake-token') {
+      // Modo offline: modificar localmente y limpiar selección
+      seleccionados.forEach((u) => (u.userStatus = nuevoStatus));
+      this.usuarios.forEach((u) => ((u as any).seleccionado = false));
+      this.filtrarUsuarios();
+      modal.close();
+      this.showSuccessToast(
+        'Estatus actualizado',
+        `${seleccionados.length} usuario(s) actualizados.`
+      );
+    } else {
+      this.usuariosService
+        .editarEstatusMasivo({ userId: userIds, userStatus: nuevoStatus })
+        .subscribe({
+          next: (resp: any) => {
+            // Actualizar localmente los usuarios seleccionados
+            seleccionados.forEach((u) => (u.userStatus = nuevoStatus));
+            this.usuarios.forEach((u) => ((u as any).seleccionado = false));
+            this.filtrarUsuarios();
+            modal.close();
+            this.showSuccessToast(
+              'Estatus actualizado',
+              `${seleccionados.length} usuario(s) actualizados.`
+            );
+          },
+          error: (err: any) => {
+            Swal.fire({
+              title: 'Error',
+              text: 'No se pudo actualizar el estatus masivo.',
+              icon: 'error',
+            });
+          },
+        });
+    }
   }
 
   salir() {

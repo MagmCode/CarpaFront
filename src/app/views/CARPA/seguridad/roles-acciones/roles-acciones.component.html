@@ -20,20 +20,20 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Asociar</th>
-            <th (click)="ordenarPor('rol')" style="cursor:pointer">
+            <th class="fw-semibold">Asociar</th>
+            <th class="fw-semibold" (click)="ordenarPor('rol')" style="cursor:pointer">
               Rol
               <span *ngIf="sortColumn === 'rol'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </span>
             </th>
-            <th (click)="ordenarPor('descripcion')" style="cursor:pointer">
+            <th class="fw-semibold" (click)="ordenarPor('descripcion')" style="cursor:pointer">
               Descripción
               <span *ngIf="sortColumn === 'descripcion'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </span>
             </th>
-            <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">
+            <th class="fw-semibold" (click)="ordenarPor('aplicacion')" style="cursor:pointer">
               Sistema
               <span *ngIf="sortColumn === 'aplicacion'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
@@ -109,7 +109,7 @@
     <app-local-loading [loading]="loading"></app-local-loading>
     <div class="mb-3">
       <strong>Rol:</strong> {{ rolSeleccionado?.rol }}<br>
-      <strong>Sistema:</strong> {{ rolSeleccionado?.aplicacion }}
+      <strong>Sistema:</strong> {{ rolSeleccionado?.siglasAplic }}
     </div>
 
     <div class="d-flex justify-content-between mb-3">
@@ -123,10 +123,10 @@
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <th>Seleccione</th>
-            <th>URL</th>
-            <th>Descripción</th>
-            <th>Sistema</th>
+            <th class="fw-semibold" >Seleccione</th>
+            <th class="fw-semibold" >URL</th>
+            <th class="fw-semibold" >Descripción</th>
+            <!-- <th class="fw-semibold" >Sistema</th> -->
           </tr>
         </thead>
         <tbody>
@@ -140,7 +140,7 @@
             </td>
             <td>{{ accion.url }}</td>
             <td>{{ accion.descripcion }}</td>
-            <td>{{ accion.applicationName }}</td>
+            <!-- <td>{{ accion.applicationName }}</td> -->
           </tr>
         </tbody>
       </table>

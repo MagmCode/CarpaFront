@@ -20,6 +20,7 @@ interface Accion {
   styleUrls: ['./acciones.component.scss']
 })
 export class AccionesComponent implements OnInit {
+  public submitted = false;
   aplicaciones: Aplicacion[] = [];
   loading = false;
 
@@ -179,7 +180,10 @@ export class AccionesComponent implements OnInit {
     return lista.find(a => a.url === accion.url && a.description === (accion.descripcion || accion.description));
   }
 
-  saveAction(modal: any) {
+  saveAction(modal: any, actionForm: any) {
+    if (!actionForm.valid) {
+      return;
+    }
     if (this.modalModo === 'agregar') {
       let idApplication = Number(this.newAction.aplicacion);
       const payload = {

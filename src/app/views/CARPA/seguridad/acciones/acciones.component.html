@@ -33,20 +33,20 @@
         <thead class="table-light">
           <tr>
             <!-- <th>Eliminar</th> -->
-            <th>Editar</th>
-            <th (click)="ordenarPor('url')" style="cursor:pointer">
+            <th class="fw-semibold">Editar</th>
+            <th class="fw-semibold" (click)="ordenarPor('url')" style="cursor:pointer">
               URL
               <span *ngIf="sortColumn === 'url'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </span>
             </th>
-            <th (click)="ordenarPor('descripcion')" style="cursor:pointer">
+            <th class="fw-semibold" (click)="ordenarPor('descripcion')" style="cursor:pointer">
               Descripción
               <span *ngIf="sortColumn === 'descripcion'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </span>
             </th>
-            <th (click)="ordenarPor('aplicacion')" style="cursor:pointer">
+            <th class="fw-semibold" (click)="ordenarPor('aplicacion')" style="cursor:pointer">
               Sistema
               <span *ngIf="sortColumn === 'aplicacion'">
                 <i class="mdi" [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
@@ -119,25 +119,40 @@
 <!-- Modal para Agregar/editar acción -->
 <ng-template #addActionModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">{{ modalModo === 'agregar' ? 'Nuevo Registro' : 'Editar Registro' }}</h5>
+    <h5 class="modal-title fw-semibold">{{ modalModo === 'agregar' ? 'Nuevo Registro' : 'Editar Registro' }}</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-  <form (ngSubmit)="saveAction(modal)">
+  <form #actionForm="ngForm" (ngSubmit)="submitted = true; saveAction(modal, actionForm)">
     <div class="modal-body">
       <div class="mb-3">
         <label for="url" class="form-label">URL</label>
-        <input id="url" name="url" class="form-control" [(ngModel)]="newAction.url" required>
+        <input id="url" name="url" class="form-control"
+          [(ngModel)]="newAction.url" required
+          [ngClass]="{'is-invalid': submitted && (!newAction.url || !newAction.url.trim())}">
+        <div *ngIf="submitted && (!newAction.url || !newAction.url.trim())" class="invalid-feedback text-start">
+          La URL no puede estar vacía.
+        </div>
       </div>
       <div class="mb-3">
         <label for="descripcion" class="form-label">Descripción</label>
-        <textarea id="descripcion" name="descripcion" class="form-control" [(ngModel)]="newAction.descripcion" required></textarea>
+        <textarea id="descripcion" name="descripcion" class="form-control"
+          [(ngModel)]="newAction.descripcion" required
+          [ngClass]="{'is-invalid': submitted && (!newAction.descripcion || !newAction.descripcion.trim())}"></textarea>
+        <div *ngIf="submitted && (!newAction.descripcion || !newAction.descripcion.trim())" class="invalid-feedback text-start">
+          La descripción no puede estar vacía.
+        </div>
       </div>
       <div class="mb-3">
         <label for="aplicacion" class="form-label">Sistema</label>
-        <select id="aplicacion" name="aplicacion" class="form-select" [(ngModel)]="newAction.aplicacion" required>
+        <select id="aplicacion" name="aplicacion" class="form-select"
+          [(ngModel)]="newAction.aplicacion" required
+          [ngClass]="{'is-invalid': submitted && (!newAction.aplicacion)}">
           <option value="" disabled>Seleccione un Sistema</option>
           <option *ngFor="let app of aplicaciones" [value]="app.idApplication">{{ app.siglasApplic }}</option>
         </select>
+        <div *ngIf="submitted && (!newAction.aplicacion)" class="invalid-feedback text-start">
+          Debe seleccionar una opción.
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -152,7 +167,7 @@
     <!-- Modal: Agregar en lote (subir Excel) -->
     <ng-template #agregarLoteModal let-modal>
       <div class="modal-header">
-        <h5 class="modal-title">Agregar acciones en lote</h5>
+        <h5 class="modal-title fw-semibold">Agregar acciones en lote</h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
       </div>
       <form (ngSubmit)="procesarAgregarLote(modal)">
@@ -172,7 +187,7 @@
     <!-- Modal: Eliminar en lote -->
     <ng-template #eliminarLoteModal let-modal>
       <div class="modal-header">
-        <h5 class="modal-title">Eliminar acciones en lote</h5>
+        <h5 class="modal-title fw-semibold">Eliminar acciones en lote</h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
       </div>
       <div class="modal-body">
