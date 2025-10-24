@@ -46,7 +46,7 @@ export class LoginComponent implements OnInit {
     const payload = {
       codUsuario,
       password,
-      siglasApplic: 'NOTINFI'
+      siglasApplic: 'CARPA'
     };
 
     // Clear any stale session flags before attempting login. This prevents old 'isLoggedin' values

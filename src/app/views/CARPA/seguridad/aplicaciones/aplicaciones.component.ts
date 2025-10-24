@@ -160,7 +160,7 @@ export class AplicacionesComponent implements OnInit {
         position: 'top-start',
         icon: 'warning',
         title: 'Campos obligatorios',
-        text: 'Debes completar el nombre, las siglas y la descripción antes de guardar.',
+        text: 'Debes completar todos los campos antes de guardar.',
         showConfirmButton: false,
         timer: 3500,
         timerProgressBar: true
@@ -177,7 +177,7 @@ export class AplicacionesComponent implements OnInit {
             toast: true,
             position: 'top-start',
             icon: 'success',
-            title: 'Aplicación creada',
+            title: 'Sistema creado',
             text: `${created.description}`,
             showConfirmButton: false,
             timer: 3000,
@@ -187,17 +187,30 @@ export class AplicacionesComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error creating aplicacion', err);
+          if (err && err.errorCode == 'APLICACION_DUPLICADA') {
+             Swal.fire({
+            // toast: true,
+            position: 'center',
+            icon: 'warning',
+            title: 'Sistema duplicado',
+            text: 'Ya existe una sistema con las mismas siglas.',
+            showConfirmButton: false,
+            timer: 2000,
+            // timerProgressBar: true
+          });
+          } else {
           Swal.fire({
-            toast: true,
-            position: 'top-start',
+            // toast: true,
+            position: 'center',
             icon: 'error',
             title: 'Error al crear',
             text: (err && err.message) ? err.message : JSON.stringify(err),
             showConfirmButton: false,
-            timer: 4000,
-            timerProgressBar: true
+            timer: 2000,
+            // timerProgressBar: true
           });
         }
+      }
       });
     } else if (this.modalModo === 'editar') {
       this.aplicacionesService.updateAplicacion(this.appSeleccionada).subscribe({
@@ -213,7 +226,7 @@ export class AplicacionesComponent implements OnInit {
             toast: true,
             position: 'top-start',
             icon: 'success',
-            title: 'Aplicación actualizada',
+            title: 'Sistema actualizado',
             text: `${updated.description}`,
             showConfirmButton: false,
             timer: 3000,
@@ -241,7 +254,7 @@ export class AplicacionesComponent implements OnInit {
 
   deleteApplication(app: Aplicacion): void {
     Swal.fire({
-      title: `¿Desea eliminar la aplicación "${app.description}"?`,
+      title: `¿Desea eliminar la sistema "${app.description}"?`,
       text: 'Esta acción no se puede deshacer.',
       icon: 'warning',
       showCancelButton: true,
@@ -261,7 +274,7 @@ export class AplicacionesComponent implements OnInit {
               position: 'top-start',
               icon: 'success',
               title: 'Eliminado',
-              text: `La aplicación "${app.description}" ha sido eliminada.`,
+              text: `el sistema "${app.description}" ha sido eliminado.`,
               showConfirmButton: false,
               timer: 2000
             });
