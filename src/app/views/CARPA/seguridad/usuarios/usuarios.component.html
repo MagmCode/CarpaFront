@@ -40,29 +40,29 @@
         <table id="rolesConsultaTable" class="table table-bordered text-center align-middle">
           <thead class="table-light">
             <tr>
-              <th class="text-center">Seleccionar
+              <th class="text-center fw-semibold">Seleccionar
                 <div class="d-flex justify-content-center align-items-center">
                   <input type="checkbox" class="form-check-input" [checked]="isAllSelected()"
                     (change)="toggleSelectAll($event)">
                 </div>
               </th>
-              <th class="text-center">Detalles</th>
-              <th class="text-center">Password</th>
-              <th class="text-center">Ver Roles</th>
-              <th class="text-center">Vincular Roles</th>
-              <th (click)="ordenarPor('userId')" style="cursor:pointer">User ID
+              <th class="text-center fw-semibold">Detalles</th>
+              <th class="text-center fw-semibold">Password</th>
+              <th class="text-center fw-semibold">Ver Roles</th>
+              <th class="text-center fw-semibold">Vincular Roles</th>
+              <th (click)="ordenarPor('userId')" style="cursor:pointer" class="fw-semibold">User ID
                 <i class="mdi" *ngIf="sortColumn === 'userId'"
                   [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </th>
-              <th (click)="ordenarPor('fullName')" style="cursor:pointer">Nombre y Apellido
+              <th (click)="ordenarPor('fullName')" style="cursor:pointer" class="fw-semibold">Nombre y Apellido
                 <i class="mdi" *ngIf="sortColumn === 'fullName'"
                   [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </th>
-              <th (click)="ordenarPor('email')" style="cursor:pointer">E-mail
+              <th (click)="ordenarPor('email')" style="cursor:pointer" class="fw-semibold">E-mail
                 <i class="mdi" *ngIf="sortColumn === 'email'"
                   [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </th>
-              <th (click)="ordenarPor('userStatus')" style="cursor:pointer">Estatus
+              <th (click)="ordenarPor('userStatus')" style="cursor:pointer" class="fw-semibold">Estatus
                 <i class="mdi" *ngIf="sortColumn === 'userStatus'"
                   [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
               </th>
@@ -160,7 +160,7 @@
   <!-- Modal 1: Confirmar eliminación -->
   <ng-template #eliminarModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Confirmar Eliminación</h5>
+      <h5 class="modal-title fw-semibold">Confirmar Eliminación</h5>
       <button type="button" class="btn-close" aria-label="Close"
         (click)="modal.close(); limpiarFormularioNuevoUsuario()"></button>
     </div>
@@ -176,8 +176,8 @@
   <!-- Modal 2: Editar usuario (usa el mismo formulario que agregar) -->
   <ng-template #editarModal let-modal>
     <div class="modal-header">
-      <h5 *ngIf="usuarioSeleccionado?.isEditable" class="modal-title"> Editar Usuario</h5>
-      <h5 *ngIf="!usuarioSeleccionado?.isEditable" class="modal-title">Detalles del Usuario</h5>
+      <h5 *ngIf="usuarioSeleccionado?.isEditable" class="modal-title fw-semibold"> Editar Usuario</h5>
+      <h5 *ngIf="!usuarioSeleccionado?.isEditable" class="modal-title fw-semibold">Detalles del Usuario</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close(); limpiarFormularioNuevoUsuario()"></button>
     </div>
     <!-- Loading overlay for Editar -->
@@ -323,7 +323,7 @@
   <!-- Modal 3: Ver roles asociados -->
   <ng-template #verRolesModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Roles Asociados al Usuario: {{ usuarioSeleccionado?.fullName }}</h5>
+      <h5 class="modal-title fw-semibold">Roles Asociados al Usuario: {{ usuarioSeleccionado?.fullName }}</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
     <!-- Loading overlay for Ver Roles -->
@@ -341,6 +341,9 @@
             </tr>
           </thead>
           <tbody>
+             <tr *ngIf="usuarioSeleccionado?.roles?.length == 0">
+              <td class="text-center text-muted" colspan="5">No hay roles asociados a este usuario</td>
+            </tr>
             <tr *ngFor="let rol of usuarioSeleccionado?.roles">
               <td>{{ rol.mscRoleId }}</td>
               <td>{{ rol.roleName }}</td>
@@ -360,7 +363,7 @@
   <!-- Modal 4: Asociar roles -->
   <ng-template #asociarRolesModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Vincular Roles a {{ usuarioSeleccionado?.fullName }}</h5>
+      <h5 class="modal-title fw-semibold">Vincular Roles a {{ usuarioSeleccionado?.fullName }}</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
     <div class="modal-body" *ngIf="!modalLoadingVincularRoles">
@@ -376,10 +379,10 @@
         <table class="table table-bordered">
           <thead class="table-light">
             <tr>
-              <th class="text-center">Seleccionar</th>
-              <th class="text-center">Rol (Alias corto)</th>
-              <th class="text-center">Descripción</th>
-              <th class="text-center">Sistema</th>
+              <th class="text-center fw-semibold">Seleccionar</th>
+              <th class="text-center fw-semibold">Rol (Alias corto)</th>
+              <th class="text-center fw-semibold">Descripción</th>
+              <th class="text-center fw-semibold">Sistema</th>
             </tr>
           </thead>
           <tbody>
@@ -426,7 +429,7 @@
   <!-- Modal para añadir usuario -->
   <ng-template #addUserModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Agregar Usuario</h5>
+      <h5 class="modal-title fw-semibold">Agregar Usuario</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close(); limpiarFormularioNuevoUsuario()"></button>
     </div>
   <form #addUserForm="ngForm" (ngSubmit)="addUser(modal)">
@@ -650,7 +653,7 @@
   <!-- Modal: Agregar en lote (subir Excel) -->
   <ng-template #agregarLoteModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Carga Masiva</h5>
+      <h5 class="modal-title fw-semibold">Carga Masiva</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
     <form (ngSubmit)="procesarAgregarLote(modal)">
@@ -671,7 +674,7 @@
   <!-- Modal: Eliminar en lote -->
   <ng-template #eliminarLoteModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Eliminar en lote</h5>
+      <h5 class="modal-title fw-semibold">Eliminar en lote</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
     <div class="modal-body">
@@ -691,7 +694,7 @@
   <!-- Modal: Modificar estatus en lote -->
   <ng-template #modificarEstatusModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Modificar estatus de usuarios seleccionados</h5>
+      <h5 class="modal-title fw-semibold">Modificar estatus de usuarios seleccionados</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
     <div class="modal-body">
@@ -743,7 +746,7 @@
   <!-- Modal: Cambiar contraseña -->
   <ng-template #passwordModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Cambiar contraseña de {{ usuarioSeleccionado?.userId }}</h5>
+      <h5 class="modal-title fw-semibold">Cambiar contraseña de {{ usuarioSeleccionado?.userId }}</h5>
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
     </div>
   <form #passwordForm="ngForm" (ngSubmit)="passwordFormSubmitted = true; cambiarPassword(modal)">
