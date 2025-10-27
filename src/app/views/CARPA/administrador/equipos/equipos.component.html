@@ -1,1 +1,144 @@
-<p>equipos works!</p>
+<!-- Equipos view: similar a Drivers -->
+<div class="card">
+	<div class="card-header">
+		<h6 class="card-title fw-semibold mb-0">Conexiones / Equipos</h6>
+	</div>
+	<div class="card-body">
+		<div class="row mb-4 align-items-end">
+			<div class="fw-bold d-flex justify-content-end">
+				<strong>Total de registros:</strong> {{ equiposFiltrados.length || 0 }}
+			</div>
+		</div>
+		<div class="d-flex justify-content-between mb-4">
+			<div class="d-flex gap-3">
+				<button class="btn btn-success" (click)="openAddEquipoModal(addEquipoModal)">
+					<i class="mdi mdi-plus"></i> Agregar
+				</button>
+			</div>
+			<div>
+				<input type="text" class="form-control" style="width: 260px; display: inline-block;"
+					placeholder="Buscar..." [(ngModel)]="searchTerm" (input)="filtrarEquipos()">
+			</div>
+		</div>
+		<div class="table-responsive">
+			<table class="table table-bordered text-center align-middle">
+				<thead class="table-light">
+					<tr>
+						<th>Eliminar</th>
+						<th>Editar</th>
+						<th (click)="ordenarPor('host')" style="cursor:pointer">Host <i class="mdi"
+								*ngIf="sortColumn === 'host'"
+								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('mac')" style="cursor:pointer">Mac <i class="mdi"
+								*ngIf="sortColumn === 'mac'"
+								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('tipo')" style="cursor:pointer">Tipo <i class="mdi"
+								*ngIf="sortColumn === 'tipo'"
+								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('identificador')" style="cursor:pointer">Identificador <i class="mdi"
+								*ngIf="sortColumn === 'identificador'"
+								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('descripcion')" style="cursor:pointer">Descripción <i class="mdi"
+								*ngIf="sortColumn === 'descripcion'"
+								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+						<th (click)="ordenarPor('status')" style="cursor:pointer">Status <i class="mdi"
+								*ngIf="sortColumn === 'status'"
+								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr *ngFor="let e of equiposPaginados">
+                        <td>
+                            <button class="btn btn-sm btn-danger" (click)="confirmDeleteEquipo(e)"><i class="feather icon-trash-2"></i></button>
+                        </td>
+						<td>
+							<button class="btn btn-sm btn-warning" (click)="openEditEquipoModal(addEquipoModal, e)"><i class="feather icon-edit"></i></button>
+						</td>
+						<td>{{ e.host }}</td>
+						<td>{{ e.mac }}</td>
+						<td>{{ e.tipo }}</td>
+						<td>{{ e.identificador }}</td>
+						<td class="text-start">{{ e.descripcion }}</td>
+						<td>
+							<span class="badge"
+								[ngClass]="e.status === 'Activo' ? 'bg-success text-white' : 'bg-danger text-white'">{{ e.status }}</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<!-- Paginador -->
+		<div class="d-flex justify-content-between align-items-center mt-3">
+			<div class="d-flex align-items-center gap-2">
+				<select class="form-select" style="width:auto;display:inline-block" [(ngModel)]="pageSize"
+					(change)="cambiarPageSize(pageSize)">
+					<option [ngValue]="5">5</option>
+					<option [ngValue]="10">10</option>
+					<option [ngValue]="25">25</option>
+				</select>
+				<label class="me-2 mb-0">registros por página</label>
+			</div>
+			<ul class="pagination mb-0">
+				<li class="page-item" [class.disabled]="page === 1"><button class="page-link"
+						(click)="cambiarPagina(page - 1)">Anterior</button></li>
+				<li class="page-item" [class.active]="page === 1"><button class="page-link"
+						(click)="cambiarPagina(1)">1</button></li>
+				<ng-container *ngFor="let p of [page-2, page-1, page, page+1, page+2]">
+					<li class="page-item" *ngIf="p > 1 && p < totalPages" [class.active]="page === p"><button
+							class="page-link" (click)="cambiarPagina(p)">{{ p }}</button></li>
+				</ng-container>
+				<li class="page-item" [class.disabled]="page === totalPages"><button class="page-link"
+						(click)="cambiarPagina(page + 1)">Siguiente</button></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<!-- Modal para agregar/editar equipo -->
+<ng-template #addEquipoModal let-modal>
+	<div class="modal-header">
+		<h5 class="modal-title">{{ modalModo === 'agregar' ? 'Nuevo Equipo' : 'Editar Equipo' }}</h5>
+		<button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+	</div>
+	<form (ngSubmit)="saveEquipo(modal)">
+		<div class="modal-body">
+			<div class="mb-3">
+				<label class="form-label">Dirección Host/IP</label>
+				<input class="form-control" [(ngModel)]="newEquipo.host" name="host" required>
+			</div>
+			<div class="mb-3">
+				<label class="form-label">MAC Address</label>
+				<input class="form-control" [(ngModel)]="newEquipo.mac" name="mac" required>
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Descripción</label>
+				<input class="form-control" [(ngModel)]="newEquipo.descripcion" name="descripcion">
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Identificador</label>
+				<input class="form-control" [(ngModel)]="newEquipo.identificador" name="identificador" required>
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Seleccione dispositivo</label>
+				<select class="form-select" [(ngModel)]="newEquipo.tipo" name="tipo" required>
+					<option value="PC">PC</option>
+					<option value="Laptop">Laptop</option>
+					<option value="Servidor">Servidor</option>
+					<option value="Impresora">Impresora</option>
+					<option value="Otro">Otro</option>
+				</select>
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Status</label>
+				<select class="form-select" [(ngModel)]="newEquipo.status" name="status">
+					<option value="Activo">Activo</option>
+					<option value="Inactivo">Inactivo</option>
+				</select>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-success" type="submit">{{ modalModo === 'agregar' ? 'Agregar' : 'Guardar' }}</button>
+			<button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
+		</div>
+	</form>
+</ng-template>
