@@ -2,13 +2,9 @@
   "name": "nobleui-angular",
   "version": "2.1.0",
   "scripts": {
-    "ng": "ng",
     "start": "ng serve --host 0.0.0.0",
     "start:docker": "ng serve --host 0.0.0.0 --port 4200 --poll",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "rtl": "webpack --config webpack-rtl.config.js"
+    "build": "ng build"
   },
   "private": true,
   "dependencies": {
@@ -68,20 +64,6 @@
     "@angular-devkit/build-angular": "^14.2.9",
     "@angular/cli": "^14.2.9",
     "@angular/compiler-cli": "^14.2.10",
-    "@types/feather-icons": "^4.7.0",
-    "@types/jasmine": "~4.0.0",
-    "@types/node": "^12.11.1",
-    "@types/quill": "^1.3.10",
-    "@types/sortablejs": "^1.10.7",
-    "del": "^6.1.1",
-    "jasmine-core": "~4.3.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.1.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "^2.0.0",
-    "typescript": "~4.7.2",
-    "webpack-cli": "^4.9.2",
-    "webpack-messages": "^2.0.4"
+    "typescript": "~4.7.2"
   }
 }

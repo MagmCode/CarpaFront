@@ -1,3 +1,4 @@
+
 # ===== Stage 1: Dependencias =====
 FROM node:16.19-alpine AS deps
 
@@ -6,8 +7,8 @@ WORKDIR /app
 # Copiamos package.json y package-lock.json
 COPY package*.json ./
 
-# Instalamos dependencias (incluyendo dev)
-RUN npm install --force 
+# Instalamos dependencias (más rápido y confiable)
+RUN npm ci && npm cache clean --force && rm -rf /root/.npm
 
 # ===== Stage 2: Código fuente =====
 FROM node:16.19-alpine AS dev
