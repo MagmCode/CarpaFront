@@ -88,10 +88,10 @@ export const MENU: MenuItem[] = [
     label: 'Auditoría',
     icon: 'icon-bdv-icon-filewarning2-m',
     subItems: [
-      {
-        label: 'Trazas',
-        link: '/auditoria/trazas',
-      },
+      // {
+      //   label: 'Trazas',
+      //   link: '/auditoria/trazas',
+      // },
       {
         label: 'Seguimiento',
         link: '/auditoria/seguimiento',
