@@ -3,7 +3,8 @@
 	<div class="card-header">
 		<h6 class="card-title fw-semibold mb-0">Conexiones / Equipos</h6>
 	</div>
-	<div class="card-body">
+	<div class="card-body" style="position: relative;">
+		<app-local-loading [loading]="loading"></app-local-loading>
 		<div class="row mb-4 align-items-end">
 			<div class="fw-bold d-flex justify-content-end">
 				<strong>Total de registros:</strong> {{ equiposFiltrados.length || 0 }}
@@ -21,51 +22,66 @@
 			</div>
 		</div>
 		<div class="table-responsive">
-			<table class="table table-bordered text-center align-middle">
-				<thead class="table-light">
-					<tr>
-						<th>Eliminar</th>
-						<th>Editar</th>
-						<th (click)="ordenarPor('host')" style="cursor:pointer">Host <i class="mdi"
-								*ngIf="sortColumn === 'host'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('mac')" style="cursor:pointer">Mac <i class="mdi"
-								*ngIf="sortColumn === 'mac'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('tipo')" style="cursor:pointer">Tipo <i class="mdi"
-								*ngIf="sortColumn === 'tipo'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('identificador')" style="cursor:pointer">Identificador <i class="mdi"
-								*ngIf="sortColumn === 'identificador'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('descripcion')" style="cursor:pointer">Descripción <i class="mdi"
-								*ngIf="sortColumn === 'descripcion'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('status')" style="cursor:pointer">Status <i class="mdi"
-								*ngIf="sortColumn === 'status'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr *ngFor="let e of equiposPaginados">
-                        <td>
-                            <button class="btn btn-sm btn-danger" (click)="confirmDeleteEquipo(e)"><i class="feather icon-trash-2"></i></button>
-                        </td>
-						<td>
-							<button class="btn btn-sm btn-warning" (click)="openEditEquipoModal(addEquipoModal, e)"><i class="feather icon-edit"></i></button>
-						</td>
-						<td>{{ e.host }}</td>
-						<td>{{ e.mac }}</td>
-						<td>{{ e.tipo }}</td>
-						<td>{{ e.identificador }}</td>
-						<td class="text-start">{{ e.descripcion }}</td>
-						<td>
-							<span class="badge"
-								[ngClass]="e.status === 'Activo' ? 'bg-success text-white' : 'bg-danger text-white'">{{ e.status }}</span>
-						</td>
-					</tr>
-				</tbody>
-			</table>
+					<table class="table table-bordered text-center align-middle">
+						<thead class="table-light">
+							<tr>
+								<!-- <th>Eliminar</th> -->
+								<th class="fw-semibold">Editar</th>
+								<th (click)="ordenarPor('host')" style="cursor:pointer" class="fw-semibold">
+									Host/IP
+									<span *ngIf="sortColumn === 'host'">
+										<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+									</span>
+								</th>
+								<th (click)="ordenarPor('mac')" style="cursor:pointer" class="fw-semibold">
+									MAC Address
+									<span *ngIf="sortColumn === 'mac'">
+										<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+									</span>
+								</th>
+								<th (click)="ordenarPor('type')" style="cursor:pointer" class="fw-semibold">
+									Tipo de Dispositivo
+									<span *ngIf="sortColumn === 'type'">
+										<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+									</span>
+								</th>
+								<th (click)="ordenarPor('identifier')" style="cursor:pointer" class="fw-semibold">
+									Identificador
+									<span *ngIf="sortColumn === 'identifier'">
+										<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+									</span>
+								</th>
+								<th (click)="ordenarPor('description')" style="cursor:pointer" class="fw-semibold">
+									Descripción
+									<span *ngIf="sortColumn === 'description'">
+										<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+									</span>
+								</th>
+								<th (click)="ordenarPor('status')" style="cursor:pointer" class="fw-semibold">
+									Status
+									<span *ngIf="sortColumn === 'status'">
+										<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+									</span>
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr *ngFor="let e of equiposPaginados">
+								<td>
+									<button class="btn btn-sm btn-warning" (click)="openEditEquipoModal(addEquipoModal, e)"><i class="feather icon-edit"></i></button>
+								</td>
+								<td>{{ e.host }}</td>
+								<td>{{ e.mac }}</td>
+								<td>{{ e.type }}</td>
+								<td>{{ e.identifier }}</td>
+								<td class="text-start">{{ e.description }}</td>
+								<td>
+									<span class="badge"
+										[ngClass]="e.status === '1' ? 'bg-success text-white' : 'bg-danger text-white'">{{ e.status === '1' ? 'Activo' : (e.status === '0' ? 'Inactivo' : e.status) }}</span>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 		</div>
 		<!-- Paginador -->
 		<div class="d-flex justify-content-between align-items-center mt-3">
@@ -112,27 +128,29 @@
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Descripción</label>
-				<input class="form-control" [(ngModel)]="newEquipo.descripcion" name="descripcion">
+				<input class="form-control" [(ngModel)]="newEquipo.description" name="description">
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Identificador</label>
-				<input class="form-control" [(ngModel)]="newEquipo.identificador" name="identificador" required>
+				<input class="form-control" [(ngModel)]="newEquipo.identifier" name="identifier" required>
 			</div>
 			<div class="mb-3">
-				<label class="form-label">Seleccione dispositivo</label>
-				<select class="form-select" [(ngModel)]="newEquipo.tipo" name="tipo" required>
-					<option value="PC">PC</option>
-					<option value="Laptop">Laptop</option>
-					<option value="Servidor">Servidor</option>
-					<option value="Impresora">Impresora</option>
-					<option value="Otro">Otro</option>
+				<label class="form-label">Dispositivo</label>
+				<select class="form-select" [(ngModel)]="newEquipo.type" name="type" required>
+					<option [ngValue]="null" disabled selected>Seleccione...</option>
+					<option [ngValue]="'PC'">PC</option>
+					<option [ngValue]="'Laptop'">Laptop</option>
+					<option [ngValue]="'Servidor'">Servidor</option>
+					<option [ngValue]="'Impresora'">Impresora</option>
+					<option [ngValue]="'Otro'">Otro</option>
 				</select>
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Status</label>
 				<select class="form-select" [(ngModel)]="newEquipo.status" name="status">
-					<option value="Activo">Activo</option>
-					<option value="Inactivo">Inactivo</option>
+					<option [ngValue]="null" disabled selected>Seleccione...</option>
+					<option [ngValue]="'Activo'">Activo</option>
+					<option [ngValue]="'Inactivo'">Inactivo</option>
 				</select>
 			</div>
 		</div>

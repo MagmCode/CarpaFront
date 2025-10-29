@@ -1,9 +1,10 @@
 <!-- Drivers view: Conexiones / Drivers -->
 <div class="card">
 	<div class="card-header">
-		<h6 class="card-title fw-semibold mb-0">Conexiones / Drivers</h6>
+		<h6 class="card-title fw-semibold mb-0">Administrador / Conexiones / Drivers</h6>
 	</div>
-	<div class="card-body">
+	<div class="card-body" style="position: relative;">
+		<app-local-loading [loading]="loading"></app-local-loading>
 		<div class="row mb-4 align-items-end">
 			<div class="fw-bold d-flex justify-content-end">
 				<strong>Total de registros:</strong> {{ driversFiltrados.length || 0 }}
@@ -23,50 +24,74 @@
 		<div class="table-responsive">
 			<table class="table table-bordered text-center align-middle">
 				<thead class="table-light">
-					<tr>
-						<th>Eliminar</th>
-						<th>Editar</th>
-						<th (click)="ordenarPor('driver')" style="cursor:pointer">Driver <i class="mdi"
-								*ngIf="sortColumn === 'driver'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('base')" style="cursor:pointer">Base de datos <i class="mdi"
-								*ngIf="sortColumn === 'base'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('descripcion')" style="cursor:pointer">Descripción <i class="mdi"
-								*ngIf="sortColumn === 'descripcion'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('host')" style="cursor:pointer">Host <i class="mdi"
-								*ngIf="sortColumn === 'host'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('puerto')" style="cursor:pointer">Puerto <i class="mdi"
-								*ngIf="sortColumn === 'puerto'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-						<th (click)="ordenarPor('status')" style="cursor:pointer">Status <i class="mdi"
-								*ngIf="sortColumn === 'status'"
-								[ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i></th>
-					</tr>
+		    <tr>
+			<!-- <th>Eliminar</th> -->
+			<th class="fw-semibold"><!-- No model field, acción de edición -->Editar</th>
+			<th (click)="ordenarPor('connectionName')" style="cursor:pointer" class="fw-semibold">
+				Nombre de Conexión
+				<span *ngIf="sortColumn === 'connectionName'">
+					<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+				</span>
+			</th>
+			<th (click)="ordenarPor('datasourceType')" style="cursor:pointer" class="fw-semibold">
+				Tipo de Fuente
+				<span *ngIf="sortColumn === 'datasourceType'">
+					<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+				</span>
+			</th>
+			<th (click)="ordenarPor('jdbcUrl')" style="cursor:pointer" class="fw-semibold">
+				URL JDBC
+				<span *ngIf="sortColumn === 'jdbcUrl'">
+					<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+				</span>
+			</th>
+			<th (click)="ordenarPor('username')" style="cursor:pointer" class="fw-semibold">
+				Usuario
+				<span *ngIf="sortColumn === 'username'">
+					<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+				</span>
+			</th>
+			<th (click)="ordenarPor('driverClassName')" style="cursor:pointer" class="fw-semibold">
+				Driver Class
+				<span *ngIf="sortColumn === 'driverClassName'">
+					<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+				</span>
+			</th>
+			<th (click)="ordenarPor('profile')" style="cursor:pointer" class="fw-semibold">
+				Perfil
+				<span *ngIf="sortColumn === 'profile'">
+					<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+				</span>
+			</th>
+			<th (click)="ordenarPor('enabled')" style="cursor:pointer" class="fw-semibold">
+				Status
+				<span *ngIf="sortColumn === 'enabled'">
+					<i class="feather" [ngClass]="{'icon-arrow-up': sortDirection === 'asc', 'icon-arrow-down': sortDirection === 'desc'}"></i>
+				</span>
+			</th>
+		    </tr>
 				</thead>
 				<tbody>
 					<tr *ngFor="let d of driversPaginados">
 						<td>
-							<button class="btn btn-sm btn-danger" (click)="confirmDeleteDriver(d)"><i
-									class="feather icon-trash-2"></i></button>
+							<button class="btn btn-sm btn-warning" (click)="openEditDriverModal(addDriverModal, d)"><i class="feather icon-edit"></i></button>
 						</td>
+						<!-- d.connectionName = columna Nombre de Conexión -->
+						<td>{{ d.connectionName }}</td>
+						<!-- d.datasourceType = columna Tipo de Fuente -->
+						<td>{{ d.datasourceType }}</td>
+						<!-- d.jdbcUrl = columna URL JDBC -->
+						<td class="text-start">{{ d.jdbcUrl }}</td>
+						<!-- d.username = columna Usuario -->
+						<td>{{ d.username }}</td>
+						<!-- d.driverClassName = columna Driver Class -->
+						<td>{{ d.driverClassName }}</td>
+						<!-- d.profile = columna Perfil -->
+						<td>{{ d.profile }}</td>
+						<!-- d.enabled = columna Status -->
 						<td>
-							<button class="btn btn-sm btn-warning" (click)="openEditDriverModal(addDriverModal, d)"><i
-									class="feather icon-edit"></i></button>
+							<span class="badge" [ngClass]="d.enabled ? 'bg-success text-white' : 'bg-danger text-white'">{{ d.enabled ? 'Activo' : 'Inactivo' }}</span>
 						</td>
-						<td>{{ d.driver }}</td>
-						<td>{{ d.base }}</td>
-						<td class="text-start">{{ d.descripcion }}</td>
-						<td>{{ d.host }}</td>
-						<td>{{ d.puerto }}</td>
-						<td>
-							<span class="badge"
-								[ngClass]="d.status === 'Activo' ? 'bg-success text-white' : 'bg-danger text-white'">{{
-								d.status }}</span>
-						</td>
-
 					</tr>
 				</tbody>
 			</table>
@@ -102,36 +127,44 @@
 <!-- Modal para agregar/editar driver -->
 <ng-template #addDriverModal let-modal>
 	<div class="modal-header">
-		<h5 class="modal-title">{{ modalModo === 'agregar' ? 'Nuevo Driver' : 'Editar Driver' }}</h5>
+		<h5 class="modal-title fw-semibold">{{ modalModo === 'agregar' ? 'Nuevo Driver' : 'Editar Driver' }}</h5>
 		<button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
 	</div>
 	<form (ngSubmit)="saveDriver(modal)">
-		<div class="modal-body">
+	<div class="modal-body" autocomplete="off">
 			<div class="mb-3">
-				<label class="form-label">Driver</label>
-				<input class="form-control" [(ngModel)]="newDriver.driver" name="driver" required>
+				<label class="form-label">Nombre de Conexión</label>
+				<input class="form-control" [(ngModel)]="newDriver.connectionName" name="connectionName" required>
 			</div>
 			<div class="mb-3">
-				<label class="form-label">Base de datos</label>
-				<input class="form-control" [(ngModel)]="newDriver.base" name="base" required>
+				<label class="form-label">Tipo de Fuente</label>
+				<input class="form-control" [(ngModel)]="newDriver.datasourceType" name="datasourceType" required>
 			</div>
 			<div class="mb-3">
-				<label class="form-label">Descripción</label>
-				<input class="form-control" [(ngModel)]="newDriver.descripcion" name="descripcion">
+				<label class="form-label">URL JDBC</label>
+				<input class="form-control" [(ngModel)]="newDriver.jdbcUrl" name="jdbcUrl" required>
 			</div>
 			<div class="mb-3">
-				<label class="form-label">Host</label>
-				<input class="form-control" [(ngModel)]="newDriver.host" name="host">
+				<label class="form-label">Usuario</label>
+				<input class="form-control" [(ngModel)]="newDriver.username" name="username" autocomplete="new-username" required>
 			</div>
 			<div class="mb-3">
-				<label class="form-label">Puerto</label>
-				<input class="form-control" [(ngModel)]="newDriver.puerto" name="puerto">
+				<label class="form-label">Contraseña</label>
+				<input class="form-control" [(ngModel)]="newDriver.password" name="password" type="password" autocomplete="new-password">
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Driver Class</label>
+				<input class="form-control" [(ngModel)]="newDriver.driverClassName" name="driverClassName" required>
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Perfil</label>
+				<input class="form-control" [(ngModel)]="newDriver.profile" name="profile" required>
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Status</label>
-				<select class="form-select" [(ngModel)]="newDriver.status" name="status">
-					<option value="Activo">Activo</option>
-					<option value="Inactivo">Inactivo</option>
+				<select class="form-select" [(ngModel)]="newDriver.enabled" name="enabled">
+					<option [ngValue]="true">Activo</option>
+					<option [ngValue]="false">Inactivo</option>
 				</select>
 			</div>
 		</div>

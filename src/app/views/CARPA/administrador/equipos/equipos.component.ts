@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
+import { EquiposService } from 'src/app/services/conexiones/equipos.service';
 
 @Component({
   selector: 'app-equipos',
@@ -8,6 +9,7 @@ import Swal from 'sweetalert2';
   styleUrls: ['./equipos.component.scss']
 })
 export class EquiposComponent implements OnInit {
+  loading = false;
   equipos: EquipoRecord[] = [];
   page: number = 1;
   pageSize: number = 10;
@@ -19,25 +21,34 @@ export class EquiposComponent implements OnInit {
   sortDirection: 'asc' | 'desc' = 'asc';
 
   modalModo: 'agregar' | 'editar' = 'agregar';
-  newEquipo: EquipoRecord = { host: '', mac: '', descripcion: '', identificador: '', tipo: '', status: 'Activo' };
+  newEquipo: EquipoRecord = { host: '', mac: '', description: '', identifier: '', type: '', status: 'Activo' };
   selectedEquipo: EquipoRecord | null = null;
 
-  constructor(private modalService: NgbModal) { }
+  constructor(private modalService: NgbModal, private equiposService: EquiposService) { }
 
   ngOnInit(): void {
-    // seed sample
-    this.equipos = [
-      { host: '192.168.1.10', mac: 'AA:BB:CC:DD:EE:01', tipo: 'PC', identificador: 'PC-01', descripcion: 'Equipo de oficina', status: 'Activo' },
-      { host: '192.168.1.20', mac: 'AA:BB:CC:DD:EE:02', tipo: 'Laptop', identificador: 'LAP-02', descripcion: 'Laptop gerencia', status: 'Activo' },
-      { host: '192.168.1.30', mac: 'AA:BB:CC:DD:EE:03', tipo: 'Servidor', identificador: 'SRV-03', descripcion: 'Servidor principal', status: 'Inactivo' }
-    ];
-    this.filtrarEquipos();
+    // Suscribirse al observable reactivo del servicio
+    this.equiposService.getEquipos$().subscribe(equipos => {
+      this.equipos = equipos || [];
+      this.filtrarEquipos();
+    });
+    this.loading = true;
+    // Cargar desde backend
+    this.equiposService.loadEquipos().subscribe({
+      next: () => {
+        this.loading = false;
+      },
+      error: () => {
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar los equipos.', icon: 'error', position: 'center' });
+        this.loading = false;
+      }
+    });
   }
 
   filtrarEquipos() {
     const term = this.searchTerm.trim().toLowerCase();
     this.equiposFiltrados = this.equipos.filter(e =>
-      term === '' || (e.host || '').toLowerCase().includes(term) || (e.mac || '').toLowerCase().includes(term) || (e.tipo || '').toLowerCase().includes(term) || (e.identificador || '').toLowerCase().includes(term) || (e.descripcion || '').toLowerCase().includes(term)
+      term === '' || (e.host || '').toLowerCase().includes(term) || (e.mac || '').toLowerCase().includes(term) || (e.type || '').toLowerCase().includes(term) || (e.identifier || '').toLowerCase().includes(term) || (e.description || '').toLowerCase().includes(term)
     );
     this.page = 1;
     this.actualizarPaginacion();
@@ -80,32 +91,101 @@ export class EquiposComponent implements OnInit {
 
   openAddEquipoModal(content: any) {
     this.modalModo = 'agregar';
-    this.newEquipo = { host: '', mac: '', descripcion: '', identificador: '', tipo: '', status: 'Activo' };
+  this.newEquipo = { host: '', mac: '', description: '', identifier: '', type: '', status: 'Activo' };
     this.modalService.open(content, { centered: true });
   }
 
   openEditEquipoModal(content: any, eq: EquipoRecord) {
     this.modalModo = 'editar';
-    this.newEquipo = { ...eq };
+    // Ajustar status para el modal
+    let statusValue = eq.status;
+    if (statusValue === '1') statusValue = 'Activo';
+    else if (statusValue === '0') statusValue = 'Inactivo';
+    this.newEquipo = { ...eq, status: statusValue };
     this.selectedEquipo = eq;
+    console.log('Editar equipo:', eq);
     this.modalService.open(content, { centered: true });
   }
 
   saveEquipo(modal: any) {
     if (this.modalModo === 'agregar') {
-      this.equipos.unshift({ ...this.newEquipo });
+      // Ajustar datos para el backend
+      const data = {
+        host: this.newEquipo.host,
+        mac: this.newEquipo.mac,
+        description: this.newEquipo.description || '',
+        identifier: this.newEquipo.identifier || '',
+        type: this.newEquipo.type || '',
+        status: this.newEquipo.status === 'Activo' ? '1' : '0',
+      };
+      this.equiposService.crearEquipo(data).subscribe({
+        next: (created) => {
+          // La lista se actualiza automáticamente por el Subject
+          this.filtrarEquipos();
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Equipo creado',
+            text: `${created.host}`,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          modal.close();
+        },
+        error: () => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo crear el equipo.',
+            position: 'center',
+            showConfirmButton: true
+          });
+        }
+      });
     } else if (this.modalModo === 'editar' && this.selectedEquipo) {
-      const idx = this.equipos.indexOf(this.selectedEquipo);
-      if (idx > -1) this.equipos[idx] = { ...this.newEquipo };
+      const payload = {
+        id: this.newEquipo.id,
+        host: this.newEquipo.host,
+        mac: this.newEquipo.mac,
+        description: this.newEquipo.description || '',
+        identifier: this.newEquipo.identifier || '',
+        type: this.newEquipo.type || '',
+        status: this.newEquipo.status === 'Activo' ? '1' : '0',
+      };
+      this.equiposService.modificarEquipo(payload).subscribe({
+        next: (updated) => {
+          this.filtrarEquipos();
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Equipo actualizado',
+            text: `${updated.description}`,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          modal.close();
+        },
+        error: () => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo modificar el equipo.',
+            position: 'center',
+            showConfirmButton: true
+          });
+        }
+      });
     }
-    this.filtrarEquipos();
-    modal.close();
   }
 
   confirmDeleteEquipo(eq: EquipoRecord) {
     Swal.fire({
       title: `¿Eliminar equipo?`,
-      text: `Identificador: ${eq.identificador}`,
+  text: `Identificador: ${eq.identifier}`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
@@ -121,10 +201,11 @@ export class EquiposComponent implements OnInit {
 }
 
 export interface EquipoRecord {
+  id?: string;
   host: string;
   mac: string;
-  tipo: string;
-  identificador: string;
-  descripcion?: string;
-  status?: 'Activo' | 'Inactivo';
+  description?: string;
+  identifier?: string;
+  type?: string;
+  status?: string;
 }
