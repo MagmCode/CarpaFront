@@ -1,8 +1,6 @@
 services:
   carpa-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+    image: carpa-dev:v2
     container_name: carpa-dev
     ports:
       - "4200:4200"

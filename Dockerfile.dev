@@ -7,8 +7,8 @@ WORKDIR /app
 # Copiamos package.json y package-lock.json
 COPY package*.json ./
 
-# Instalamos dependencias (más tolerante si falta lockfile)
-RUN npm install --force && npm cache clean --force && rm -rf /root/.npm
+# Instalamos dependencias
+RUN npm install --force && npm cache clean --force
 
 # ===== Stage 2: Código fuente =====
 FROM node:16.19-alpine AS dev
