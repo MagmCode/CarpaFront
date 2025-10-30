@@ -17,12 +17,19 @@ jobs:
 
       - name: Build dev Docker image
         run: |
-          docker build -f Dockerfile.dev -t carpa-dev .
+          # Leer versión desde package.json y exponerla como variable de entorno
+          VERSION=$(jq -r .version package.json)
+          echo "Building image with tag: carpa-dev:$VERSION"
+          docker build -f Dockerfile.dev -t carpa-dev:$VERSION .
 
       - name: Save dev image as tar and include compose
         run: |
           mkdir -p artifact_dev
-          docker save -o artifact_dev/carpa-dev.tar carpa-dev
+          # Guardar la imagen con la etiqueta correcta
+          VERSION=$(jq -r .version package.json)
+          docker save -o artifact_dev/carpa-dev-$VERSION.tar carpa-dev:$VERSION
+          # Generar .env con la etiqueta para que docker-compose use la imagen correcta
+          echo "IMAGE_TAG=$VERSION" > artifact_dev/.env
           cp docker-compose.yml artifact_dev/ || true
           cp Dockerfile.dev artifact_dev/ || true
 

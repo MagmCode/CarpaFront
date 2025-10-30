@@ -1,7 +1,6 @@
 services:
   carpa-dev:
-    image: carpa-dev:v2
-    container_name: carpa-dev
+    image: carpa-dev:${IMAGE_TAG}
     ports:
       - "4200:4200"
     environment:
