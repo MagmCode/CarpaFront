@@ -18,8 +18,8 @@ export const environment = {
   // Url: 'http://180.183.67.212:8081/api',
   // Url: 'http://180.183.67.228:8081/api',
 
-  // Url: 'http://180.183.172.74:8081/api', // Ip servidor 
-  Url: 'http://DLNTFI01.banvendes.corp:8081/api', // DNS Servidor
+  Url: 'http://180.183.172.74:8081/api', // Ip servidor 
+  // Url: 'http://DLNTFI01.banvendes.corp:8081/api', // DNS Servidor
   
   API: '/api/',
   Hash: ':c521f27fb1b3311d686d511b668e5bd4',
