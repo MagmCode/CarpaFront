@@ -23,10 +23,11 @@ export class LoginService {
     if (BYPASS) {
       // BYPASS LOGIN: Retorna usuario simulado
       return new Observable<any>((observer) => {
-        const nombre = 'Usuario';
-        const apellido = 'Demo';
-        // console.log('LoginService: BYPASS active - setting isLoggedin and returning demo user');
-        localStorage.setItem('isLoggedin', 'true');
+  const nombre = 'Usuario';
+  const apellido = 'Demo';
+  // console.log('LoginService: BYPASS active - setting isLoggedin and returning demo user');
+  // Use sessionStorage so session is not shared between tabs
+  sessionStorage.setItem('isLoggedin', 'true');
         observer.next({
           // marcar sesión activa para que AuthGuard permita el acceso
           token: 'fake-token',
@@ -45,9 +46,10 @@ export class LoginService {
       return this.http.post<any>(`${this.apiUrl}/auth/login`, data).pipe(
         tap((response: any) => {
           // If backend returns a token, mark session active here (service centralizes session handling)
-          try {
+            try {
             if (response && response.token) {
-              localStorage.setItem('isLoggedin', 'true');
+              // Use sessionStorage so session state is tab-scoped
+              sessionStorage.setItem('isLoggedin', 'true');
             }
           } catch (e) {
             // ignore storage errors
@@ -59,5 +61,19 @@ export class LoginService {
         })
       );
     }
+  }
+
+  /**
+   * Reporta un evento/resultado de login (o mensajes relacionados) al backend.
+   * payload expected: { app, code, severity, message, timestamp?, details? }
+   */
+  reportEvent(payload: { app: string; code: string; severity: string; message: string; timestamp?: string; details?: any }): Observable<any> {
+    console.log('LoginService.reportEvent', payload);
+    return this.http.post<any>(`${this.apiUrl}/auth/report`, payload).pipe(
+      tap((resp: any) => console.log('reportEvent response:', resp)),
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => error.error || error);
+      })
+    );
   }
 }

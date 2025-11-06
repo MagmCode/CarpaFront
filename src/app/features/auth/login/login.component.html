@@ -4,21 +4,35 @@
       <img src="/assets/images/bdv-logo.png" alt="Logo">
     </div>
     <div class="login-title mb-3">CARPA</div>
-    <form (ngSubmit)="submit($event)" [formGroup]="loginForm" class="forms-sample">
+    <!-- Add dummy hidden fields to capture browser autofill for stored credentials.
+         This technique reduces the chance that the browser will fill the visible password field. -->
+    <form (ngSubmit)="submit($event)" [formGroup]="loginForm" class="forms-sample" autocomplete="off">
+      <!-- Hidden dummy inputs: many browsers try to autofill the first username/password fields they find. -->
+      <input type="text" name="fake-username" autocomplete="off" style="position:absolute;left:-9999px;top:-9999px;opacity:0;" aria-hidden="true" tabindex="-1" />
+      <input type="password" name="fake-password" autocomplete="new-password" style="position:absolute;left:-9999px;top:-9999px;opacity:0;" aria-hidden="true" tabindex="-1" />
       <div class="mb-3">
         <input type="text" class="form-control" id="exampleInputEmail1" placeholder="Usuario (NM, CT, TP)"
-          formControlName="codUsuario">
+          formControlName="codUsuario" autocomplete="new-user" autocorrect="off" autocapitalize="off" spellcheck="false"
+          [class.is-invalid]="(f.codUsuario.invalid && (f.codUsuario.dirty || f.codUsuario.touched || submitted))">
+        <div *ngIf="f.codUsuario.invalid && (f.codUsuario.dirty || f.codUsuario.touched || submitted)" class="invalid-feedback text-start">
+          <div *ngIf="f.codUsuario.errors?.['required']">El usuario no puede estar vacío.</div>
+          <div *ngIf="f.codUsuario.errors?.['pattern']">Ingrese un usuario valido</div>
+        </div>
       </div>
       <div class="mb-3 position-relative">
         <input [type]="showPassword ? 'text' : 'password'" class="form-control" id="exampleInputPassword1"
-          autocomplete="current-password" placeholder="Contraseña" formControlName="password">
-        <button type="button" class="btn btn-link btn-sm p-0 eye-btn" tabindex="-1" (click)="togglePassword()">
+          autocomplete="new-password" placeholder="Contraseña" formControlName="password" autocorrect="off" autocapitalize="off" spellcheck="false"
+          [class.is-invalid]="(f.password.invalid && (f.password.dirty || f.password.touched || submitted))">
+        <button *ngIf="!loginForm.invalid" type="button" class="btn btn-link btn-sm p-0 eye-btn" tabindex="-1" (click)="togglePassword()">
           <i [ngClass]="showPassword ? 'icon-bdv-icon-hide-l' : 'icon-bdv-icon-show-l'"></i>
         </button>
+        <div *ngIf="f.password.invalid && (f.password.dirty || f.password.touched || submitted)" class="invalid-feedback text-start">
+          <div *ngIf="f.password.errors?.['required']">La clave no puede estar vacía.</div>
+        </div>
       </div>
       <div>
         <button type="submit" class="btn btn-primary login-btn d-flex align-items-center justify-content-center mt-5"
-          [disabled]="loading">
+          [disabled]="loading || loginForm.invalid">
           <ng-container *ngIf="!loading">Ingresar</ng-container>
           <ng-container *ngIf="loading">
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -29,7 +43,7 @@
       <div class="login-footer mt-4">
         <hr>
         <div class="text-center">
-          <a href="#" class="forgot-link">¿Olvido de Contraseña?</a>
+          <a href="#" class="forgot-link">¿Olvidó Contraseña?</a>
         </div>
       </div>
     </form>
@@ -41,7 +55,7 @@
       <!-- EMAC logo name positioned at the bottom center of the blue square -->
       <div class="footer-content">
         <span class="text-white small mb-0">Copyright &copy; {{ currentYear }}</span>
-        <a href="https://gitlab.com/emac3/srd-front/" target="_blank" rel="noopener noreferrer"
+        <a href="https://gitlab.com/emac3/carpa-front/" target="_blank" rel="noopener noreferrer"
           class="d-flex align-items-center gap-2">
           <span class="text-white small mb-0">EMAC Tech Solutions</span>
           <img src="assets/images/EMAC/LogoEMAC_white.png" alt="Logo EMAC" class="mb-2">

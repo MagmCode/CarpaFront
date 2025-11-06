@@ -6,6 +6,7 @@ import { NotificationService, Notificacion } from 'src/app/core/services/notific
 import { DateUtilsServiceTsService } from 'src/app/core/services/date-utils.service';
 import { LogoutService } from 'src/app/services/logout.service';
 import { environment } from 'src/environments/environment';
+import { SessionSyncService } from 'src/app/services/session-sync.service';
 
 @Component({
   selector: 'app-navbar',
@@ -61,11 +62,12 @@ today: Date = new Date();
     private router: Router,
     private notificationService: NotificationService,
     private dateUtils: DateUtilsServiceTsService,
-    private logoutService: LogoutService
+    private logoutService: LogoutService,
+    private sessionSync: SessionSyncService
   ) {}
 
   ngOnInit(): void {
-    this.usuarioActual = localStorage.getItem('usuarioActual');
+    this.usuarioActual = sessionStorage.getItem('usuarioActual');
     this.notificationService.notificacion$.subscribe((n) => {
       this.notificaciones.unshift(n);
     });
@@ -96,7 +98,7 @@ today: Date = new Date();
       e.preventDefault();
     }
 
-    Swal.fire({
+Swal.fire({
       icon: 'warning',
       title: '¿Estás seguro que deseas cerrar sesión?',
       showCancelButton: true,
@@ -105,11 +107,16 @@ today: Date = new Date();
       allowOutsideClick: false
     }).then((result) => {
       if (result.isConfirmed) {
-        const token = localStorage.getItem('token');
+        // Prefer sessionStorage token, fallback to localStorage
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
         if (token) {
           this.logoutService.logout(token).subscribe({
             next: () => {
-              localStorage.clear();
+              // Broadcast logout to other tabs
+              try { this.sessionSync.broadcast({ type: 'logout' }); } catch (e) {}
+              // Clear both storages to avoid stale values
+              try { sessionStorage.clear(); } catch (e) {}
+              try { localStorage.clear(); } catch (e) {}
               this.router.navigate(['/auth/login']);
             },
             error: (err) => {
@@ -117,7 +124,9 @@ today: Date = new Date();
             },
           });
         } else {
-          localStorage.clear();
+          try { this.sessionSync.broadcast({ type: 'logout' }); } catch (e) {}
+          try { sessionStorage.clear(); } catch (e) {}
+          try { localStorage.clear(); } catch (e) {}
           this.router.navigate(['/auth/login']);
         }
       }

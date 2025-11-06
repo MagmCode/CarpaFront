@@ -7,13 +7,19 @@ export class AuthGuard implements CanActivate {
   constructor(private router: Router) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-    if (localStorage.getItem('isLoggedin')) {
-      // logged in so return true
+    // Prefer sessionStorage (tab-scoped). Fall back to localStorage for compatibility.
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    // Aquí podrías agregar una validación más robusta del token (expiración, formato, etc.)
+    if (token && token.length > 0) {
+      // Si el token existe y es válido, redirige a inicio y permite el acceso
+      if (state.url === '/auth/login') {
+        this.router.navigate(['/inicio']);
+        return false;
+      }
       return true;
     }
-
-    // not logged in so redirect to login page with the return url
-    this.router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
+    // Si no hay token, redirige a login
+    this.router.navigate(['/auth/login']);
     return false;
   }
 }

@@ -3,19 +3,17 @@ import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse
 import { Observable, throwError, EMPTY } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { SessionSyncService } from 'src/app/services/session-sync.service'; 
 
 let sessionExpiredAlertShown = false;
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-		const token = localStorage.getItem('token');
-		if (token === 'fake-token') {
-			// En modo demo, nunca mostrar error de sesión expirada ni bloquear petición
-			console.warn('[AUTH-INTERCEPTOR] Bypass: fake-token, no se muestra error de sesión expirada');
-			return next.handle(request);
-		}
+	constructor(private sessionSync: SessionSyncService) {}
 
+	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+		// Prefer sessionStorage (tab-scoped). Fall back to localStorage for compatibility with older code.
+		const token = sessionStorage.getItem('token') || localStorage.getItem('token');
 		if (token) {
 			request = request.clone({
 				setHeaders: {
@@ -29,8 +27,13 @@ export class AuthInterceptor implements HttpInterceptor {
 				if ((error.status === 401 || error.status === 403) && !sessionExpiredAlertShown) {
 					console.warn('[AUTH-INTERCEPTOR] 401/403 detectado, mostrando alerta de sesión expirada');
 					sessionExpiredAlertShown = true;
+					// Remove tokens from both storages to be safe
+					sessionStorage.removeItem('token');
+					sessionStorage.removeItem('refreshToken');
 					localStorage.removeItem('token');
 					localStorage.removeItem('refreshToken');
+					// Broadcast logout so other tabs can react
+					try { this.sessionSync.broadcast({ type: 'logout' }); } catch (e) { /* ignore */ }
 					Swal.fire({
 						icon: 'warning',
 						title: 'Sesión expirada',

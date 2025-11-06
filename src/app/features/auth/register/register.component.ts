@@ -15,8 +15,9 @@ export class RegisterComponent implements OnInit {
 
   onRegister(e: Event) {
     e.preventDefault();
-    localStorage.setItem('isLoggedin', 'true');
-    if (localStorage.getItem('isLoggedin')) {
+    // Use sessionStorage so registration/login is tab-scoped and consistent with login flow
+    sessionStorage.setItem('isLoggedin', 'true');
+    if (sessionStorage.getItem('isLoggedin')) {
       this.router.navigate(['/']);
     }
   }
