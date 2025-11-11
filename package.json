@@ -1,10 +1,11 @@
 {
   "name": "nobleui-angular",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host 0.0.0.0",
-    "start:docker": "ng serve --host 0.0.0.0 --port 4200 --poll",
+   "start": "ng serve --ssl true --ssl-cert ssl/server.crt --ssl-key ssl/server.key --host 0.0.0.0 ",
+   "start-ssl": "ng serve --ssl true --ssl-cert ssl/server.crt --ssl-key ssl/server.key --host 0.0.0.0 ",
+    "start:docker": "ng serve --host 0.0.0.0 --port 4200 --poll 2000",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

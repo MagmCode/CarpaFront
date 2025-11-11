@@ -1,0 +1,164 @@
+Convertir el proyecto a HTTPS (desarrollo) - Pasos detallados
+
+Resumen
+Este documento indica paso a paso cómo convertir el proyecto Angular a HTTPS para desarrollo. Incluye los cambios en archivos del proyecto, generación de certificados para desarrollo (mkcert / OpenSSL / PowerShell), y comandos de verificación.
+
+1) Preparar certificados SSL (recomendado: mkcert)
+- Recomendado: usar mkcert para que el navegador confíe en los certificados locales.
+
+Opción A - mkcert (recomendado)
+1. Instalar mkcert (si tienes Chocolatey):
+   choco install mkcert -y
+2. Crear CA local e instalarla en Windows:
+   mkcert -install
+3. Generar certificado y clave (desde la raíz del proyecto):
+   mkcert -key-file "ssl/server.key" -cert-file "ssl/server.crt" localhost 127.0.0.1 ::1
+4. Verifica que los archivos se crearon:
+   dir ssl\server.*
+
+Opción B - OpenSSL (si mkcert no está disponible)
+1. Instalar OpenSSL (por ejemplo con Chocolatey):
+   choco install openssl.light -y
+2. Generar un certificado autofirmado:
+   openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ssl/server.key -out ssl/server.crt -subj "/CN=localhost"
+3. Verifica archivos:
+   dir ssl\server.*
+
+Opción C - PowerShell New-SelfSignedCertificate -> PFX -> extraer (menos directo)
+1. Crear certificado en el almacén y exportar a PFX (requiere permisos admin):
+   $cert = New-SelfSignedCertificate -DnsName "localhost" -CertStoreLocation "cert:\LocalMachine\My"
+   $pwd = ConvertTo-SecureString -String "changeit" -Force -AsPlainText
+   Export-PfxCertificate -Cert $cert -FilePath "ssl\\server.pfx" -Password $pwd
+2. Extraer PEM (requiere OpenSSL):
+   openssl pkcs12 -in ssl/server.pfx -nocerts -nodes -out ssl/server.key
+   openssl pkcs12 -in ssl/server.pfx -clcerts -nokeys -out ssl/server.crt
+
+Notas sobre certificados
+- No subas `ssl/server.key` a repositorios públicos. Añade `ssl/*` a `.gitignore` si procede.
+- mkcert es preferible porque instala una CA local y evita advertencias en el navegador.
+
+2) Cambios en archivos del proyecto
+A continuación se indican los cambios concretos para cada archivo. Ya apliqué algunos cambios automáticos, pero revisa y ajusta según tu entorno.
+
+A) `angular.json` (activar SSL en dev-server)
+- En la sección `projects -> <projectName> -> architect -> serve -> options` añade o actualiza:
+  "proxyConfig": "proxy.conf.json",
+  "ssl": true,
+  "sslKey": "ssl/server.key",
+  "sslCert": "ssl/server.crt",
+  "host": "0.0.0.0"
+
+Ejemplo:
+  "options": {
+    "proxyConfig": "proxy.conf.json",
+    "ssl": true,
+    "sslKey": "ssl/server.key",
+    "sslCert": "ssl/server.crt",
+    "host": "0.0.0.0"
+  }
+
+B) `proxy.conf.json` (redirigir API a backend HTTPS local)
+- Asegúrate de que las rutas API apunten al backend HTTPS y deja `secure: false` si el backend usa certificado autofirmado.
+- Ajusta el host/puerto del backend según corresponda (ej.: 8443 o 8081).
+
+Ejemplo mínimo:
+{
+  "/v1/api/*": {
+    "target": "https://localhost:8443",
+    "secure": false,
+    "logLevel": "debug"
+  },
+  "/api/*": {
+    "target": "https://localhost:8443",
+    "secure": false,
+    "logLevel": "debug"
+  }
+}
+
+C) `package.json` (script para arrancar con SSL)
+- Añade un script para facilitar el arranque con los certificados:
+
+  "start-ssl": "ng serve --ssl true --ssl-cert ssl/server.crt --ssl-key ssl/server.key --host 0.0.0.0"
+
+D) `src/environments/environment.ts` (usar URL HTTPS del backend)
+- Cambia la variable `Url` a la URL HTTPS real del backend de desarrollo.
+  Ejemplo:
+  Url: 'https://localhost:8443/api',
+
+- Si usas `environment.API` para rutas relativas, asegúrate que `API` coincida con el proxy o la ruta que usas.
+
+E) Servicios / código que usan URLs (ejemplos a revisar)
+- `src/app/core/services/rest.service.ts`:
+  - Actualmente usa `URL = environment.API` y en métodos concatena rutas con `this.URL + url`.
+  - Asegúrate de usar rutas relativas (ej. `/api/login`) para que el proxy redirija correctamente, o usar `environment.Url` cuando necesites conexión directa.
+
+- Busca en el repo usos de `environment.Url`:
+  - `src/app/services/*` y otros servicios suelen usar `private apiUrl = environment.Url;`
+  - Asegúrate que `environment.Url` usa `https://`.
+
+F) `.gitignore` (opcional pero recomendado)
+- Añadir la carpeta `ssl/` a `.gitignore` para evitar subir claves privadas:
+  /ssl/*
+
+3) Arrancar la aplicación en HTTPS (PowerShell)
+- Desde la raíz del proyecto, una vez generados `ssl/server.crt` y `ssl/server.key`:
+
+  npm run start-ssl
+
+  o directamente:
+
+  ng serve --ssl true --ssl-cert ssl/server.crt --ssl-key ssl/server.key --host 0.0.0.0
+
+- Abre el navegador en: https://localhost:4200
+- Si usas mkcert no deberían aparecer advertencias. Si usas OpenSSL, el navegador pedirá excepción o importar la CA.
+
+4) Verificar y probar la comunicación con el backend
+- Asegúrate de que tu backend esté corriendo en `https://localhost:8443` (o el puerto que hayas configurado).
+- En la app, realiza una acción que invoque una API (login, listar usuarios...). Observa la consola del terminal (logLevel: debug en `proxy.conf.json`) y la consola del backend para ver que llegan las peticiones.
+- Si el proxy muestra errores de SSL entre Angular CLI y backend, revisa `secure: false` en `proxy.conf.json` para aceptar certificados autofirmados.
+
+5) Problemas comunes y soluciones
+- Error PEM routines:get_name:no start line
+  - Indica que `ssl/server.crt` o `ssl/server.key` no son válidos o están vacíos. Regenera los archivos con mkcert u openssl.
+
+- mkcert no encontrado
+  - Instala mkcert y asegúrate que el ejecutable esté en PATH.
+
+- openssl no encontrado
+  - Instala OpenSSL en Windows o usa la versión incluida con Git for Windows.
+
+- CORS / Rechazo por el backend
+  - Habilita CORS en el backend para `https://localhost:4200` o la URL que uses del frontend.
+
+6) Pruebas finales recomendadas
+- Generar certs con mkcert y arrancar `npm run start-ssl`.
+- Abrir https://localhost:4200 y comprobar que no hay advertencias.
+- Ejecutar una llamada que antes funcionaba vía HTTP y verificar que ahora llega por HTTPS al backend.
+- Revisar logs del proxy (console) para confirmar routing.
+
+7) Lista de archivos a revisar / editar
+- `angular.json` -> serve.options (activar ssl, sslKey, sslCert)
+- `proxy.conf.json` -> targets apuntando a https://localhost:<puerto>, secure:false
+- `package.json` -> script `start-ssl`
+- `src/environments/environment.ts` -> Url: 'https://localhost:8443/api'
+- `src/app/core/services/rest.service.ts` -> revisar concatenación de rutas, preferir rutas relativas y `environment.API` o `environment.Url` coherente.
+- `.gitignore` -> añadir `/ssl/*` (opcional)
+
+8) Ejemplo de comprobaciones en PowerShell (secuencia completa)
+# Generar certs con mkcert (si está instalado)
+mkcert -install
+mkcert -key-file "ssl/server.key" -cert-file "ssl/server.crt" localhost 127.0.0.1 ::1
+
+# Arrancar la app con HTTPS
+npm run start-ssl
+
+# Abrir https://localhost:4200 y probar un endpoint
+
+9) Siguientes pasos (opcional, puedo hacerlo por ti)
+- Buscar y reemplazar programáticamente `http://<backend>` hardcodeado en el repo por `environment.Url` o `https://` si confirmas el puerto.
+- Añadir `ssl/*` a `.gitignore` y confirmar su inclusión.
+- Ejecutar mkcert si está instalado en la máquina (puedo intentarlo desde aquí si autorizas).
+
+Fin del documento
+
+Si quieres, genero también una versión en Markdown (`ssl/HTTPS-setup.md`) y puede incluir fragmentos de comandos con resaltado. Indícame si prefieres eso o si quieres que aplique automáticamente algún cambio adicional (por ejemplo añadir `ssl/*` a `.gitignore` o reemplazar hardcodes HTTP).

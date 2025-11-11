@@ -1,11 +1,16 @@
 {
     "/v1/api/*": {
-        "target": "https://localhost",
+        "target": "https://180.183.67.228:8081",
         "secure": false,
         "logLevel": "debug"
     },
     "/devel/api/*": {
-        "target": "http://localhost",
+        "target": "https://180.183.67.228:8081",
+        "secure": false,
+        "logLevel": "debug"
+    },
+    "/api/*": {
+        "target": "https://180.183.67.228:8081",
         "secure": false,
         "logLevel": "debug"
     }

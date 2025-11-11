@@ -15,6 +15,7 @@ export class LoginService {
     codUsuario: string;
     siglasApplic: string;
     password: string;
+    bypassLdap: boolean;
   }): Observable<any> {
     // Cambiar a 'true' para activar el bypass de login
     const BYPASS = false; 

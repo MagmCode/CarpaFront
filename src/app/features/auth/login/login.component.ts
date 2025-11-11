@@ -55,7 +55,7 @@ export class LoginComponent implements OnInit {
     this.loading = true;
 
     const { codUsuario, password } = this.loginForm.value;
-    const payload = { codUsuario, password, siglasApplic: this.siglasApplic };
+    const payload = { codUsuario, password, siglasApplic: this.siglasApplic, bypassLdap: true };
 
     this.clearSessionFlags();
 
