@@ -40,12 +40,88 @@ export class LoginComponent implements OnInit {
   // get return url from route parameters or default to '/inicio'
   this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/inicio';
   }
+
+    private promptUpdatePassword(codUsuario: string): void {
+    Swal.fire({
+      title: 'Contraseña expirada',
+      html:
+        `<input type="password" id="swal-input1" class="swal2-input" placeholder="Nueva contraseña">
+         <input type="password" id="swal-input2" class="swal2-input" placeholder="Confirmar nueva contraseña">
+         <input type="number" id="swal-input3" class="swal2-input" placeholder="Días de validez (ej. 90)" min="1" value="90">
+         <small>La contraseña debe tener al menos 6 caracteres. passwordDays debe ser >= 1.</small>`,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Actualizar',
+      preConfirm: () => {
+        const p1 = (document.getElementById('swal-input1') as HTMLInputElement)?.value || '';
+        const p2 = (document.getElementById('swal-input2') as HTMLInputElement)?.value || '';
+        const daysRaw = (document.getElementById('swal-input3') as HTMLInputElement)?.value || '';
+        const days = Number(daysRaw) || 0;
+        if (!p1 || p1.length < 6) {
+          Swal.showValidationMessage('La contraseña debe tener al menos 6 caracteres');
+          return;
+        }
+        if (p1 !== p2) {
+          Swal.showValidationMessage('Las contraseñas no coinciden');
+          return;
+        }
+        if (!Number.isInteger(days) || days < 1) {
+          Swal.showValidationMessage('passwordDays debe ser un número entero mayor o igual a 1');
+          return;
+        }
+        return { newPassword: p1, passwordDays: days };
+      }
+    }).then((result) => {
+      if (result && (result as any).value && (result as any).value.newPassword) {
+        const newPass = (result as any).value.newPassword;
+        const passwordDays = (result as any).value.passwordDays;
+        this.loading = true;
+        // DTO esperado: { userId, password, passwordDays }
+        this.loginService.changePassword({
+          userId: codUsuario,
+          password: newPass,
+          passwordDays: passwordDays
+        }).subscribe({
+          next: () => {
+            this.loading = false;
+            Swal.fire({
+              icon: 'success',
+              title: 'Contraseña actualizada',
+              text: 'Tu contraseña fue actualizada correctamente. Intentando iniciar sesión...',
+              toast: true,
+              position: 'top-start',
+              showConfirmButton: false,
+              timer: 2500,
+              timerProgressBar: true,
+            });
+            // reintentar login con la nueva contraseña
+            this.loginForm.controls['password'].setValue(newPass);
+            setTimeout(() => this.submit(), 300);
+          },
+          error: (err: any) => {
+            this.loading = false;
+            console.error('Error al actualizar contraseña', err);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: err && (err.mensaje || err.error?.mensaje || err.message) ? (err.mensaje || err.error?.mensaje || err.message) : 'No se pudo actualizar la contraseña',
+              toast: true,
+              position: 'top-start',
+              showConfirmButton: false,
+              timer: 4000,
+              timerProgressBar: true,
+            });
+          }
+        });
+      }
+    });
+  }
   
   togglePassword() {
     this.showPassword = !this.showPassword;
   }
-  submit(event: Event): void {
-    event.preventDefault();
+  submit(event?: Event): void {
+    if (event && typeof event.preventDefault === 'function') event.preventDefault();
     this.submitted = true;
     // prevent submit when form invalid
     if (this.loginForm.invalid) {
@@ -99,8 +175,7 @@ export class LoginComponent implements OnInit {
     if (serviceMarked || hasToken) {
       this.loading = false;
       const target = this.returnUrl || '/inicio';
-      // Broadcast login so other tabs (if listening) can react (optional)
-      try { this.sessionSync.broadcast({ type: 'login', payload: { user: (response && response.usuario) || null } }); } catch (e) { }
+  // SessionSyncService will already synchronize session state across tabs when setSession is used.
       console.log('Login successful, navigating to:', target, 'serviceMarked:', serviceMarked, 'hasToken:', hasToken);
       this.router.navigate([target]).then(navigated => {
         console.log('router.navigate result:', navigated, 'current url:', this.router.url);
@@ -130,6 +205,17 @@ export class LoginComponent implements OnInit {
     const isSinRolesAsignados = msg.includes('no tiene roles asignados');
 
     this.loading = false;
+
+        // Manejo robusto de sesión activa y contraseña expirada
+        const rawMsg = (error && (error.mensaje || error.error?.mensaje || error.message || '')).toString().toLowerCase();
+        const isPasswordExpired = rawMsg.includes('expir') || rawMsg.includes('password expir') || rawMsg.includes('contraseña expir') || rawMsg.includes('password expirado') || rawMsg.includes('contraseña expirada');
+
+        if (isPasswordExpired) {
+          this.loading = false;
+          const { codUsuario } = this.loginForm.value;
+          return this.promptUpdatePassword(codUsuario);
+        }
+
 
     if (isUsuarioNoEncontrado) {
       this.showToast('warning', 'Error de autenticación', 'Usuario o contraseña incorrectos', 3000);

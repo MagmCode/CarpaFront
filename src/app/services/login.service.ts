@@ -77,4 +77,15 @@ export class LoginService {
       })
     );
   }
+
+    changePassword(payload: { userId: string; password: string; passwordDays: number }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/admin/users/change-password`, payload).pipe(
+      tap(() => {
+        // no-op; server may not return token here
+      }),
+      catchError((error: HttpErrorResponse) => {
+        return throwError(() => error.error || error);
+      })
+    );
+  }
 }
