@@ -116,11 +116,11 @@
     <div class="modal-body">
       <div class="mb-3">
         <label for="editNombre" class="form-label">Nombre</label>
-        <input id="editNombre" class="form-control" [(ngModel)]="parametroSeleccionado.nombre" name="editNombre" required>
+        <input id="editNombre" class="form-control" [(ngModel)]="parametroSeleccionado.nombre" name="editNombre" required [appAlphanumeric]="true">
       </div>
       <div class="mb-3">
         <label for="editValor" class="form-label">Valor</label>
-        <input id="editValor" class="form-control" [(ngModel)]="parametroSeleccionado.valor" name="editValor" required>
+        <input id="editValor" class="form-control" [(ngModel)]="parametroSeleccionado.valor" name="editValor" required [appAlphanumeric]="true">
       </div>
     </div>
     <div class="modal-footer d-flex justify-content-start gap-3 mt-4">
@@ -140,12 +140,12 @@
     <div class="modal-body">
       <div class="mb-3">
         <label for="nuevoNombre" class="form-label">Nombre</label>
-        <input id="nuevoNombre" name="nuevoNombre" class="form-control" [(ngModel)]="nuevoParametro.nombre" required>
+        <input id="nuevoNombre" name="nuevoNombre" class="form-control" [(ngModel)]="nuevoParametro.nombre" required [appAlphanumeric]="true">
       </div>
       <div class="mb-3">
         <label for="nuevoValor" class="form-label">Valor</label>
-        <input id="nuevoValor" name="nuevoValor" class="form-control" [(ngModel)]="nuevoParametro.valor" required>
-      </div>
+          <input id="nuevoValor" name="nuevoValor" class="form-control" [(ngModel)]="nuevoParametro.valor" required [appAlphanumeric]="true">
+        </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-success" type="submit">Añadir</button>

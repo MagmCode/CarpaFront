@@ -80,7 +80,7 @@ export class MenuService {
   editarMenu(payload: any): Observable<any> {
     const url = `${this.apiUrl}/admin/menu/editar`;
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    return this.http.put<any>(url, payload, { headers }).pipe(
+    return this.http.post<any>(url, payload, { headers }).pipe(
       map((resp: any) => {
         const raw = resp && resp.data ? resp.data : resp;
         const backendObj = Array.isArray(raw) ? raw[0] : raw;

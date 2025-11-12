@@ -122,12 +122,12 @@
       <div class="mb-3">
         <label for="sistema" class="form-label">Sistema:</label>
         <input type="text" class="form-control" id="sistema" [(ngModel)]="nuevoRegistro.sistema" name="sistema"
-          autocomplete="off" required>
+          autocomplete="off" required [appAlphanumeric]="true">
       </div>
       <div class="mb-3">
         <label for="usuario" class="form-label">Usuario:</label>
         <input type="text" class="form-control" id="usuario" [(ngModel)]="nuevoRegistro.usuario" name="usuario"
-          autocomplete="new-username" required>
+          autocomplete="new-username" required [appAlphanumeric]="true">
       </div>
       <div class="mb-3">
         <label for="clave" class="form-label">Clave:</label>
@@ -177,7 +177,7 @@
       <div class="mb-3">
         <label for="editarUsuario" class="form-label">Usuario:</label>
         <input type="text" class="form-control" id="editarUsuario" [(ngModel)]="editarRegistroSeleccionado.usuario"
-          name="editarUsuario" required>
+          name="editarUsuario" required [appAlphanumeric]="true">
       </div>
       <div class="mb-3">
         <label for="editarClave" class="form-label">Clave:</label>

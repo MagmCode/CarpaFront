@@ -13,7 +13,7 @@ export class ModificarStatusService {
   constructor(private http: HttpClient) { }
 
   modificarStatus(data:{userId: string, userStatus: number}): Observable <any> {
-    return this.http.put<any>(`${this.apiUrl}/admin/users/update`, data).pipe(
+    return this.http.post<any>(`${this.apiUrl}/admin/users/update`, data).pipe(
         tap((response: any)=> {
             console.log("respuesta de servicio de modificar status", response)
         }), 

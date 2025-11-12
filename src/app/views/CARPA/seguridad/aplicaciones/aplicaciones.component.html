@@ -129,7 +129,7 @@
     <div class="modal-body">
       <div class="mb-3">
         <label for="nombre" class="form-label">Nombre</label>
-        <input id="nombre" name="nombre" class="form-control"
+  <input id="nombre" name="nombre" class="form-control" [appAlphanumeric]="true"
           [(ngModel)]="appSeleccionada.description" required
           [ngClass]="{'is-invalid': appForm.submitted && (!appSeleccionada.description || !appSeleccionada.description.trim())}"
         >
@@ -139,7 +139,7 @@
       </div>
       <div class="mb-3">
         <label for="siglas" class="form-label">Siglas</label>
-        <input id="siglas" name="siglas" class="form-control"
+  <input id="siglas" name="siglas" class="form-control" [appAlphanumeric]="false"
           [(ngModel)]="appSeleccionada.siglasApplic" required
           [ngClass]="{'is-invalid': appForm.submitted && (!appSeleccionada.siglasApplic || !appSeleccionada.siglasApplic.trim())}"
         >
@@ -149,7 +149,7 @@
       </div>
       <div class="mb-3">
         <label for="comentarios" class="form-label">Descripción</label>
-        <textarea id="comentarios" name="comentarios" class="form-control"
+  <textarea id="comentarios" name="comentarios" class="form-control" [appAlphanumeric]="true"
           [(ngModel)]="appSeleccionada.comentarios" required
           [ngClass]="{'is-invalid': appForm.submitted && (!appSeleccionada.comentarios || !appSeleccionada.comentarios.trim())}"
         ></textarea>

@@ -74,12 +74,11 @@ export class AccionesService {
 
   // Editar acción (PUT admin/acciones/editar/{id})
   editar(payload: any): Observable<any> {
-    const id = payload.idAction;
-    const url = `${this.apiUrl}/admin/acciones/editar/${id}`;
+    const url = `${this.apiUrl}/admin/acciones/editar/`;
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     // No enviar idAction en el body
-    const { idAction, ...body } = payload;
-    return this.http.put<any>(url, body, { headers }).pipe(
+    const { ...body } = payload;
+    return this.http.post<any>(url, body, { headers }).pipe(
       map((resp: any) => {
         const data = resp && resp.data ? resp.data : resp;
         const updated = Array.isArray(data) ? data[0] : data;

@@ -33,10 +33,12 @@ export class LoginComponent implements OnInit {
   
   ngOnInit(): void {
     this.loginForm = this.formBuilder.group({
-      codUsuario:['', [Validators.required, Validators.pattern(/^(?:NM|CT|TP).*/i)]],
-      password: ['', [Validators.required]]
+      // codUsuario: only alphanumeric (no special characters or spaces), max 25 chars
+      codUsuario: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9]+$/), Validators.maxLength(25)]],
+      // Password: alphanumeric only, max 25 chars
+      password: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9]+$/), Validators.maxLength(25)]]
 
-    })
+    });
   // get return url from route parameters or default to '/inicio'
   this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/inicio';
   }
@@ -203,6 +205,7 @@ export class LoginComponent implements OnInit {
     const isSesionActiva = (error && (error.status === 409)) || (error && error.status === 'ERROR' && msg.toLowerCase().includes('autenticado'));
     const isUsuarioNoEncontrado = (error && error.status === 403) || msg.includes('Usuario no encontrado');
     const isSinRolesAsignados = msg.includes('no tiene roles asignados');
+    const userInvalid = msg.includes('Password inválido');
 
     this.loading = false;
 
@@ -217,14 +220,14 @@ export class LoginComponent implements OnInit {
         }
 
 
-    if (isUsuarioNoEncontrado) {
+    if (userInvalid || isUsuarioNoEncontrado) {
       this.showToast('warning', 'Error de autenticación', 'Usuario o contraseña incorrectos', 3000);
       console.error('Error en login', error);
       // Enviar evento estandarizado al backend (si aplica)
-    } else if (isSesionActiva) {
+      } else if (isSesionActiva) {
       this.showToast('warning', 'Sesión Activa', 'Ya tienes una sesión activa.', 3000);
     } else if (isSinRolesAsignados) {
-      this.showToast('error', 'Error de autenticación', `El usuario no tiene roles asignados para sistema ${this.siglasApplic}.`, 3000);
+      this.showToast('error', 'Error de autenticación', `Este usuario no se encuentra registrado en el sistema de seguridad`, 3000);
     } else {
       this.showToast('error', 'Error inesperado', 'Por favor, intenta nuevamente más tarde.', 3000);
       console.error('Error en login', error);

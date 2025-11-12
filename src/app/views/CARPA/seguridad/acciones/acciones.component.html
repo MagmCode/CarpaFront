@@ -135,7 +135,7 @@
       </div>
       <div class="mb-3">
         <label for="descripcion" class="form-label">Descripción</label>
-        <textarea id="descripcion" name="descripcion" class="form-control"
+        <textarea id="descripcion" name="descripcion" class="form-control" [appAlphanumeric]="true"
           [(ngModel)]="newAction.descripcion" required
           [ngClass]="{'is-invalid': submitted && (!newAction.descripcion || !newAction.descripcion.trim())}"></textarea>
         <div *ngIf="submitted && (!newAction.descripcion || !newAction.descripcion.trim())" class="invalid-feedback text-start">

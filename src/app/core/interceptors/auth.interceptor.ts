@@ -24,30 +24,44 @@ export class AuthInterceptor implements HttpInterceptor {
 		return next.handle(request).pipe(
 			catchError((error: HttpErrorResponse) => {
 				console.warn('[AUTH-INTERCEPTOR] catchError', error);
-				if ((error.status === 401 || error.status === 403) && !sessionExpiredAlertShown) {
-					console.warn('[AUTH-INTERCEPTOR] 401/403 detectado, mostrando alerta de sesión expirada');
-					sessionExpiredAlertShown = true;
-					// Remove tokens from both storages to be safe
-					sessionStorage.removeItem('token');
-					sessionStorage.removeItem('refreshToken');
-					localStorage.removeItem('token');
-					localStorage.removeItem('refreshToken');
-					// Broadcast logout so other tabs can react
-					try { this.sessionSync.broadcast({ type: 'logout' }); } catch (e) { /* ignore */ }
-					Swal.fire({
-						icon: 'warning',
-						title: 'Sesión expirada',
-						text: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
-						confirmButtonText: 'OK',
-						allowOutsideClick: false
-					}).then(() => {
-						console.warn('[AUTH-INTERCEPTOR] Redirigiendo a /auth/login');
-						sessionExpiredAlertShown = false;
-						window.location.href = '/auth/login';
-					});
-					return EMPTY;
-				} else if (error.status === 401 || error.status === 403) {
-					console.warn('[AUTH-INTERCEPTOR] 401/403 detectado, alerta ya mostrada, bloqueando petición');
+				if (error.status === 401 || error.status === 403) {
+					// Distinguish between requests made without a token (e.g. login attempts or unauthenticated calls)
+					const hasToken = !!(sessionStorage.getItem('token') || localStorage.getItem('token'));
+					if (!hasToken) {
+						// No token present: this is likely a login failure or unauthenticated request.
+						// Show a lightweight toast and rethrow so the caller can handle specifics.
+						Swal.fire({
+							icon: 'error',
+							title: 'No autorizado',
+							text: 'Credenciales inválidas o sin permisos.',
+							toast: true,
+							position: 'top-start',
+							showConfirmButton: false,
+							timer: 3000,
+							timerProgressBar: true
+						});
+						return throwError(() => error);
+					}
+					// Token exists -> session likely expired or invalid. Show session-expired modal once.
+					if (!sessionExpiredAlertShown) {
+						sessionExpiredAlertShown = true;
+						console.warn('[AUTH-INTERCEPTOR] 401/403 detectado con token presente, mostrando alerta de sesión expirada');
+						// Clear tokens from both storages to be safe
+						try { sessionStorage.removeItem('token'); sessionStorage.removeItem('refreshToken'); } catch (e) {}
+						try { localStorage.removeItem('token'); localStorage.removeItem('refreshToken'); } catch (e) {}
+						// Broadcast logout so other tabs can react
+						try { this.sessionSync.broadcast({ type: 'logout' }); } catch (e) { /* ignore */ }
+						Swal.fire({
+							icon: 'warning',
+							title: 'Sesión expirada',
+							text: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+							confirmButtonText: 'OK',
+							allowOutsideClick: false
+						}).then(() => {
+							sessionExpiredAlertShown = false;
+							window.location.href = '/auth/login';
+						});
+					}
 					return EMPTY;
 				}
 				return throwError(() => error);

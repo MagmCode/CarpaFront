@@ -13,15 +13,17 @@
       <div class="mb-3">
         <input type="text" class="form-control" id="exampleInputEmail1" placeholder="Usuario (NM, CT, TP)"
           formControlName="codUsuario" autocomplete="new-user" autocorrect="off" autocapitalize="off" spellcheck="false"
+          maxlength="25" [appAlphanumeric]="false"
           [class.is-invalid]="(f.codUsuario.invalid && (f.codUsuario.dirty || f.codUsuario.touched || submitted))">
         <div *ngIf="f.codUsuario.invalid && (f.codUsuario.dirty || f.codUsuario.touched || submitted)" class="invalid-feedback text-start">
           <div *ngIf="f.codUsuario.errors?.['required']">El usuario no puede estar vacío.</div>
-          <div *ngIf="f.codUsuario.errors?.['pattern']">Ingrese un usuario valido</div>
+          <!-- <div *ngIf="f.codUsuario.errors?.['pattern']">Ingrese un usuario valido</div> -->
         </div>
       </div>
       <div class="mb-3 position-relative">
         <input [type]="showPassword ? 'text' : 'password'" class="form-control" id="exampleInputPassword1"
           autocomplete="new-password" placeholder="Contraseña" formControlName="password" autocorrect="off" autocapitalize="off" spellcheck="false"
+          maxlength="25" [appAlphanumeric]="false"
           [class.is-invalid]="(f.password.invalid && (f.password.dirty || f.password.touched || submitted))">
         <button *ngIf="!loginForm.invalid" type="button" class="btn btn-link btn-sm p-0 eye-btn" tabindex="-1" (click)="togglePassword()">
           <i [ngClass]="showPassword ? 'icon-bdv-icon-hide-l' : 'icon-bdv-icon-show-l'"></i>

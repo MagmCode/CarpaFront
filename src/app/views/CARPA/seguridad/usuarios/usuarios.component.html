@@ -268,7 +268,7 @@
             <!-- Nombre -->
             <div class="col-md-4">
               <label for="editFullName" class="form-label">Nombre del usuario</label>
-              <input id="editFullName" name="editFullName" class="form-control"
+              <input id="editFullName" name="editFullName" class="form-control" [appAlphanumeric]="true"
                 [(ngModel)]="usuarioSeleccionado.fullName" [disabled]="!usuarioSeleccionado.isEditable" required>
             </div>
             <!-- Correo -->
@@ -279,13 +279,13 @@
             </div>
             <div class="col-md-4">
               <label for="nuevoDescCargo" class="form-label">Cargo</label>
-              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control"
-                [(ngModel)]="usuarioSeleccionado.cargo" [disabled]="!usuarioSeleccionado.isEditable" required>
+              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [appAlphanumeric]="true"
+                [(ngModel)]="usuarioSeleccionado.descCargo" [disabled]="!usuarioSeleccionado.isEditable" required>
             </div>
             <!-- Descripción -->
             <div class="col-md-4">
               <label for="editDescripcion" class="form-label">Unidad</label>
-              <input id="editDescripcion" name="editDescripcion" class="form-control"
+              <input id="editDescripcion" name="editDescripcion" class="form-control" [appAlphanumeric]="true"
                 [(ngModel)]="usuarioSeleccionado.descGeneral" [disabled]="!usuarioSeleccionado.isEditable"
                 autocomplete="off">
             </div>
@@ -450,12 +450,12 @@
           <ng-container *ngIf="nuevoTypeAccess === ''">
             <div class="col-md-4">
               <label for="nuevoFullName" class="form-label">Nombre completo</label>
-              <input id="nuevoFullName" name="nuevoFullName" class="form-control" [(ngModel)]="nuevoFullName" disabled
+              <input id="nuevoFullName" name="nuevoFullName" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoFullName" disabled
                 required>
             </div>
             <div class="col-md-4">
               <label for="nuevoEmail" class="form-label">Correo</label>
-              <input id="nuevoEmail" name="nuevoEmail" type="email" class="form-control" [(ngModel)]="nuevoEmail"
+              <input id="nuevoEmail" name="nuevoEmail" type="email" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoEmail"
                 disabled required>
             </div>
             <div class="col-md-4">
@@ -465,7 +465,7 @@
             </div>
             <div class="col-md-4">
               <label for="nuevoDescCargo" class="form-label">Cargo</label>
-              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [(ngModel)]="nuevoDescCargo"
+              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoDescCargo"
                 disabled required>
             </div>
             <div class="col-md-4">
@@ -487,7 +487,7 @@
           <ng-container *ngIf="nuevoTypeAccess === 'Local'">
             <div class="col-md-4">
               <label for="nuevoLogin" class="form-label">Login</label>
-              <input id="nuevoLogin" name="nuevoLogin" class="form-control" [(ngModel)]="nuevoLogin" required
+              <input id="nuevoLogin" name="nuevoLogin" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoLogin" required
                 [ngClass]="{'is-invalid': addUserForm.submitted && (!nuevoLogin || !nuevoLogin.trim())}"
               >
               <div *ngIf="addUserForm.submitted && (!nuevoLogin || !nuevoLogin.trim())" class="invalid-feedback text-start">
@@ -516,7 +516,7 @@
             </div>
             <div class="col-md-4">
               <label for="nuevoFullName" class="form-label">Nombre completo</label>
-              <input id="nuevoFullName" name="nuevoFullName" class="form-control" [(ngModel)]="nuevoFullName" required
+              <input id="nuevoFullName" name="nuevoFullName" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoFullName" required
                 [ngClass]="{'is-invalid': addUserForm.submitted && (!nuevoFullName || !nuevoFullName.trim())}"
               >
               <div *ngIf="addUserForm.submitted && (!nuevoFullName || !nuevoFullName.trim())" class="invalid-feedback text-start">
@@ -548,7 +548,7 @@
             </div>
             <div class="col-md-4">
               <label for="nuevoDescCargo" class="form-label">Cargo</label>
-              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [(ngModel)]="nuevoDescCargo"
+              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoDescCargo"
                 required [ngClass]="{'is-invalid': addUserForm.submitted && (!nuevoDescCargo || !nuevoDescCargo.trim())}"
               >
               <div *ngIf="addUserForm.submitted && (!nuevoDescCargo || !nuevoDescCargo.trim())" class="invalid-feedback text-start">
@@ -557,7 +557,7 @@
             </div>
             <div class="col-md-4">
               <label for="nuevoDescGeneral" class="form-label">Unidad</label>
-              <input id="nuevoDescGeneral" name="nuevoDescGeneral" class="form-control" [(ngModel)]="nuevoDescGeneral"
+              <input id="nuevoDescGeneral" name="nuevoDescGeneral" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoDescGeneral"
                 required [ngClass]="{'is-invalid': addUserForm.submitted && (!nuevoDescGeneral || !nuevoDescGeneral.trim())}"
               >
               <div *ngIf="addUserForm.submitted && (!nuevoDescGeneral || !nuevoDescGeneral.trim())" class="invalid-feedback text-start">
@@ -580,7 +580,7 @@
             <div class="col-md-4">
               <label for="nuevoLogin" class="form-label">Login</label>
               <div class="input-group">
-                <input id="nuevoLogin" name="nuevoLogin" class="form-control" [(ngModel)]="nuevoLogin" required
+                <input id="nuevoLogin" name="nuevoLogin" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoLogin" required
                 [ngClass]="{'is-invalid': addUserForm.submitted && (!nuevoLogin || !nuevoLogin.trim())}">
                 <button type="button" class="btn btn-outline-info btn-sm" [disabled]="ldapLoading"
                   (click)="buscarUsuarioLDAP(nuevoLogin)">
@@ -598,7 +598,7 @@
             </div>
             <div class="col-md-4">
               <label for="nuevoFullName" class="form-label">Nombre completo</label>
-              <input id="nuevoFullName" name="nuevoFullName" class="form-control" [(ngModel)]="nuevoFullName" required
+              <input id="nuevoFullName" name="nuevoFullName" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoFullName" required
                 disabled="true">
             </div>
             <div class="col-md-4">
@@ -613,12 +613,12 @@
             </div>
             <div class="col-md-4">
               <label for="nuevoDescCargo" class="form-label">Cargo</label>
-              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [(ngModel)]="nuevoDescCargo"
+              <input id="nuevoDescCargo" name="nuevoDescCargo" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoDescCargo"
                 required disabled="true">
             </div>
             <div class="col-md-4">
               <label for="nuevoDescGeneral" class="form-label">Unidad</label>
-              <input id="nuevoDescGeneral" name="nuevoDescGeneral" class="form-control" [(ngModel)]="nuevoDescGeneral"
+              <input id="nuevoDescGeneral" name="nuevoDescGeneral" class="form-control" [appAlphanumeric]="true" [(ngModel)]="nuevoDescGeneral"
                 required disabled="true">
             </div>
             <div class="col-md-4">

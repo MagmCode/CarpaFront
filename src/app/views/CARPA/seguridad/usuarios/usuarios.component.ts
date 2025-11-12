@@ -840,7 +840,7 @@ export class UsuariosComponent implements OnInit {
               fullName: user.fullName,
               email:  user.email,
               userStatus: user.userStatus,
-              cargo: user.descCargo,
+              descCargo: user.descCargo,
               cedula: user.cedula,
               descGeneral: user.descGeneral,
             };

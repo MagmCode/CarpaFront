@@ -128,11 +128,11 @@
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Descripción</label>
-				<input class="form-control" [(ngModel)]="newEquipo.description" name="description">
+				<input class="form-control" [(ngModel)]="newEquipo.description" name="description" [appAlphanumeric]="true">
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Identificador</label>
-				<input class="form-control" [(ngModel)]="newEquipo.identifier" name="identifier" required>
+				<input class="form-control" [(ngModel)]="newEquipo.identifier" name="identifier" required [appAlphanumeric]="true">
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Dispositivo</label>

@@ -134,11 +134,11 @@
 	<div class="modal-body" autocomplete="off">
 			<div class="mb-3">
 				<label class="form-label">Nombre de Conexión</label>
-				<input class="form-control" [(ngModel)]="newDriver.connectionName" name="connectionName" required>
+				<input class="form-control" [(ngModel)]="newDriver.connectionName" name="connectionName" required [appAlphanumeric]="true">
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Tipo de Fuente</label>
-				<input class="form-control" [(ngModel)]="newDriver.datasourceType" name="datasourceType" required>
+				<input class="form-control" [(ngModel)]="newDriver.datasourceType" name="datasourceType" required [appAlphanumeric]="true">
 			</div>
 			<div class="mb-3">
 				<label class="form-label">URL JDBC</label>
@@ -158,7 +158,7 @@
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Perfil</label>
-				<input class="form-control" [(ngModel)]="newDriver.profile" name="profile" required>
+				<input class="form-control" [(ngModel)]="newDriver.profile" name="profile" required [appAlphanumeric]="true">
 			</div>
 			<div class="mb-3">
 				<label class="form-label">Status</label>

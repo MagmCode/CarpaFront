@@ -125,7 +125,7 @@
     <div class="modal-body">
       <div class="mb-3">
         <label for="rol" class="form-label">Rol (alias corto)</label>
-        <input id="rol" name="rol" class="form-control"
+        <input id="rol" name="rol" class="form-control" [appAlphanumeric]="true"
           [(ngModel)]="newRole.rol" required
           [ngClass]="{'is-invalid': submitted && (!newRole.rol || !newRole.rol.trim())}">
         <div *ngIf="submitted && (!newRole.rol || !newRole.rol.trim())" class="invalid-feedback text-start">
@@ -134,7 +134,7 @@
       </div>
       <div class="mb-3">
         <label for="descripcion" class="form-label">Descripción</label>
-        <textarea id="descripcion" name="descripcion" class="form-control"
+        <textarea id="descripcion" name="descripcion" class="form-control" [appAlphanumeric]="true"
           [(ngModel)]="newRole.descripcion" required
           [ngClass]="{'is-invalid': submitted && (!newRole.descripcion || !newRole.descripcion.trim())}"></textarea>
         <div *ngIf="submitted && (!newRole.descripcion || !newRole.descripcion.trim())" class="invalid-feedback text-start">

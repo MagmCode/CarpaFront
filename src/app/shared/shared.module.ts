@@ -6,6 +6,7 @@ import { GenericFormComponent } from './components/generic-form/generic-form.com
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbDatepickerModule } from '@ng-bootstrap/ng-bootstrap'; // Importa el módulo del datepicker
 import { LocalLoadingComponent } from './components/local-loading/local-loading.component';
+import { AlphanumericDirective } from './directives/alphanumeric.directive';
 
 
 @NgModule({
@@ -13,7 +14,8 @@ import { LocalLoadingComponent } from './components/local-loading/local-loading.
     GenericTableComponent,
     GenericModalComponent,
     GenericFormComponent,
-    LocalLoadingComponent
+    LocalLoadingComponent,
+    AlphanumericDirective
   ],
   imports: [CommonModule, ReactiveFormsModule,NgbDatepickerModule,FormsModule],
   exports: [
@@ -25,7 +27,8 @@ import { LocalLoadingComponent } from './components/local-loading/local-loading.
     FormsModule,
     ReactiveFormsModule,
     NgbDatepickerModule,
-    LocalLoadingComponent
+    LocalLoadingComponent,
+    AlphanumericDirective
   ],
 })
 export class SharedModule {}
