@@ -52,8 +52,9 @@ export class UsuariosComponent implements OnInit {
   }
 
   validarClave(clave: string): boolean {
-    // Mínimo 8 caracteres, al menos una mayúscula, una minúscula, un número y un símbolo
-    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(clave);
+    // Entre 8 y 12 caracteres, al menos una mayúscula, una minúscula, un número y un símbolo
+    // Limitar la longitud a 8-12 para cumplir la nueva política
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,12}$/.test(clave);
   }
 
   validarCorreo(correo: string): boolean {
@@ -111,12 +112,15 @@ export class UsuariosComponent implements OnInit {
       password: this.passwordNueva,
       passwordDays: this.passwordVigencia
     };
+    this.loading = true;
     this.usuariosService.changePassword(payload).subscribe({
       next: (resp: any) => {
         modal?.close();
         this.showSuccessToast('Contraseña cambiada', `Usuario: ${this.usuarioSeleccionado?.userId}`);
+        this.loading = false;
       },
       error: (err: any) => {
+        this.loading = false;
         Swal.fire({
           title: 'Error',
           text: 'No se pudo cambiar la contraseña.',
@@ -664,7 +668,7 @@ export class UsuariosComponent implements OnInit {
       if (!this.validarClave(this.nuevoClave)) {
         Swal.fire({
           title: 'Clave insegura',
-          text: 'La clave debe tener al menos 8 caracteres, mayúsculas, minúsculas, números y símbolos.',
+          text: 'Debe tener entre 8-12 caracteres, incluir mayúsculas, minúsculas, números y símbolos.',
           icon: 'warning',
         });
         return;
@@ -901,6 +905,7 @@ export class UsuariosComponent implements OnInit {
       userStatus: this.usuarioSeleccionado.userStatus,
     };
 
+    this.loading = true;
     // Call backend update with minimal payload { userId, userStatus }
     this.usuariosService.updateUsuario(payload).subscribe({
       next: (updated: any) => {
@@ -916,6 +921,7 @@ export class UsuariosComponent implements OnInit {
           this.usuarios[idx] = mapped;
         }
         this.filtrarUsuarios();
+        this.loading = false;
         modal.close();
         this.showSuccessToast(
           'Usuario actualizado',
@@ -923,6 +929,7 @@ export class UsuariosComponent implements OnInit {
         );
       },
       error: (err) => {
+        this.loading = false;
         console.error('Error guardando edición', err);
         Swal.fire({
           title: 'Error',
@@ -1085,6 +1092,7 @@ export class UsuariosComponent implements OnInit {
       roleIds: rolesSeleccionados.map((r) => (r as any).mscRoleId),
     };
 
+    this.loading = true;
     this.usuariosService.asignarRoles(payload).subscribe({
       next: (resp: any) => {
         // update local user's roles to the selected ones
@@ -1098,6 +1106,7 @@ export class UsuariosComponent implements OnInit {
           }));
         }
         this.filtrarUsuarios();
+        this.loading = false;
         modal.close();
         this.showSuccessToast(
           'Roles asignados',
@@ -1105,6 +1114,7 @@ export class UsuariosComponent implements OnInit {
         );
       },
       error: (err) => {
+        this.loading = false;
         console.error('Error asignando roles', err);
         Swal.fire({
           title: 'Error',

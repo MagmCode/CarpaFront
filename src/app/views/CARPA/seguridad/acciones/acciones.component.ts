@@ -34,6 +34,8 @@ export class AccionesComponent implements OnInit {
   accionesFiltradas: { url: string; descripcion: string; aplicacion: string }[] = [];
   accionesPaginadas: { url: string; descripcion: string; aplicacion: string }[] = [];
   searchTerm: string = '';
+  // Filter by application siglas (empty = all)
+  filtroSiglas: string = '';
 
   // Ordenamiento
   sortColumn: string = '';
@@ -88,16 +90,32 @@ export class AccionesComponent implements OnInit {
   }
 
   filtrarAcciones(): void {
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.trim().toLowerCase();
-      this.accionesFiltradas = this.acciones.filter(a =>
-        a.url.toLowerCase().includes(term) ||
-        a.descripcion.toLowerCase().includes(term) ||
-        a.aplicacion.toLowerCase().includes(term)
+    const term = (this.searchTerm || '').trim().toLowerCase();
+    const siglasFilter = (this.filtroSiglas || '').toLowerCase().trim();
+
+    this.accionesFiltradas = this.acciones.filter(a => {
+      const urlStr = (a.url || '').toLowerCase();
+      const descStr = (a.descripcion || '').toLowerCase();
+      const aplicStr = (a.aplicacion || '').toLowerCase();
+
+      // Try to resolve the siglas for this action's application by matching description or siglas
+      const foundApp = this.aplicaciones.find(app =>
+        ((app.description || '').toLowerCase() === aplicStr) ||
+        ((app.siglasApplic || '').toLowerCase() === aplicStr)
       );
-    } else {
-      this.accionesFiltradas = [...this.acciones];
-    }
+      const actionSiglas = foundApp ? (foundApp.siglasApplic || '').toLowerCase() : '';
+
+      const matchesSearch =
+        term === '' ||
+        urlStr.includes(term) ||
+        descStr.includes(term) ||
+        aplicStr.includes(term) ||
+        actionSiglas.includes(term);
+
+      const matchesSiglas = siglasFilter === '' || (actionSiglas !== '' && actionSiglas === siglasFilter) || aplicStr === siglasFilter;
+
+      return matchesSearch && matchesSiglas;
+    });
     // Aplica ordenamiento si hay columna seleccionada
     if (this.sortColumn) {
       const col = this.sortColumn as keyof typeof this.acciones[0];
@@ -192,13 +210,16 @@ export class AccionesComponent implements OnInit {
         idApplication: idApplication,
         secured: 's'
       };
+      this.loading = true;
       this.accionesService.crear(payload).subscribe({
         next: () => {
           Swal.fire({ icon: 'success', title: 'Privilegio Creado', timer: 1200, showConfirmButton: false });
           this.cargarAcciones();
+          this.loading = false;
           modal.close();
         },
         error: (err) => {
+          this.loading = false;
           Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear el privilegio.' });
         }
       });
@@ -221,10 +242,12 @@ export class AccionesComponent implements OnInit {
         idApplication: idApplication,
         secured: 's'
       };
+      this.loading = true;
       this.accionesService.editar(payload).subscribe({
         next: () => {
           Swal.fire({ icon: 'success', title: 'Privilegio editado', timer: 1200, showConfirmButton: false });
           this.cargarAcciones();
+          this.loading = false;
           modal.close();
         },
         error: (err) => {

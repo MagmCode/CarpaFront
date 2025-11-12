@@ -28,6 +28,8 @@ export interface RolAccion {
 })
 export class RolesAccionesComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
+  // Filter by application siglas (empty = all)
+  filtroSiglas: string = '';
   // roles will be loaded from backend via RolesService (we don't need the 'tipo' field here)
   roles: RolAccion[] = [];
 
@@ -53,6 +55,7 @@ export class RolesAccionesComponent implements OnInit {
   rolesFiltrados: RolAccion[] = [];
   rolesPaginados: RolAccion[] = [];
   searchTerm: string = '';
+    aplicacionesMap: { [desc: string]: number } = {}; // Para mapear nombre a id
 
   // Ordenamiento
   sortColumn: string = '';
@@ -65,7 +68,17 @@ export class RolesAccionesComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
+        // Suscribirse al observable para tener la lista siempre actualizada
+    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      this.aplicaciones = apps || [];
+      // Mapear nombre a id para el combo
+      this.aplicacionesMap = {};
+      this.aplicaciones.forEach(app => {
+        this.aplicacionesMap[app.description] = app.idApplication;
+      });
+    });
+    // Cargar desde backend (no bloqueante)
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
 
     this.loading = true;
     // load roles from backend and map to RolAccion (exclude 'tipo')
@@ -150,16 +163,27 @@ export class RolesAccionesComponent implements OnInit {
   }
 
   filtrarRoles(): void {
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.trim().toLowerCase();
-      this.rolesFiltrados = this.roles.filter(rol =>
-        rol.rol.toLowerCase().includes(term) ||
-        rol.descripcion.toLowerCase().includes(term) ||
-        rol.aplicacion.toLowerCase().includes(term)
+    const term = this.searchTerm ? this.searchTerm.trim().toLowerCase() : '';
+    const siglasFilter = (this.filtroSiglas || '').toLowerCase().trim();
+
+    this.rolesFiltrados = this.roles.filter(rol => {
+      const aplicacionStr = (rol.aplicacion || '').toLowerCase();
+      const siglasStr = (rol.siglasAplic || '').toLowerCase();
+
+      // If a siglas filter is selected, role must match the selected sigla (or application string)
+      const matchesSiglas = siglasFilter === '' || siglasStr === siglasFilter || aplicacionStr === siglasFilter;
+      if (!matchesSiglas) return false;
+
+      // If no search term, it's a match (siglas already matched)
+      if (!term) return true;
+
+      return (
+        (rol.rol || '').toLowerCase().includes(term) ||
+        (rol.descripcion || '').toLowerCase().includes(term) ||
+        aplicacionStr.includes(term) ||
+        siglasStr.includes(term)
       );
-    } else {
-      this.rolesFiltrados = [...this.roles];
-    }
+    });
     // Aplica ordenamiento si hay columna seleccionada
     if (this.sortColumn) {
       const col = this.sortColumn as keyof RolAccion;

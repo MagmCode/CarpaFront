@@ -40,6 +40,8 @@ export interface MenuOption {
 export class RolesMenuComponent implements OnInit {
   aplicaciones: Aplicacion[] = [];
   loading = false;
+  // Filter by application siglas (empty = all)
+  filtroSiglas: string = '';
 
   roles: RolMenu[] = [
     // will be populated from backend
@@ -132,6 +134,8 @@ export class RolesMenuComponent implements OnInit {
   // Sort state for association menu
   menuSortColumn: string = '';
   menuSortDirection: 'asc' | 'desc' = 'asc';
+    aplicacionesMap: { [desc: string]: number } = {}; // Para mapear nombre a id
+
 
   constructor(
     private aplicacionesService: AplicacionesService,
@@ -142,8 +146,18 @@ export class RolesMenuComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.aplicaciones = this.aplicacionesService.getAplicaciones ? this.aplicacionesService.getAplicaciones() : [];
-
+    // Suscribirse al observable para tener la lista siempre actualizada
+    this.aplicacionesService.getAplicaciones$().subscribe(apps => {
+      this.aplicaciones = apps || [];
+      // Mapear nombre a id para el combo
+      this.aplicacionesMap = {};
+      this.aplicaciones.forEach(app => {
+        this.aplicacionesMap[app.description] = app.idApplication;
+      });
+    });
+    // Cargar desde backend (no bloqueante)
+    this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
+  
     this.loading = true;
     // load roles from backend and map to RolMenu[] (generate numeric ids)
     this.rolesService.consultarRoles({}).subscribe({
@@ -180,17 +194,26 @@ export class RolesMenuComponent implements OnInit {
 
   // Tabla principal
   filtrarRoles(): void {
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.trim().toLowerCase();
-      this.rolesFiltrados = this.roles.filter(r =>
-        r.rol.toLowerCase().includes(term) ||
-        r.descripcion.toLowerCase().includes(term) ||
-        r.aplicacion.toLowerCase().includes(term) ||
-        r.siglasAplic.toLowerCase().includes(term)
+    const term = this.searchTerm ? this.searchTerm.trim().toLowerCase() : '';
+    const siglasFilter = (this.filtroSiglas || '').toLowerCase().trim();
+
+    this.rolesFiltrados = this.roles.filter(r => {
+      const aplicacionStr = (r.aplicacion || '').toLowerCase();
+      const siglasStr = (r.siglasAplic || '').toLowerCase();
+
+      // Siglas filter: if provided, role must match the selected sigla (or application string)
+      const matchesSiglas = siglasFilter === '' || siglasStr === siglasFilter || aplicacionStr === siglasFilter;
+      if (!matchesSiglas) return false;
+
+      // If there's a search term, role must match one of the searchable fields
+      if (!term) return true;
+      return (
+        (r.rol || '').toLowerCase().includes(term) ||
+        (r.descripcion || '').toLowerCase().includes(term) ||
+        aplicacionStr.includes(term) ||
+        siglasStr.includes(term)
       );
-    } else {
-      this.rolesFiltrados = [...this.roles];
-    }
+    });
     if (this.sortColumn) {
       const col = this.sortColumn as keyof RolMenu;
       this.rolesFiltrados.sort((a, b) => {

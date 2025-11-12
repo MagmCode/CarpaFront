@@ -35,6 +35,8 @@ export class RolesComponent implements OnInit {
   rolesFiltrados: Rol[] = [];
   rolesPaginados: Rol[] = [];
   searchTerm: string = '';
+  // Filter by application siglas (empty = all)
+  filtroSiglas: string = '';
 
   // Ordenamiento
   sortColumn: string = '';
@@ -81,17 +83,28 @@ export class RolesComponent implements OnInit {
   }
 
   filtrarRoles(): void {
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.trim().toLowerCase();
-      this.rolesFiltrados = this.roles.filter(rol =>
-        rol.rol.toLowerCase().includes(term) ||
-        rol.descripcion.toLowerCase().includes(term) ||
-        rol.tipo.toLowerCase().includes(term) ||
-        rol.aplicacion.toLowerCase().includes(term)
-      );
-    } else {
-      this.rolesFiltrados = [...this.roles];
-    }
+    const term = (this.searchTerm || '').trim().toLowerCase();
+    const siglasFilter = (this.filtroSiglas || '').toLowerCase().trim();
+
+    this.rolesFiltrados = this.roles.filter(rol => {
+      const rolStr = (rol.rol || '').toLowerCase();
+      const descStr = (rol.descripcion || '').toLowerCase();
+      const tipoStr = (rol.tipo || '').toLowerCase();
+      const aplicStr = (rol.aplicacion || '').toLowerCase();
+      const siglasStr = (rol.siglasAplic || '').toLowerCase();
+
+      const matchesSearch =
+        term === '' ||
+        rolStr.includes(term) ||
+        descStr.includes(term) ||
+        tipoStr.includes(term) ||
+        aplicStr.includes(term) ||
+        siglasStr.includes(term);
+
+      const matchesSiglas = siglasFilter === '' || (siglasStr !== '' && siglasStr === siglasFilter);
+
+      return matchesSearch && matchesSiglas;
+    });
     // Aplica ordenamiento si hay columna seleccionada
     if (this.sortColumn) {
       const col = this.sortColumn as keyof Rol;
@@ -184,6 +197,7 @@ export class RolesComponent implements OnInit {
       this.loading = true;
       this.rolesService.crearRol(payload).subscribe({
         next: (resp: any) => {
+          this.loading = false;
           Swal.fire({
             toast: true,
             position: 'top-end',
@@ -248,6 +262,7 @@ export class RolesComponent implements OnInit {
       this.loading = true;
       this.rolesService.modificarRol(payload).subscribe({
         next: (resp: any) => {
+          this.loading = false;
           Swal.fire({
             toast: true,
             position: 'top-end',

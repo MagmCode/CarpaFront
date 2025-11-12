@@ -23,7 +23,11 @@
             <i class="mdi mdi-delete"></i> Eliminar Masivo
           </button> -->
         </div>
-      <div>
+      <div class="d-flex gap-3 align-items-center">
+        <select class="form-select form-select-sm" style="width: 220px; display: inline-block;" [(ngModel)]="filtroSiglas" (change)="filtrarAcciones()">
+          <option [ngValue]="''">Todos los sistemas</option>
+          <option *ngFor="let app of aplicaciones" [ngValue]="app.siglasApplic">{{ app.siglasApplic || app.description }}</option>
+        </select>
         <input type="text" class="form-control" style="width: 250px; display: inline-block;" placeholder="Buscar..."
           [(ngModel)]="searchTerm" (input)="filtrarAcciones()">
       </div>
@@ -123,6 +127,7 @@
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
   <form #actionForm="ngForm" (ngSubmit)="submitted = true; saveAction(modal, actionForm)">
+    <app-local-loading [loading]="loading"></app-local-loading>
     <div class="modal-body">
       <div class="mb-3">
         <label for="url" class="form-label">URL</label>

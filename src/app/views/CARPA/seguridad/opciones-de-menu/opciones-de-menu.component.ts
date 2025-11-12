@@ -64,6 +64,8 @@ export class OpcionesDeMenuComponent implements OnInit {
   opcionesFiltradas: OpcionMenu[] = [];
   opcionesPaginadas: OpcionMenu[] = [];
   searchTerm: string = '';
+  // Filter by application siglas (empty = all)
+  filtroSiglas: string = '';
 
   // Ordenamiento
   sortColumn: string = '';
@@ -184,7 +186,8 @@ export class OpcionesDeMenuComponent implements OnInit {
 
   // Filtra y ordena recursivamente padres e hijos
   filtrarOpciones(): void {
-    const term = this.searchTerm.trim().toLowerCase();
+  const term = this.searchTerm.trim().toLowerCase();
+  const siglasFilter = (this.filtroSiglas || '').toLowerCase().trim();
     // Filtrar recursivo
     const filterRecursive = (opciones: OpcionMenu[]): OpcionMenu[] => {
       const resultado: OpcionMenu[] = [];
@@ -195,6 +198,13 @@ export class OpcionesDeMenuComponent implements OnInit {
           (op.nombre || '').toLowerCase().includes(term) ||
           (op.ruta || '').toLowerCase().includes(term) ||
           appStr.toLowerCase().includes(term);
+        const matchesSiglas = siglasFilter === '' || (appStr && appStr.toLowerCase() === siglasFilter);
+
+        // If the node doesn't match the selected siglas AND none of its children matched, skip
+        if (!matchesSiglas && !(hijosFiltrados && hijosFiltrados.length)) {
+          continue;
+        }
+
         if (term === '' || match || (hijosFiltrados && hijosFiltrados.length)) {
           const copia: OpcionMenu = { ...op };
           if (hijosFiltrados && hijosFiltrados.length) {
@@ -366,15 +376,18 @@ export class OpcionesDeMenuComponent implements OnInit {
         parentId: this.parentForSubmenu && (this.parentForSubmenu as any).id ? (this.parentForSubmenu as any).id : null
       };
 
+      this.loading = true;
       // call backend create
       this.menuService.crearMenu(payload).subscribe({
         next: (created: any) => {
           this.showCreateSuccess(created);
           // reload menu from backend
+          this.loading = false;
           this.reloadMenu();
           modal.close();
         },
         error: (err) => {
+          this.loading = false;
           console.error('Error creando opción de menú', err);
           Swal.fire({ title: 'Error', text: 'No se pudo crear la opción de menú.', icon: 'error' });
         }
@@ -388,13 +401,16 @@ export class OpcionesDeMenuComponent implements OnInit {
         orden: Number(this.opcionSeleccionada.orden) || 1,
         habilitado: this.opcionSeleccionada.checked ? 1 : 0
       };
+      this.loading = true;
       this.menuService.editarMenu(payload).subscribe({
         next: (edited: any) => {
           this.showEditSuccess(edited);
           this.reloadMenu();
+          this.loading = false;
           modal.close();
         },
         error: (err) => {
+          this.loading = false;
           console.error('Error editando opción de menú', err);
           Swal.fire({ title: 'Error', text: 'No se pudo editar la opción de menú.', icon: 'error' });
         }

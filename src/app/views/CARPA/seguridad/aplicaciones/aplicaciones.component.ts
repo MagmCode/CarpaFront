@@ -169,10 +169,12 @@ export class AplicacionesComponent implements OnInit {
     }
 
     if (this.modalModo === 'agregar') {
+      this.loading = true;
       this.aplicacionesService.createAplicacion(this.appSeleccionada).subscribe({
         next: (created) => {
           this.aplicaciones = this.aplicacionesService.getAplicaciones();
           this.filtrarAplicaciones();
+          this.loading = false;
           Swal.fire({
             toast: true,
             position: 'top-start',
@@ -186,6 +188,7 @@ export class AplicacionesComponent implements OnInit {
           modal.close();
         },
         error: (err) => {
+          this.loading = false;
           console.error('Error creating aplicacion', err);
           if (err && err.errorCode == 'APLICACION_DUPLICADA') {
              Swal.fire({
@@ -213,6 +216,7 @@ export class AplicacionesComponent implements OnInit {
       }
       });
     } else if (this.modalModo === 'editar') {
+      this.loading = true;
       this.aplicacionesService.updateAplicacion(this.appSeleccionada).subscribe({
         next: (updated) => {
           const idx = this.aplicaciones.findIndex(a => String(a.idApplication) === String(updated.idApplication));
@@ -221,6 +225,7 @@ export class AplicacionesComponent implements OnInit {
           } else {
             this.aplicaciones.unshift(updated);
           }
+          this.loading = false;
           this.filtrarAplicaciones();
           Swal.fire({
             toast: true,
@@ -236,6 +241,7 @@ export class AplicacionesComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error updating aplicacion', err);
+          this.loading = false;
           Swal.fire({
             toast: true,
             position: 'top-start',
