@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
-import { ReportesService } from 'src/app/services/auditoria/reportes.service';
+import { ReportesService as ExportReportesService } from 'src/app/services/reportes/reportes.service';
+import { ReportesService as AuditReportesService } from 'src/app/services/auditoria/reportes.service';
 import Swal from 'sweetalert2';
 
 type ViewMode = 'usuarios' | 'acciones' | 'roles';
@@ -38,7 +39,8 @@ export class ReportesAplicacionComponent implements OnInit {
 
   constructor(
     private aplicacionesService: AplicacionesService,
-    private reportesService: ReportesService
+    private auditReportesService: AuditReportesService,
+    private exportReportesService: ExportReportesService
   ) { }
 
   ngOnInit(): void {
@@ -86,7 +88,7 @@ export class ReportesAplicacionComponent implements OnInit {
     const siglas = app ? app.siglasApplic : null;
     if (siglas) {
       this.loading = true;
-      this.reportesService.obtenerReportes(siglas).subscribe({
+      this.auditReportesService.obtenerReportes(siglas).subscribe({
         next: (resp: any) => {
           this.usuarios = Array.isArray(resp.usuarios) ? resp.usuarios : [];
           this.acciones = Array.isArray(resp.acciones) ? resp.acciones : [];
@@ -167,28 +169,56 @@ export class ReportesAplicacionComponent implements OnInit {
 
   // export CSV (Excel puede abrir CSV)
   exportCsv() {
-    if (!this.itemsFiltrados) return;
-    const rows: string[] = [];
-    if (this.view === 'usuarios') {
-      rows.push(['Usuario ID','Rol','Nombres','Apellidos','Email','Estatus'].join(','));
-      this.itemsFiltrados.forEach((r: any) => rows.push([r.usuarioId, r.rol, r.nombres, r.apellidos, r.email, r.estatus].map(this.escapeCsv).join(',')));
-    } else if (this.view === 'acciones') {
-      rows.push(['Rol','Acción','Descripción'].join(','));
-      this.itemsFiltrados.forEach((r: any) => rows.push([r.rol, r.accion, r.descripcion].map(this.escapeCsv).join(',')));
-    } else {
-      rows.push(['Rol','Descripción','Tipo'].join(','));
-      this.itemsFiltrados.forEach((r: any) => rows.push([r.rol, r.descripcion, r.tipo].map(this.escapeCsv).join(',')));
+    if (!this.selectedApp) {
+      Swal.fire({ title: 'No hay aplicación seleccionada', text: 'Seleccione una aplicación antes de exportar.', icon: 'warning' });
+      return;
     }
 
-    const csv = rows.join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-  const filename = `${this.getSelectedAppName() || this.selectedApp || 'report'}_${this.view}.csv`;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    let payload: any;
+    if (this.view === 'usuarios') {
+      // backend expects 'application' for usuarios export
+      payload = { application: this.selectedApp };
+    } else {
+      payload = { idApplication: this.selectedApp };
+    }
+    this.loading = true;
+
+    let obs: any;
+    if (this.view === 'usuarios') {
+      obs = this.exportReportesService.exportUsuarios(payload);
+    } else if (this.view === 'acciones') {
+      obs = this.exportReportesService.exportPrivilegios(payload);
+    } else {
+      obs = this.exportReportesService.exportRoles(payload);
+    }
+
+    obs.subscribe({
+      next: (blob: Blob) => {
+        this.loading = false;
+        const filename = `${this.getSelectedAppName() || this.selectedApp || 'report'}_${this.view}.csv`;
+        this.downloadBlob(blob, filename);
+      },
+      error: (err: any) => {
+        this.loading = false;
+        console.error('Export error', err);
+        Swal.fire({ title: 'Error', text: 'No se pudo generar el reporte. Intente nuevamente.', icon: 'error' });
+      }
+    });
+  }
+
+  private downloadBlob(blob: Blob, filename: string) {
+    try {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('downloadBlob failed', e);
+    }
   }
 
   private escapeCsv(val: any) {
