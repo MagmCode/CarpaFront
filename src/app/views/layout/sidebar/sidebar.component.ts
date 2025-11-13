@@ -8,6 +8,7 @@ import MetisMenu from 'metismenujs';
 import { MENU } from './menu';
 import { MenuItem } from './menu.model';
 import { Router, NavigationEnd } from '@angular/router';
+import { JwtService } from 'src/app/services/jwt.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -21,8 +22,10 @@ sidebarMenuClass: string = 'sidebar-nav metismenu mm-collapse-show';
 
   menuItems: MenuItem[] = [];
   @ViewChild('sidebarMenu') sidebarMenu: ElementRef;
+  private metisMenuInstance: any = null;
+  private sidebarClickFixerAttached = false;
 
-  constructor(@Inject(DOCUMENT) private document: Document, private renderer: Renderer2, router: Router  ) { 
+  constructor(@Inject(DOCUMENT) private document: Document, private renderer: Renderer2, router: Router, private jwtService: JwtService  ) { 
     router.events.forEach((event) => {
       if (event instanceof NavigationEnd) {
 
@@ -45,7 +48,8 @@ sidebarMenuClass: string = 'sidebar-nav metismenu mm-collapse-show';
   nombreUsuarioActual: string = '';
 
   ngOnInit(): void {
-    this.menuItems = MENU;
+    // Initialize menu from token if available; otherwise fallback to hardcoded MENU.
+    this.loadMenuFromTokenOrFallback();
 
 
     /**
@@ -59,10 +63,88 @@ sidebarMenuClass: string = 'sidebar-nav metismenu mm-collapse-show';
 
   }
 
+  /**
+   * Build menu items from JWT payload (if present). Keep a hardcoded 'Menu' title and 'Inicio' entry.
+   */
+  private loadMenuFromTokenOrFallback() {
+    try {
+      this.jwtService.payload$.subscribe(p => {
+        if (!p) {
+          // no token payload -> fallback to MENU
+          this.menuItems = MENU;
+        } else {
+          const raw = p['menu'];
+          let tokenMenu: any[] | null = null;
+          try {
+            if (!raw) tokenMenu = null;
+            else if (typeof raw === 'string') tokenMenu = JSON.parse(raw);
+            else if (Array.isArray(raw)) tokenMenu = raw;
+          } catch (e) {
+            tokenMenu = null;
+          }
+
+          if (!tokenMenu || !tokenMenu.length) {
+            this.menuItems = MENU;
+          } else {
+            // Build final menu: Title + Inicio (hardcoded) + token items mapped
+            const inicioItem: MenuItem = {
+              label: 'Inicio',
+              icon: 'icon-bdv-icon-bank-l',
+              link: '/inicio'
+            };
+
+            const titleItem: MenuItem = { label: 'Menu', isTitle: true };
+
+            // Map token menu recursively
+            const mapItem = (it: any): MenuItem => {
+              const mapped: MenuItem = {
+                label: it.label,
+                icon: it.icon || undefined,
+                link: it.link || undefined,
+                isTitle: !!it.isTitle,
+                parentId: it.parentId ? Number(it.parentId) : undefined,
+                subItems: (it.subItems && Array.isArray(it.subItems)) ? it.subItems.map((c: any) => mapItem(c)) : []
+              } as MenuItem;
+              return mapped;
+            };
+
+            // Sort top-level by 'order' if present
+            tokenMenu.sort((a: any, b: any) => {
+              const oa = typeof a.order === 'number' ? a.order : Number(a.order) || 0;
+              const ob = typeof b.order === 'number' ? b.order : Number(b.order) || 0;
+              return oa - ob;
+            });
+
+            const mappedTop = tokenMenu.map(t => mapItem(t));
+            this.menuItems = [titleItem, inicioItem, ...mappedTop];
+          }
+        }
+
+        // Reinitialize MetisMenu after the menu items change so the DOM is wired correctly.
+        setTimeout(() => {
+          if (this.sidebarMenu) {
+            this.recreateMetisMenu();
+            this._activateMenuDropdown();
+            // Attach a fixer that watches for mm-collapsing left behind and fixes it
+            try { this.attachSidebarCollapseFixer(); } catch (e) { /* ignore */ }
+          }
+        }, 80);
+      });
+    } catch (e) {
+      // safe fallback
+      this.menuItems = MENU;
+    }
+  }
+
   ngAfterViewInit() {
     // activate menu item
     if (this.sidebarMenu) {
-      new MetisMenu(this.sidebarMenu.nativeElement);
+      try {
+        this.metisMenuInstance = new MetisMenu(this.sidebarMenu.nativeElement);
+      } catch (e) {
+        // ignore
+        this.metisMenuInstance = null;
+      }
       // Espera a que MetisMenu y el DOM estén listos antes de activar el menú
       setTimeout(() => {
         this._activateMenuDropdown();
@@ -71,8 +153,124 @@ sidebarMenuClass: string = 'sidebar-nav metismenu mm-collapse-show';
         if (sidebarMenu && sidebarMenu.classList.contains('mm-collapse')) {
           sidebarMenu.classList.remove('mm-collapse');
         }
+        try { this.attachSidebarCollapseFixer(); } catch (e) { }
       }, 200);
     }
+  }
+
+  private recreateMetisMenu() {
+    try {
+      if (this.metisMenuInstance && typeof this.metisMenuInstance.dispose === 'function') {
+        try { this.metisMenuInstance.dispose(); } catch (e) { /* ignore */ }
+      }
+    } catch (e) { /* ignore */ }
+    try {
+      this.metisMenuInstance = new MetisMenu(this.sidebarMenu.nativeElement);
+      console.log('[Sidebar] MetisMenu recreated');
+    } catch (e) {
+      this.metisMenuInstance = null;
+    }
+  }
+
+  /**
+   * Attach a delegated listener to detect submenus that remain in the 'mm-collapsing' state
+   * and force them to the final 'mm-collapse mm-show' / collapsed state when necessary.
+   */
+  private attachSidebarCollapseFixer() {
+    if (this.sidebarClickFixerAttached || !this.sidebarMenu || !this.sidebarMenu.nativeElement) return;
+    this.sidebarClickFixerAttached = true;
+    this.sidebarMenu.nativeElement.addEventListener('click', (ev: MouseEvent) => {
+      try {
+        const target = ev.target as HTMLElement;
+        const anchor = target.closest('a') as HTMLElement | null;
+        if (!anchor) return;
+        // Only handle parent toggles (anchors that don't navigate)
+        const href = (anchor.getAttribute('href') || '').toLowerCase();
+        const looksLikeToggle = href.includes('javascript') || href === '#' || !anchor.getAttribute('href') || anchor.classList.contains('side-nav-link-a-ref');
+        if (!looksLikeToggle) {
+          // let real navigation happen; but still schedule a check to fix stray mm-collapsing elements
+          setTimeout(() => this.fixCollapsingElements(), 220);
+          return;
+        }
+
+        // Prevent default navigation for toggle anchors and perform deterministic toggle
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        const parentLi = anchor.closest('li');
+        let ul: HTMLElement | null = null;
+        if (parentLi) {
+          // direct child submenu
+          ul = parentLi.querySelector(':scope > ul.sub-menu') as HTMLElement | null;
+        }
+
+        if (ul) {
+          this.toggleSubmenu(ul, anchor, parentLi as HTMLElement);
+        }
+
+        // After manual toggle, still ensure any stuck collapsing elements are fixed
+        setTimeout(() => this.fixCollapsingElements(), 220);
+      } catch (e) { /* ignore */ }
+    }, true);
+  }
+
+  private toggleSubmenu(ul: HTMLElement, anchor: HTMLElement, parentLi: HTMLElement | null) {
+    try {
+      const isOpen = ul.classList.contains('mm-show');
+      if (isOpen) {
+        // collapse
+        ul.classList.remove('mm-show');
+        ul.classList.add('mm-collapse');
+        ul.setAttribute('aria-expanded', 'false');
+        if (parentLi) parentLi.classList.remove('mm-active');
+        anchor.classList.remove('mm-expanded');
+        anchor.classList.add('mm-collapsed');
+        try { ul.style.height = '0px'; } catch (e) { }
+        // console.log('[Sidebar FIXER] manual collapse applied');
+      } else {
+        // expand
+        ul.classList.add('mm-collapse', 'mm-show');
+        ul.setAttribute('aria-expanded', 'true');
+        if (parentLi) parentLi.classList.add('mm-active');
+        anchor.classList.remove('mm-collapsed');
+        anchor.classList.add('mm-expanded');
+        try { ul.style.height = 'auto'; } catch (e) { }
+        // console.log('[Sidebar FIXER] manual expand applied');
+      }
+    } catch (e) { console.warn('[Sidebar FIXER] toggleSubmenu error', e); }
+  }
+
+  private fixCollapsingElements() {
+    try {
+      const collapsing = this.sidebarMenu.nativeElement.querySelectorAll('.mm-collapsing');
+      if (collapsing && collapsing.length) {
+        collapsing.forEach((el: HTMLElement) => {
+          try {
+            // If element seems collapsed (height 0 or missing), toggle to visible state
+            const h = el.style && el.style.height ? el.style.height : '';
+            // if it already has mm-show, ensure height auto
+            if (el.classList.contains('mm-show')) {
+              el.classList.remove('mm-collapsing');
+              el.classList.add('mm-collapse');
+              try { el.style.height = 'auto'; } catch (e) { }
+              el.setAttribute('aria-expanded', 'true');
+              const parentLi = el.closest('li');
+              if (parentLi) parentLi.classList.add('mm-active');
+              console.log('[Sidebar FIXER] Replaced mm-collapsing with mm-collapse mm-show for', el);
+            } else if (h === '0px' || !h) {
+              // default: make it visible to avoid being stuck
+              el.classList.remove('mm-collapsing');
+              el.classList.add('mm-collapse', 'mm-show');
+              el.setAttribute('aria-expanded', 'true');
+              try { el.style.height = 'auto'; } catch (e) { }
+              const parentLi = el.closest('li');
+              if (parentLi) parentLi.classList.add('mm-active');
+              console.log('[Sidebar FIXER] Replaced mm-collapsing with mm-collapse mm-show for', el);
+            }
+          } catch (e) { /* ignore per-element */ }
+        });
+      }
+    } catch (e) { /* ignore */ }
   }
   /**
    * Toggle sidebar on hamburger button click

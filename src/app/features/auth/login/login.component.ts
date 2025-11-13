@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, NgForm, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LoginService } from 'src/app/services/login.service'; 
 import { SessionSyncService } from 'src/app/services/session-sync.service'; 
+import { JwtService } from 'src/app/services/jwt.service';
 
 @Component({
   selector: 'app-login',
@@ -29,16 +30,24 @@ export class LoginComponent implements OnInit {
     private formBuilder: FormBuilder,
     private loginService: LoginService,
     private sessionSync: SessionSyncService
+    , private jwtService: JwtService
   ) { }
+
+  
   
   ngOnInit(): void {
     this.loginForm = this.formBuilder.group({
       // codUsuario: only alphanumeric (no special characters or spaces), max 25 chars
       codUsuario: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9]+$/), Validators.maxLength(25)]],
       // Password: alphanumeric only, max 25 chars
-      password: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9]+$/), Validators.maxLength(25)]]
+      password: ['', [Validators.required, Validators.maxLength(25)]]
 
     });
+
+    this.jwtService.payload$.subscribe(p => {
+    console.log('JWT payload:', p);            // objeto con claims
+    console.log('Nombre (claim):', p?.nombre); // ejemplo de claim
+  });
   // get return url from route parameters or default to '/inicio'
   this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/inicio';
   }
@@ -152,6 +161,9 @@ export class LoginComponent implements OnInit {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('refreshToken');
       sessionStorage.removeItem('usuarioActual');
+      // Also clear previously stored role name
+      sessionStorage.removeItem('usuarioRoleName');
+      try { this.jwtService.clear(); } catch (e) { }
     } catch (e) {
       // ignore storage errors
     }
@@ -161,6 +173,8 @@ export class LoginComponent implements OnInit {
     if (response && response.token) {
       // Store tokens in sessionStorage to avoid cross-tab sharing
       sessionStorage.setItem('token', response.token);
+      // update JWT service with the latest token so other parts of the app can read claims
+      try { this.jwtService.setToken(response.token); } catch (e) { /* ignore */ }
     }
     if (response && response.refreshToken) {
       sessionStorage.setItem('refreshToken', response.refreshToken);
@@ -169,6 +183,20 @@ export class LoginComponent implements OnInit {
     const usuarioNombre = this.buildDisplayName(response);
     if (usuarioNombre) {
       sessionStorage.setItem('usuarioActual', usuarioNombre);
+    }
+    // Try to extract a human-friendly role name from common response shapes
+    try {
+      let roleName: string | undefined;
+      if (response) {
+        roleName = response.usuario?.roleName || response.roleName;
+        if (!roleName && Array.isArray(response.usuario?.roles) && response.usuario.roles.length) {
+          const r = response.usuario.roles[0];
+          roleName = r?.roleName || r?.alias || r?.rol || r?.name;
+        }
+      }
+      if (roleName) sessionStorage.setItem('usuarioRoleName', roleName);
+    } catch (e) {
+      // ignore extraction errors
     }
 
     // Only navigate if service marked session or token exists

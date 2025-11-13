@@ -3,15 +3,16 @@
     <h6 class="card-title fw-semibold">Configuración / Criterios</h6>
   </div>
   <div class="card-body" style="position: relative;">
+    <app-local-loading [loading]="loading"></app-local-loading>
     <div class="row mb-4 align-items-end">
       <div class="d-flex justify-content-end">
-        <strong>Total de registros:&nbsp;</strong>  {{ parametrosFiltrados.length }}
+  <strong>Total de registros:&nbsp;{{ settingsFiltrados.length }}</strong>  
       </div>
     </div>
     <div class="d-flex justify-content-between mb-4">
       <div class="d-flex gap-3">
         <button class="btn btn-success" (click)="openAddParametroModal(addParametroModal)">
-          <i class="mdi mdi-plus"></i> Añadir
+          <i class="mdi mdi-plus"></i> Agregar
         </button>
       </div>
       <div>
@@ -21,29 +22,30 @@
     </div>
 
     <div class="table-responsive">
+      <div *ngIf="settingsPaginados.length === 0" class="alert alert-info">No hay configuraciones para mostrar.</div>
       <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
           <tr>
-            <!-- <th>Eliminar</th> -->
-            <th>Editar</th>
-            <th>Nombre del Parámetro</th>
-            <th>Valor</th>
+            <th class="fw-semibold">Editar</th>
+            <th class="fw-semibold">Nombre</th>
+            <th class="fw-semibold">Valor</th>
+            <th class="fw-semibold">Tipo</th>
+            <th class="fw-semibold">Descripción</th>
+            <th class="fw-semibold">Activo</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let parametro of parametrosPaginados">
-            <!-- <td>
-              <button class="btn btn-danger btn-sm" (click)="confirmarEliminarParametro(parametro)">
-                <i class="feather icon-trash-2"></i>
-              </button>
-            </td> -->
+          <tr *ngFor="let set of settingsPaginados">
             <td>
-              <button class="btn btn-warning btn-sm" (click)="openEditarModal(parametro, editarModal)">
+              <button class="btn btn-warning btn-sm" (click)="openEditarModal(set, editarModal)">
                 <i class="feather icon-edit"></i>
               </button>
             </td>
-            <td>{{ parametro.nombre }}</td>
-            <td>{{ parametro.valor }}</td>
+            <td class="text-start">{{ set.key }}</td>
+            <td class="text-start">{{ set.value }}</td>
+            <td>{{ set.type }}</td>
+            <td class="text-start">{{ set.description }}</td>
+            <td class="text-center">{{ set.active ? 'Sí' : 'No' }}</td>
           </tr>
         </tbody>
       </table>
@@ -91,64 +93,104 @@
   </div>
 </div>
 
-<!-- Modal para eliminar parámetro -->
+<!-- Modal para eliminar Criterios -->
 <ng-template #eliminarModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Eliminar Parámetro</h5>
+    <h5 class="modal-title fw-semibold">Eliminar Criterios</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
   <div class="modal-body text-center">
-    <p>¿Está seguro que desea eliminar el parámetro <strong>{{ parametroSeleccionado?.nombre }}</strong>?</p>
+    <p>¿Está seguro que desea eliminar el Criterios <strong>{{ settingSeleccionado?.key }}</strong>?</p>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-danger" (click)="eliminarParametro(parametroSeleccionado!, modal)">Eliminar</button>
+    <button class="btn btn-danger" (click)="eliminarParametro(settingSeleccionado!, modal)">Eliminar</button>
     <button class="btn btn-secondary" (click)="modal.close()">Cancelar</button>
   </div>
 </ng-template>
 
-<!-- Modal para editar parámetro -->
+<!-- Modal para editar Criterios -->
 <ng-template #editarModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Editar Parámetro</h5>
+    <h5 class="modal-title fw-semibold">Editar Criterios</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-  <form *ngIf="parametroSeleccionado" (ngSubmit)="guardarEdicionParametro(modal)">
+  <form #editForm="ngForm" *ngIf="settingSeleccionado" (ngSubmit)="guardarEdicionParametro(editForm, modal)">
+    <app-local-loading [loading]="loading"></app-local-loading>
     <div class="modal-body">
       <div class="mb-3">
-        <label for="editNombre" class="form-label">Nombre</label>
-        <input id="editNombre" class="form-control" [(ngModel)]="parametroSeleccionado.nombre" name="editNombre" required [appAlphanumeric]="true">
+        <label for="editKey" class="form-label">Nombre</label>
+  <input id="editKey" class="form-control" [(ngModel)]="settingSeleccionado.key" name="editKey" #editKey="ngModel" required [appAlphanumeric]="true" [ngClass]="{'is-invalid': submittedEdit && editKey.invalid}">
+        <div *ngIf="submittedEdit && editKey.invalid" class="invalid-feedback text-start">El nombre no puede estar vacío.</div>
       </div>
       <div class="mb-3">
-        <label for="editValor" class="form-label">Valor</label>
-        <input id="editValor" class="form-control" [(ngModel)]="parametroSeleccionado.valor" name="editValor" required [appAlphanumeric]="true">
+        <label for="editValue" class="form-label">Valor</label>
+  <input id="editValue" class="form-control" [(ngModel)]="settingSeleccionado.value" name="editValue" #editValue="ngModel" required [type]="settingSeleccionado.type === 'number' ? 'number' : 'text'" [ngClass]="{'is-invalid': submittedEdit && (editValue.invalid || editValuePatternError)}">
+        <div *ngIf="submittedEdit && editValue.invalid" class="invalid-feedback text-start">El valor no puede estar vacío.</div>
+        <div *ngIf="submittedEdit && editValuePatternError" class="invalid-feedback text-start">El valor debe ser numérico.</div>
+      </div>
+      <div class="mb-3">
+        <label for="editType" class="form-label">Tipo</label>
+        <select id="editType" class="form-select" [(ngModel)]="settingSeleccionado.type" name="editType">
+          <option value="string">Texto</option>
+          <option value="number">Numérico</option>
+          <!-- <option value="boolean">Booleano</option> -->
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="editDescription" class="form-label">Descripción</label>
+        <input id="editDescription" class="form-control" [(ngModel)]="settingSeleccionado.description" name="editDescription">
+      </div>
+      <div class="form-check mb-2">
+        <input id="editActive" class="form-check-input" type="checkbox" [(ngModel)]="settingSeleccionado.active" name="editActive">
+        <label class="form-check-label" for="editActive">Activo</label>
       </div>
     </div>
-    <div class="modal-footer d-flex justify-content-start gap-3 mt-4">
+    <div class="modal-footer">
       <button class="btn btn-success" type="submit">Guardar</button>
       <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
     </div>
   </form>
 </ng-template>
 
-<!-- Modal para añadir parámetro -->
+<!-- Modal para Agregar Criterios -->
 <ng-template #addParametroModal let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Añadir Parámetro</h5>
+    <h5 class="modal-title fw-semibold">Agregar Criterio</h5>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
   </div>
-  <form (ngSubmit)="addParametro(modal)">
+  <form #addForm="ngForm" (ngSubmit)="addParametro(addForm, modal)">
+    <app-local-loading [loading]="loading"></app-local-loading>
     <div class="modal-body">
       <div class="mb-3">
-        <label for="nuevoNombre" class="form-label">Nombre</label>
-        <input id="nuevoNombre" name="nuevoNombre" class="form-control" [(ngModel)]="nuevoParametro.nombre" required [appAlphanumeric]="true">
+        <label for="nuevoKey" class="form-label">Nombre</label>
+  <input id="nuevoKey" name="nuevoKey" class="form-control" [(ngModel)]="nuevoSetting.key" #newKey="ngModel" required [appAlphanumeric]="true" [ngClass]="{'is-invalid': submittedAdd && newKey.invalid}">
+        <div *ngIf="submittedAdd && newKey.invalid" class="invalid-feedback text-start">El nombre no puede estar vacío.</div>
       </div>
       <div class="mb-3">
-        <label for="nuevoValor" class="form-label">Valor</label>
-          <input id="nuevoValor" name="nuevoValor" class="form-control" [(ngModel)]="nuevoParametro.valor" required [appAlphanumeric]="true">
-        </div>
+        <label for="nuevoValue" class="form-label">Valor</label>
+  <input id="nuevoValue" name="nuevoValue" class="form-control" [(ngModel)]="nuevoSetting.value" #newValue="ngModel" required [type]="nuevoSetting.type === 'number' ? 'number' : 'text'" [ngClass]="{'is-invalid': submittedAdd && (newValue.invalid || addValuePatternError)}">
+  <div *ngIf="submittedAdd && newValue.invalid" class="invalid-feedback text-start">El valor no puede estar vacío.</div>
+  <div *ngIf="submittedAdd && addValuePatternError" class="invalid-feedback text-start">El valor debe ser numérico.</div>
+      </div>
+      <div class="mb-3">
+        <label for="nuevoType" class="form-label">Tipo</label>
+        <select id="nuevoType" class="form-select" [(ngModel)]="nuevoSetting.type" name="nuevoType">
+          <option value="string">Texto</option>
+          <option value="number">Numérico</option>
+          <!-- <option value="boolean">Booleano</option> -->
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="nuevoDescription" class="form-label">Descripción</label>
+        <input id="nuevoDescription" name="nuevoDescription" class="form-control" [(ngModel)]="nuevoSetting.description">
+      </div>
+      <div class="form-check mb-2">
+        <input id="nuevoActive" class="form-check-input" type="checkbox" [(ngModel)]="nuevoSetting.active" name="nuevoActive">
+        <label class="form-check-label" for="nuevoActive">Activo</label>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-success" type="submit">Añadir</button>
+      <button class="btn btn-success" type="submit">Agregar</button>
       <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
     </div>
   </form>

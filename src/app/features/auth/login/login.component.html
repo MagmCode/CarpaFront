@@ -23,12 +23,12 @@
       <div class="mb-3 position-relative">
         <input [type]="showPassword ? 'text' : 'password'" class="form-control" id="exampleInputPassword1"
           autocomplete="new-password" placeholder="Contraseña" formControlName="password" autocorrect="off" autocapitalize="off" spellcheck="false"
-          maxlength="25" [appAlphanumeric]="false"
-          [class.is-invalid]="(f.password.invalid && (f.password.dirty || f.password.touched || submitted))">
+          maxlength="25" 
+          [class.is-invalid]="(f.password.invalid && ( f.password.touched || submitted))">
         <button *ngIf="!loginForm.invalid" type="button" class="btn btn-link btn-sm p-0 eye-btn" tabindex="-1" (click)="togglePassword()">
           <i [ngClass]="showPassword ? 'icon-bdv-icon-hide-l' : 'icon-bdv-icon-show-l'"></i>
         </button>
-        <div *ngIf="f.password.invalid && (f.password.dirty || f.password.touched || submitted)" class="invalid-feedback text-start">
+        <div *ngIf="f.password.invalid && ( f.password.touched || submitted)" class="invalid-feedback text-start">
           <div *ngIf="f.password.errors?.['required']">La clave no puede estar vacía.</div>
         </div>
       </div>

@@ -69,7 +69,7 @@ export class ReportesAplicacionComponent implements OnInit {
   getSelectedAppName(): string | null {
     if (!this.selectedApp) return null;
     const app = this.aplicaciones.find(a => a.idApplication === this.selectedApp);
-    return app ? app.description : null;
+    return app ? app.siglasApplic : null;
   }
 
   // Elimina la generación de datos de ejemplo

@@ -8,6 +8,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RolUsuario, Usuario } from 'src/app/core/models/usuarios/usuario';
 import { UsuariosService } from 'src/app/services/usuarios/usuarios.service';
+import { JwtService } from 'src/app/services/jwt.service';
 import { DataTable } from 'simple-datatables';
 import Swal from 'sweetalert2';
 import { ModificarStatusService } from 'src/app/services/usuarios/modificarStatus.service';
@@ -331,7 +332,19 @@ export class UsuariosComponent implements OnInit {
     private modificarStatusService: ModificarStatusService,
     private route: ActivatedRoute,
     private rolesService: RolesService
+    , private jwtService: JwtService
   ) {}
+  // Privileges resolved from JWT payload (set of URLs)
+  privileges: Set<string> = new Set<string>();
+
+  hasPrivilege(url: string): boolean {
+    if (!url) return false;
+    // normalize
+    const normalized = url.startsWith('/') ? url : '/' + url;
+    console.log('Checking privilege for URL:', url);
+    console.log('Checking privilege for URL set:', this.privileges);
+    return this.privileges.has(normalized);
+  }
 
   itemsPorPagina: number = 10;
   paginaActual: number = 1;
@@ -348,6 +361,21 @@ export class UsuariosComponent implements OnInit {
     this.aplicacionesService.getAplicaciones$().subscribe(apps => {
       this.aplicaciones = apps || [];
     });
+    // Subscribe to normalized privileges observable from JwtService
+    try {
+      this.jwtService.privileges$.subscribe((list: string[] | null) => {
+        this.privileges.clear();
+        try {
+          (list || []).forEach((u: string) => {
+            if (!u) return;
+            const normalized = u.startsWith('/') ? u : '/' + u;
+            this.privileges.add(normalized);
+          });
+        } catch (e) {
+          // ignore per-item parsing
+        }
+      });
+    } catch (e) { /* ignore subscription errors */ }
     this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
     // Detectar token
     const token = localStorage.getItem('token');
@@ -1179,6 +1207,32 @@ export class UsuariosComponent implements OnInit {
 
   toggleShowAllSelected() {
     this.showAllSelected = !this.showAllSelected;
+  }
+
+  // Toggle single selection for roles in the 'Vincular Roles' modal.
+  // Behavior: selecting a role will deselect others for the same application; clicking the already
+  // selected radio will deselect it (allowing revocation/no selection).
+  toggleSelectSingleRole(rol: RolUsuario, event: Event) {
+    // If already selected, deselect and prevent the radio default selection (so it becomes unchecked)
+    if ((rol as any).seleccionado) {
+      (rol as any).seleccionado = false;
+      event.preventDefault();
+      return;
+    }
+    // Deselect other roles in the filtered list and select the clicked one
+    (this.rolesFiltradosModal || []).forEach(r => (r as any).seleccionado = false);
+    (rol as any).seleccionado = true;
+  }
+
+  // Select the explicit 'Ninguno' option: clear selection for the filtered roles
+  selectNoneRoles(event?: Event) {
+    (this.rolesFiltradosModal || []).forEach(r => (r as any).seleccionado = false);
+    // Do not prevent default—allow the radio control to reflect the cleared state visually.
+  }
+
+  // Helper getter used by template to determine if the 'Ninguno' radio should be checked
+  get isNoneSelectedRolesModal(): boolean {
+    return !(this.rolesFiltradosModal && this.rolesFiltradosModal.some(r => (r as any).seleccionado));
   }
 
   openModificarEstatusModal(template: TemplateRef<any>) {

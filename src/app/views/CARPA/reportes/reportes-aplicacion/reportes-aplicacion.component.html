@@ -1,6 +1,6 @@
 <div class="card">
 	<div class="card-header d-flex justify-content-between align-items-center">
-		<h6 class="card-title fw-semibold mb-0">Reportes por Sistema</h6>
+		<h6 class="card-title fw-semibold mb-0">Reportes de Sistema {{ getSelectedAppName() }}</h6>
 		<div class="d-flex align-items-center gap-2">
 			<select class="form-select" [(ngModel)]="selectedApp" (change)="onAppSelected()" style="width: 280px">
 				<option [ngValue]="null">Seleccione un sistema</option>
@@ -124,7 +124,7 @@
 											<th>ID</th>
 											<th>URL</th>
 											<th>Descripción</th>
-											<th>Secured</th>
+											<!-- <th>Secured</th> -->
 										</tr>
 										<tr *ngIf="view==='roles'">
 											<th>ID</th>
@@ -143,7 +143,7 @@
 											<td *ngIf="view==='acciones'">{{ it.idAction }}</td>
 											<td *ngIf="view==='acciones'">{{ it.url }}</td>
 											<td *ngIf="view==='acciones'">{{ it.description }}</td>
-											<td *ngIf="view==='acciones'">{{ it.secured }}</td>
+											<!-- <td *ngIf="view==='acciones'">{{ it.secured }}</td> -->
 
 											<td *ngIf="view==='roles'">{{ it.mscRoleId }}</td>
 											<td *ngIf="view==='roles'">{{ it.tipo }}</td>
