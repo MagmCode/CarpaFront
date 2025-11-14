@@ -18,6 +18,17 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(private sessionSync: SessionSyncService, private router: Router, private sessionActivityService: SessionActivityService) {}
 
   ngOnInit(): void {
+    // If a logout was requested by a previous tab close, force cleanup and go to login immediately
+    try {
+      const requested = localStorage.getItem('__session_logout_requested__');
+      if (requested) {
+        try { localStorage.removeItem('__session_logout_requested__'); } catch (e) {}
+        // ensure any session artifacts are removed and redirect to login
+        this.performLogoutCleanup();
+        return;
+      }
+    } catch (e) { /* ignore */ }
+
     // Start activity tracking (auto-logout on inactivity and handle unload)
     try { this.sessionActivityService.start(); } catch (e) { /* ignore */ }
 
