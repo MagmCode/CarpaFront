@@ -23,10 +23,10 @@
           <button class="btn btn-success" (click)="openAddApplicationModal(addUserModal)" *ngIf="hasPrivilege('/add_user')" data-privilege="/add_user">
             <i class="mdi mdi-plus"></i> Agregar
           </button>
-          <button class="btn btn-primary" (click)="openAgregarEnLote(agregarLoteModal)">
+          <button class="btn btn-primary" (click)="openAgregarEnLote(agregarLoteModal)" *ngIf="hasPrivilege('/lote_user')" data-privilege="/lote_user">
             <i class="mdi mdi-file-upload"></i> Carga Masiva
           </button>
-          <button class="btn btn-warning" (click)="openModificarEstatusModal(modificarEstatusModal)">
+          <button class="btn btn-warning" (click)="openModificarEstatusModal(modificarEstatusModal)" *ngIf="hasPrivilege('/edit_status_user')" data-privilege="/edit_status_user">
             <i class="mdi mdi-account-switch"></i> Modificar estatus
           </button>
         </div>
@@ -40,16 +40,16 @@
         <table id="rolesConsultaTable" class="table table-bordered text-center align-middle">
           <thead class="table-light">
             <tr>
-              <th class="text-center fw-semibold">Seleccionar
+              <th class="text-center fw-semibold" *ngIf="hasPrivilege('/edit_status_user')">Seleccionar
                 <!-- <div class="d-flex justify-content-center align-items-center">
                   <input type="checkbox" class="form-check-input" [checked]="isAllSelected()"
                     (change)="toggleSelectAll($event)">
                 </div> -->
               </th>
-              <th class="text-center fw-semibold">Detalles</th>
-              <th class="text-center fw-semibold">Password</th>
+              <th class="text-center fw-semibold" *ngIf="hasPrivilege('/edit_user')">Detalles</th>
+              <th class="text-center fw-semibold" *ngIf="hasPrivilege('/edit_password_user')">Password</th>
               <th class="text-center fw-semibold">Ver Roles</th>
-              <th class="text-center fw-semibold">Vincular Roles</th>
+              <th class="text-center fw-semibold" *ngIf="hasPrivilege('/link_rol_user')">Vincular Roles</th>
               <th (click)="ordenarPor('userId')" style="cursor:pointer" class="fw-semibold">User ID
                 <i class="mdi" *ngIf="sortColumn === 'userId'"
                   [ngClass]="sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'"></i>
@@ -70,19 +70,19 @@
           </thead>
           <tbody>
             <tr *ngFor="let usuario of usuariosPaginados">
-              <td class="text-center align-middle">
+              <td class="text-center align-middle" *ngIf="hasPrivilege('/edit_status_user')">
                 <div class="d-flex justify-content-center align-items-center">
                   <input class="form-check-input" type="checkbox" [(ngModel)]="usuario.seleccionado"
                     [name]="'seleccionar'+usuario.userId">
                 </div>
               </td>
-              <td class="text-center align-middle">
+              <td class="text-center align-middle" *ngIf="hasPrivilege('/edit_user')">
                 <button class="btn btn-sm btn-warning" (click)="openEditarModal(usuario, editarModal)">
                   <i *ngIf="usuario.isEditable" class="feather icon-edit"></i>
                   <i *ngIf="!usuario.isEditable" class="feather icon-eye"></i>
                 </button>
               </td>
-              <td class="text-center align-middle">
+              <td class="text-center align-middle" *ngIf="hasPrivilege('/edit_password_user')">
                 <button *ngIf="usuario.isEditable" class="btn btn-secondary btn-sm" (click)="openPasswordModal(usuario, passwordModal)">
                   <i class="mdi mdi-lock"></i>
                 </button>
@@ -93,7 +93,7 @@
                 </button>
               </td>
 
-              <td class="text-center align-middle">
+              <td class="text-center align-middle" *ngIf="hasPrivilege('/link_rol_user')">
                 <button class="btn btn-sm btn-primary" (click)="openAsociarRolesModal(usuario, asociarRolesModal)">
                   <i class="mdi mdi-link-variant"></i>
                 </button>
@@ -321,7 +321,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-success" type="submit" [hidden]="!usuarioSeleccionado.isEditable">Guardar</button>
+        <button class="btn btn-success" type="submit" *ngIf="usuarioSeleccionado.isEditable && hasPrivilege('/edit_user')">Guardar</button>
         <button class="btn btn-secondary" type="button" (click)="modal.close()">Salir</button>
       </div>
     </form>
@@ -428,7 +428,7 @@
       <div *ngIf="!aplicacionSeleccionadaRolesModal" class="text-muted">Seleccione una aplicación para ver los roles disponibles.</div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-success" (click)="guardarAsociacionRoles(usuarioSeleccionado!, modal)" [disabled]="!aplicacionSeleccionadaRolesModal">Guardar</button>
+      <button class="btn btn-success" (click)="guardarAsociacionRoles(usuarioSeleccionado!, modal)" [disabled]="!aplicacionSeleccionadaRolesModal" *ngIf="hasPrivilege('/link_rol_user')">Guardar</button>
       <button class="btn btn-secondary" (click)="modal.close()">Salir</button>
     </div>
   </ng-template>
@@ -688,7 +688,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-success">Procesar</button>
+        <button type="submit" class="btn btn-success" *ngIf="hasPrivilege('/lote_user')">Procesar</button>
         <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
       </div>
     </form>
@@ -760,7 +760,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-success" (click)="aplicarModificacionEstatus(modal)">Aplicar</button>
+      <button class="btn btn-success" (click)="aplicarModificacionEstatus(modal)" *ngIf="hasPrivilege('/edit_status_user')">Aplicar</button>
       <button class="btn btn-secondary" (click)="modal.close()">Cancelar</button>
     </div>
   </ng-template>
@@ -838,7 +838,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-success">Cambiar</button>
+        <button type="submit" class="btn btn-success" *ngIf="hasPrivilege('/edit_password_user')">Cambiar</button>
         <button type="button" class="btn btn-secondary" (click)="modal.close()">Cancelar</button>
       </div>
     </form>

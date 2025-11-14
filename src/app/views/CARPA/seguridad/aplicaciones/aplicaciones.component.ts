@@ -3,6 +3,8 @@ import Swal from 'sweetalert2';
 import { DataTable } from "simple-datatables";
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
+import { ValidarService } from 'src/app/services/validar.service';
+import { JwtService } from 'src/app/services/jwt.service';
 
 
 
@@ -39,7 +41,39 @@ export class AplicacionesComponent implements OnInit {
   constructor(
     private modalService: NgbModal,
     private aplicacionesService: AplicacionesService
+    , private validarService: ValidarService
+    , private jwtService: JwtService
   ) { }
+
+  /**
+   * Validate a privilege URL on the server and execute the provided callback only when allowed.
+   * Shows a Swal message if the server responds allowed: false or on error.
+   */
+    private validateAndExecute(privUrl: string, onAllowed: () => void) {
+      try {
+        this.validarService.validate(privUrl).subscribe({
+          next: (resp) => {
+            if (resp && resp.allowed === true) {
+             
+            }
+            // allowed
+            onAllowed();
+          },
+          error: (err) => {
+            console.error('Error validando privilegio', err);
+            Swal.fire({
+                title: 'Acceso denegado',
+                text: 'No tiene ese privilegio asociado a su rol actual.',
+                icon: 'warning',
+              });
+              return;
+          }
+        });
+      } catch (e) {
+        console.error('validateAndExecute exception', e);
+        Swal.fire({ title: 'Error', text: 'Error al validar privilegio', icon: 'error' });
+      }
+    }
 
   ngOnInit(): void {
     
@@ -71,6 +105,32 @@ export class AplicacionesComponent implements OnInit {
     //   ];
     //   this.filtrarAplicaciones();
     // }
+    // Subscribe to privileges from JwtService (normalize to leading /)
+    try {
+      this.jwtService.privileges$?.subscribe((list: string[] | null) => {
+        // build set
+        this._privileges.clear();
+        try {
+          (list || []).forEach((u: string) => {
+            if (!u) return;
+            const normalized = u.startsWith('/') ? u : '/' + u;
+            this._privileges.add(normalized);
+          });
+        } catch (e) {
+          // ignore
+        }
+      });
+    } catch (e) {
+      // ignore if JwtService not available
+    }
+  }
+
+  private _privileges: Set<string> = new Set<string>();
+
+  hasPrivilege(url: string): boolean {
+    if (!url) return false;
+    const normalized = url.startsWith('/') ? url : '/' + url;
+    return this._privileges.has(normalized);
   }
   ngAfterViewInit(): void {
     // Inicializa DataTable después de que la vista esté lista (opcional, si usas simple-datatables)
@@ -139,123 +199,130 @@ export class AplicacionesComponent implements OnInit {
   }
 
   openAddApplicationModal(content: TemplateRef<any>): void {
-    this.modalModo = 'agregar';
-    this.appSeleccionada = { idApplication: 0, description: '', siglasApplic: '', comentarios: '' };
-    this.modalService.open(content, { centered: true });
+    this.validateAndExecute('/add_system', () => {
+      this.modalModo = 'agregar';
+      this.appSeleccionada = { idApplication: 0, description: '', siglasApplic: '', comentarios: '' };
+      this.modalService.open(content, { centered: true });
+    });
   }
 
   openEditApplicationModal(content: TemplateRef<any>, app: Aplicacion): void {
-    this.modalModo = 'editar';
-    this.appSeleccionada = { ...app };
-    this.modalService.open(content, { centered: true });
+    this.validateAndExecute('/edit_system', () => {
+      this.modalModo = 'editar';
+      this.appSeleccionada = { ...app };
+      this.modalService.open(content, { centered: true });
+    });
   }
-
-
   saveApplication(modal: any): void {
-    // Validaciones de campos obligatorios
-    const { description, siglasApplic, comentarios } = this.appSeleccionada;
-    if (!description || !description.trim() || !siglasApplic || !siglasApplic.trim() || !comentarios || !comentarios.trim()) {
-      Swal.fire({
-        toast: true,
-        position: 'top-start',
-        icon: 'warning',
-        title: 'Campos obligatorios',
-        text: 'Debes completar todos los campos antes de guardar.',
-        showConfirmButton: false,
-        timer: 3500,
-        timerProgressBar: true
-      });
-      return;
-    }
-
-    if (this.modalModo === 'agregar') {
-      this.loading = true;
-      this.aplicacionesService.createAplicacion(this.appSeleccionada).subscribe({
-        next: (created) => {
-          this.aplicaciones = this.aplicacionesService.getAplicaciones();
-          this.filtrarAplicaciones();
-          this.loading = false;
-          Swal.fire({
-            toast: true,
-            position: 'top-start',
-            icon: 'success',
-            title: 'Sistema creado',
-            text: `${created.description}`,
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-          });
-          modal.close();
-        },
-        error: (err) => {
-          this.loading = false;
-          console.error('Error creating aplicacion', err);
-          if (err && err.errorCode == 'APLICACION_DUPLICADA') {
-             Swal.fire({
-            // toast: true,
-            position: 'center',
-            icon: 'warning',
-            title: 'Sistema duplicado',
-            text: 'Ya existe una sistema con las mismas siglas.',
-            showConfirmButton: false,
-            timer: 2000,
-            // timerProgressBar: true
-          });
-          } else {
-          Swal.fire({
-            // toast: true,
-            position: 'center',
-            icon: 'error',
-            title: 'Error al crear',
-            text: (err && err.message) ? err.message : JSON.stringify(err),
-            showConfirmButton: false,
-            timer: 2000,
-            // timerProgressBar: true
-          });
-        }
+    const performSave = () => {
+      // Validaciones de campos obligatorios
+      const { description, siglasApplic, comentarios } = this.appSeleccionada;
+      if (!description || !description.trim() || !siglasApplic || !siglasApplic.trim() || !comentarios || !comentarios.trim()) {
+        Swal.fire({
+          toast: true,
+          position: 'top-start',
+          icon: 'warning',
+          title: 'Campos obligatorios',
+          text: 'Debes completar todos los campos antes de guardar.',
+          showConfirmButton: false,
+          timer: 3500,
+          timerProgressBar: true
+        });
+        return;
       }
-      });
-    } else if (this.modalModo === 'editar') {
-      this.loading = true;
-      this.aplicacionesService.updateAplicacion(this.appSeleccionada).subscribe({
-        next: (updated) => {
-          const idx = this.aplicaciones.findIndex(a => String(a.idApplication) === String(updated.idApplication));
-          if (idx > -1) {
-            this.aplicaciones[idx] = updated;
-          } else {
-            this.aplicaciones.unshift(updated);
+
+      if (this.modalModo === 'agregar') {
+        this.loading = true;
+        this.aplicacionesService.createAplicacion(this.appSeleccionada).subscribe({
+          next: (created) => {
+            this.aplicaciones = this.aplicacionesService.getAplicaciones();
+            this.filtrarAplicaciones();
+            this.loading = false;
+            Swal.fire({
+              toast: true,
+              position: 'top-start',
+              icon: 'success',
+              title: 'Sistema creado',
+              text: `${created.description}`,
+              showConfirmButton: false,
+              timer: 3000,
+              timerProgressBar: true
+            });
+            modal.close();
+          },
+          error: (err) => {
+            this.loading = false;
+            console.error('Error creating aplicacion', err);
+            if (err && err.errorCode == 'APLICACION_DUPLICADA') {
+               Swal.fire({
+              // toast: true,
+              position: 'center',
+              icon: 'warning',
+              title: 'Sistema duplicado',
+              text: 'Ya existe una sistema con las mismas siglas.',
+              showConfirmButton: false,
+              timer: 2000,
+              // timerProgressBar: true
+            });
+            } else {
+            Swal.fire({
+              // toast: true,
+              position: 'center',
+              icon: 'error',
+              title: 'Error al crear',
+              text: (err && err.message) ? err.message : JSON.stringify(err),
+              showConfirmButton: false,
+              timer: 2000,
+              // timerProgressBar: true
+            });
           }
-          this.loading = false;
-          this.filtrarAplicaciones();
-          Swal.fire({
-            toast: true,
-            position: 'top-start',
-            icon: 'success',
-            title: 'Sistema actualizado',
-            text: `${updated.description}`,
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-          });
-          modal.close();
-        },
-        error: (err) => {
-          console.error('Error updating aplicacion', err);
-          this.loading = false;
-          Swal.fire({
-            toast: true,
-            position: 'top-start',
-            icon: 'error',
-            title: 'Error al actualizar',
-            text: (err && err.message) ? err.message : JSON.stringify(err),
-            showConfirmButton: false,
-            timer: 4000,
-            timerProgressBar: true
-          });
         }
-      });
-    }
-    // Note: add flow is handled by the service call above and closes the modal on success.
+        });
+      } else if (this.modalModo === 'editar') {
+        this.loading = true;
+        this.aplicacionesService.updateAplicacion(this.appSeleccionada).subscribe({
+          next: (updated) => {
+            const idx = this.aplicaciones.findIndex(a => String(a.idApplication) === String(updated.idApplication));
+            if (idx > -1) {
+              this.aplicaciones[idx] = updated;
+            } else {
+              this.aplicaciones.unshift(updated);
+            }
+            this.loading = false;
+            this.filtrarAplicaciones();
+            Swal.fire({
+              toast: true,
+              position: 'top-start',
+              icon: 'success',
+              title: 'Sistema actualizado',
+              text: `${updated.description}`,
+              showConfirmButton: false,
+              timer: 3000,
+              timerProgressBar: true
+            });
+            modal.close();
+          },
+          error: (err) => {
+            console.error('Error updating aplicacion', err);
+            this.loading = false;
+            Swal.fire({
+              toast: true,
+              position: 'top-start',
+              icon: 'error',
+              title: 'Error al actualizar',
+              text: (err && err.message) ? err.message : JSON.stringify(err),
+              showConfirmButton: false,
+              timer: 4000,
+              timerProgressBar: true
+            });
+          }
+        });
+      }
+    };
+
+    // Decide privilege path based on modal mode
+    const priv = this.modalModo === 'editar' ? '/edit_system' : '/add_system';
+    this.validateAndExecute(priv, performSave);
   }
 
   deleteApplication(app: Aplicacion): void {

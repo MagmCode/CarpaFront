@@ -173,37 +173,62 @@ export class ReportesAplicacionComponent implements OnInit {
       Swal.fire({ title: 'No hay aplicación seleccionada', text: 'Seleccione una aplicación antes de exportar.', icon: 'warning' });
       return;
     }
-
-    let payload: any;
-    if (this.view === 'usuarios') {
-      // backend expects 'application' for usuarios export
-      payload = { application: this.selectedApp };
-    } else {
-      payload = { idApplication: this.selectedApp };
-    }
+    // Build a payload and call strictly the corresponding export service for the active view.
+    // Do not fallback to a default export; show an error if the service call fails.
     this.loading = true;
-
-    let obs: any;
     if (this.view === 'usuarios') {
-      obs = this.exportReportesService.exportUsuarios(payload);
-    } else if (this.view === 'acciones') {
-      obs = this.exportReportesService.exportPrivilegios(payload);
-    } else {
-      obs = this.exportReportesService.exportRoles(payload);
+      const payload = { idApplication: this.selectedApp };
+      this.exportReportesService.exportUsuarios(payload).subscribe({
+        next: (blob: Blob) => {
+          this.loading = false;
+          const filename = `${this.getSelectedAppName() || this.selectedApp || 'report'}_${this.view}.csv`;
+          this.downloadBlob(blob, filename);
+        },
+        error: (err: any) => {
+          this.loading = false;
+          console.error('Export usuarios error', err);
+          Swal.fire({ title: 'Error exportando usuarios', text: (err && err.message) ? err.message : 'No se pudo generar el reporte de usuarios.', icon: 'error' });
+        }
+      });
+      return;
     }
 
-    obs.subscribe({
-      next: (blob: Blob) => {
-        this.loading = false;
-        const filename = `${this.getSelectedAppName() || this.selectedApp || 'report'}_${this.view}.csv`;
-        this.downloadBlob(blob, filename);
-      },
-      error: (err: any) => {
-        this.loading = false;
-        console.error('Export error', err);
-        Swal.fire({ title: 'Error', text: 'No se pudo generar el reporte. Intente nuevamente.', icon: 'error' });
-      }
-    });
+    if (this.view === 'acciones') {
+      const payload = { idApplication: this.selectedApp };
+      this.exportReportesService.exportPrivilegios(payload).subscribe({
+        next: (blob: Blob) => {
+          this.loading = false;
+          const filename = `${this.getSelectedAppName() || this.selectedApp || 'report'}_${this.view}.csv`;
+          this.downloadBlob(blob, filename);
+        },
+        error: (err: any) => {
+          this.loading = false;
+          console.error('Export acciones error', err);
+          Swal.fire({ title: 'Error exportando privilegios', text: (err && err.message) ? err.message : 'No se pudo generar el reporte de privilegios.', icon: 'error' });
+        }
+      });
+      return;
+    }
+
+    if (this.view === 'roles') {
+      const payload = { idApplication: this.selectedApp };
+      this.exportReportesService.exportRoles(payload).subscribe({
+        next: (blob: Blob) => {
+          this.loading = false;
+          const filename = `${this.getSelectedAppName() || this.selectedApp || 'report'}_${this.view}.csv`;
+          this.downloadBlob(blob, filename);
+        },
+        error: (err: any) => {
+          this.loading = false;
+          console.error('Export roles error', err);
+          Swal.fire({ title: 'Error exportando roles', text: (err && err.message) ? err.message : 'No se pudo generar el reporte de roles.', icon: 'error' });
+        }
+      });
+      return;
+    }
+
+    // Shouldn't reach here, but reset loading just in case.
+    this.loading = false;
   }
 
   private downloadBlob(blob: Blob, filename: string) {

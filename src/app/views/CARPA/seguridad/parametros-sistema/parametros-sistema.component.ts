@@ -19,6 +19,8 @@ export class ParametrosSistemaComponent implements OnInit {
   settings: SystemParameterSetting[] = [];
 
   settingSeleccionado: SystemParameterSetting | null = null;
+  // store original key when opening edit modal so we can locate the correct array index
+  private settingOriginalKey: string | null = null;
   nuevoSetting: SystemParameterSetting = { key: '', value: '', type: 'string', description: '', active: true } as SystemParameterSetting;
 
   // validation flags for template-driven forms
@@ -50,7 +52,7 @@ export class ParametrosSistemaComponent implements OnInit {
     this.criteriosService.criterios$.subscribe((v) => {
       if (v) {
         this.systemParameters = v;
-        this.settings = v.settings ? [...v.settings] : [];
+        this.settings = v.settings ? this.parseIncomingSettings(v.settings) : [];
         this.filtrarParametros();
 
       }
@@ -59,25 +61,56 @@ export class ParametrosSistemaComponent implements OnInit {
     this.loadCriterios();
   }
 
+  /**
+   * Convert server settings into UI-friendly objects.
+   * If a setting has a numeric value in the {$numberInt: '...'} form, expose its inner string/number for editing.
+   */
+  private parseIncomingSettings(settings: SystemParameterSetting[]): SystemParameterSetting[] {
+    return (settings || []).map(s => {
+      const copy: any = { ...s };
+      if (copy && copy.type === 'number' && copy.value && typeof copy.value === 'object' && '$numberInt' in copy.value) {
+        // expose as plain string for inputs; keep as string to avoid number coercion issues in form
+        copy.value = String(copy.value['$numberInt']);
+      }
+      return copy as SystemParameterSetting;
+    });
+  }
+
+  /**
+   * Convert a UI setting to the server shape. For numeric types, wrap value in {$numberInt: '...'}.
+   */
+  private normalizeSettingForServer(s: SystemParameterSetting): any {
+    const out: any = { ...s };
+    if (out.type === 'number') {
+      // ensure it's a stringified integer inside $numberInt
+      const num = out.value === null || out.value === undefined ? '' : String(out.value);
+      // keep empty as empty string if necessary; otherwise coerce to integer string
+      out.value = { $numberInt: num };
+    } else {
+      out.value = out.value;
+    }
+    return out;
+  }
+
   private loadCriterios(): void {
     this.loading = true;
-    // handle possible response shapes: an object or an array of profiles
-    this.criteriosService.refresh().subscribe({
+    // search only the fixed profile via POST payload so backend returns only 'criterios'
+    const payload = { system: this.FIXED_SYSTEM, profile: this.FIXED_PROFILE };
+    this.criteriosService.buscar(payload).subscribe({
       next: (resp: any) => {
         this.loading = false;
         let found: SystemParameters | null = null;
         if (Array.isArray(resp)) {
+          // backend returned array: pick the exact profile entry
           found = resp.find((r: SystemParameters) => r.system === this.FIXED_SYSTEM && r.profile === this.FIXED_PROFILE) || null;
         } else {
-          // sometimes backend returns object directly
           found = resp as SystemParameters;
         }
         if (!found) {
-          // if nothing found, try currentValue from service
           found = this.criteriosService.currentValue;
         }
-        this.systemParameters = found;
-        this.settings = found?.settings ? [...found.settings] : [];
+  this.systemParameters = found;
+  this.settings = found?.settings ? this.parseIncomingSettings(found.settings) : [];
         this.filtrarParametros();
       },
       error: (err) => {
@@ -97,6 +130,8 @@ export class ParametrosSistemaComponent implements OnInit {
     this.settingSeleccionado = { ...setting } as SystemParameterSetting;
     this.submittedEdit = false;
     this.editValuePatternError = false;
+    // remember original key to find the correct item even if user edits the key field
+    this.settingOriginalKey = setting.key;
     this.modalService.open(template, { centered: true });
   }
 
@@ -109,9 +144,9 @@ export class ParametrosSistemaComponent implements OnInit {
 
   eliminarParametro(setting: SystemParameterSetting, modal: any) {
     this.settings = this.settings.filter(p => p.key !== setting.key);
-    this.persistSettings('editar');
+    // persist and close the modal only when server confirms
+    this.persistSettings('editar', undefined, modal);
     this.filtrarParametros();
-    modal.close();
   }
 
   guardarEdicionParametro(form: NgForm, modal: any) {
@@ -131,13 +166,16 @@ export class ParametrosSistemaComponent implements OnInit {
       }
     }
 
-    const idx = this.settings.findIndex(p => p.key === this.settingSeleccionado!.key);
+    // Find the index using the original key (in case the user edited the key in the modal)
+    const lookupKey = this.settingOriginalKey || this.settingSeleccionado!.key;
+    const idx = this.settings.findIndex(p => p.key === lookupKey);
     if (idx !== -1) {
       this.settings[idx] = { ...this.settingSeleccionado } as SystemParameterSetting;
     }
-    this.persistSettings('editar');
-    this.filtrarParametros();
-    modal.close();
+    // reset original key tracking
+    this.settingOriginalKey = null;
+  this.persistSettings('editar', undefined, modal);
+  this.filtrarParametros();
   }
 
   addParametro(form: NgForm, modal: any) {
@@ -151,12 +189,19 @@ export class ParametrosSistemaComponent implements OnInit {
         return;
       }
     }
-    const idx = this.settings.findIndex(s => s.key === this.nuevoSetting.key);
-    if (idx !== -1) this.settings[idx] = { ...this.nuevoSetting };
-    else this.settings.push({ ...this.nuevoSetting });
-    this.persistSettings('crear');
-    this.filtrarParametros();
-    modal.close();
+    const newSetting = { ...this.nuevoSetting } as SystemParameterSetting;
+    const idx = this.settings.findIndex(s => s.key === newSetting.key);
+    // If key already exists, treat as an edit (send full settings for edit).
+    if (idx !== -1) {
+      this.settings[idx] = { ...newSetting };
+      // Persist as edit (server will replace/update the setting) and close modal on success
+      this.persistSettings('editar', undefined, modal);
+    } else {
+      // Persist only the single new setting to avoid sending the entire settings array and close modal on success
+      this.persistSettings('crear', newSetting, modal);
+    }
+    // filtering/pagination will be updated when server response arrives and settings are replaced
+    // close modal will occur after successful response inside persistSettings
   }
 
   confirmarEliminarParametro(setting: SystemParameterSetting) {
@@ -222,27 +267,113 @@ export class ParametrosSistemaComponent implements OnInit {
   salir() {
   }
 
-  private persistSettings(mode: 'crear'|'editar') {
-    const payload: SystemParameters = {
-      id: this.FIXED_ID,
-      system: this.FIXED_SYSTEM,
-      profile: this.FIXED_PROFILE,
-      settings: this.settings
-    };
+  /**
+   * Persist settings to server.
+   * - For 'crear' mode we send only the single new setting in the settings array to avoid duplicating or re-sending the whole profile.
+   * - For 'editar' mode we send the full settings array (server-side replace/update semantics expected).
+   */
+  private persistSettings(mode: 'crear'|'editar', singleSetting?: SystemParameterSetting, modal?: any) {
     this.loading = true;
-    const op$ = mode === 'crear' ? this.criteriosService.crearCriterios(payload) : this.criteriosService.editarCriterios(payload);
-    op$.subscribe({
-      next: (resp) => {
-        this.loading = false;
-        this.systemParameters = resp;
-        this.settings = resp?.settings ? [...resp.settings] : [];
-        Swal.fire({ icon: 'success', title: 'Éxito', text: 'Configuración persistida correctamente', toast: true, position: 'top-start', timer: 2000, showConfirmButton: false });
-      },
-      error: (err) => {
-        this.loading = false;
-        console.error('Error guardando criterios', err);
-        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar la configuración' });
-      }
-    });
+
+    if (mode === 'crear') {
+      const payload: SystemParameters = {
+        system: this.FIXED_SYSTEM,
+        profile: this.FIXED_PROFILE,
+        settings: singleSetting ? [this.normalizeSettingForServer(singleSetting)] : []
+      };
+      this.criteriosService.crearCriterios(payload).subscribe({
+        next: (resp) => {
+            // Some backends return only the created item instead of the full profile.
+            // If resp contains full settings, use it; otherwise, refresh via buscar to obtain canonical profile.
+            const hasSettings = resp && Array.isArray(resp.settings) && resp.settings.length > 0;
+            if (hasSettings) {
+              this.loading = false;
+              this.systemParameters = resp;
+              this.settings = resp?.settings ? this.parseIncomingSettings(resp.settings) : [];
+              this.filtrarParametros();
+              Swal.fire({ icon: 'success', title: 'Éxito', text: 'Configuración agregada correctamente', toast: true, position: 'top-start', timer: 2000, showConfirmButton: false });
+              try { if (modal && modal.close) modal.close(); } catch (e) { }
+            } else {
+              // refresh canonical profile from server
+              this.criteriosService.buscar({ system: this.FIXED_SYSTEM, profile: this.FIXED_PROFILE }).subscribe({
+                next: (r: any) => {
+                  this.loading = false;
+                  let found: SystemParameters | null = null;
+                  if (Array.isArray(r)) {
+                    found = r.find((x: SystemParameters) => x.system === this.FIXED_SYSTEM && x.profile === this.FIXED_PROFILE) || null;
+                  } else {
+                    found = r as SystemParameters;
+                  }
+                  this.systemParameters = found;
+                  this.settings = found?.settings ? this.parseIncomingSettings(found.settings) : [];
+                  this.filtrarParametros();
+                  Swal.fire({ icon: 'success', title: 'Éxito', text: 'Configuración agregada correctamente', toast: true, position: 'top-start', timer: 2000, showConfirmButton: false });
+                  try { if (modal && modal.close) modal.close(); } catch (e) { }
+                },
+                error: (err) => {
+                  this.loading = false;
+                  console.error('Error refrescando criterios después de crear', err);
+                  Swal.fire({ icon: 'warning', title: 'Atención', text: 'Se creó el criterio pero no se pudo refrescar la lista automáticamente. Por favor recargue la página.' });
+                }
+              });
+            }
+        },
+        error: (err) => {
+          this.loading = false;
+          console.error('Error creando criterios', err);
+          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear el criterio' });
+        }
+      });
+    } else {
+      // editar: send full settings array (server expected replace/update semantics)
+      const payload: SystemParameters = {
+        id: this.FIXED_ID,
+        system: this.FIXED_SYSTEM,
+        profile: this.FIXED_PROFILE,
+        settings: this.settings ? this.settings.map(s => this.normalizeSettingForServer(s)) : []
+      };
+      this.criteriosService.editarCriterios(payload).subscribe({
+        next: (resp) => {
+          // similar handling to crear: if server returns full settings, use it; otherwise refresh canonical profile
+          const hasSettings = resp && Array.isArray(resp.settings) && resp.settings.length > 0;
+          if (hasSettings) {
+            this.loading = false;
+            this.systemParameters = resp;
+            this.settings = resp?.settings ? this.parseIncomingSettings(resp.settings) : [];
+            this.filtrarParametros();
+            Swal.fire({ icon: 'success', title: 'Éxito', text: 'Configuración persistida correctamente', toast: true, position: 'top-start', timer: 2000, showConfirmButton: false });
+            try { if (modal && modal.close) modal.close(); } catch (e) { }
+          } else {
+            // fetch canonical profile to ensure UI shows server state
+            this.criteriosService.buscar({ system: this.FIXED_SYSTEM, profile: this.FIXED_PROFILE }).subscribe({
+              next: (r: any) => {
+                this.loading = false;
+                let found: SystemParameters | null = null;
+                if (Array.isArray(r)) {
+                  found = r.find((x: SystemParameters) => x.system === this.FIXED_SYSTEM && x.profile === this.FIXED_PROFILE) || null;
+                } else {
+                  found = r as SystemParameters;
+                }
+                this.systemParameters = found;
+                this.settings = found?.settings ? this.parseIncomingSettings(found.settings) : [];
+                this.filtrarParametros();
+                Swal.fire({ icon: 'success', title: 'Éxito', text: 'Configuración persistida correctamente', toast: true, position: 'top-start', timer: 2000, showConfirmButton: false });
+                try { if (modal && modal.close) modal.close(); } catch (e) { }
+              },
+              error: (err) => {
+                this.loading = false;
+                console.error('Error refrescando criterios después de editar', err);
+                Swal.fire({ icon: 'warning', title: 'Atención', text: 'Se actualizó el criterio pero no se pudo refrescar la lista automáticamente. Por favor recargue la página.' });
+              }
+            });
+          }
+        },
+        error: (err) => {
+          this.loading = false;
+          console.error('Error guardando criterios', err);
+          Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar la configuración' });
+        }
+      });
+    }
   }
 }

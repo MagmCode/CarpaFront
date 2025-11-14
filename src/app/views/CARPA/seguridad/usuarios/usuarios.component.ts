@@ -11,6 +11,7 @@ import { UsuariosService } from 'src/app/services/usuarios/usuarios.service';
 import { JwtService } from 'src/app/services/jwt.service';
 import { DataTable } from 'simple-datatables';
 import Swal from 'sweetalert2';
+import { ValidarService } from 'src/app/services/validar.service';
 import { ModificarStatusService } from 'src/app/services/usuarios/modificarStatus.service';
 import { RolesService } from 'src/app/services/roles/roles.service';
 
@@ -69,10 +70,12 @@ export class UsuariosComponent implements OnInit {
 
   // Abrir modal de cambio de contraseña
   openPasswordModal(usuario: Usuario, template: any) {
-    this.usuarioSeleccionado = usuario;
-    this.passwordNueva = '';
-    this.passwordRepite = '';
-    this.modalService.open(template, { centered: true });
+    this.validateAndExecute('/edit_password_user', () => {
+      this.usuarioSeleccionado = usuario;
+      this.passwordNueva = '';
+      this.passwordRepite = '';
+      this.modalService.open(template, { centered: true });
+    });
   }
 
   // --- Password Modal ---
@@ -80,54 +83,56 @@ export class UsuariosComponent implements OnInit {
 
   // Procesar cambio de contraseñavige
   cambiarPassword(modal: any) {
-    if (!this.usuarioSeleccionado) {
-      modal?.close();
-      return;
-    }
-    if ( !this.passwordNueva || !this.passwordRepite) {
-      this.passwordFormSubmitted = true;
-      return;
-    }
-    if (!this.validarClave(this.passwordNueva)) {
-      this.passwordFormSubmitted = true;
-      return;
-    }
-    this.passwordFormSubmitted = false;
-    if (this.passwordNueva !== this.passwordRepite) {
-      Swal.fire({
-        title: 'Error',
-        text: 'Las contraseñas nuevas no coinciden.',
-        icon: 'error',
-      });
-      return;
-    }
-    const token = localStorage.getItem('token');
-    if (token === 'fake-token') {
-      modal?.close();
-      this.showSuccessToast('Contraseña cambiada (local)', `Usuario: ${this.usuarioSeleccionado.userId}`);
-      return;
-    }
-    // Llamar servicio real de cambio de contraseña
-    const payload = {
-      userId: this.usuarioSeleccionado.userId,
-      password: this.passwordNueva,
-      passwordDays: this.passwordVigencia
-    };
-    this.loading = true;
-    this.usuariosService.changePassword(payload).subscribe({
-      next: (resp: any) => {
+    this.validateAndExecute('/edit_password_user', () => {
+      if (!this.usuarioSeleccionado) {
         modal?.close();
-        this.showSuccessToast('Contraseña cambiada', `Usuario: ${this.usuarioSeleccionado?.userId}`);
-        this.loading = false;
-      },
-      error: (err: any) => {
-        this.loading = false;
+        return;
+      }
+      if ( !this.passwordNueva || !this.passwordRepite) {
+        this.passwordFormSubmitted = true;
+        return;
+      }
+      if (!this.validarClave(this.passwordNueva)) {
+        this.passwordFormSubmitted = true;
+        return;
+      }
+      this.passwordFormSubmitted = false;
+      if (this.passwordNueva !== this.passwordRepite) {
         Swal.fire({
           title: 'Error',
-          text: 'No se pudo cambiar la contraseña.',
+          text: 'Las contraseñas nuevas no coinciden.',
           icon: 'error',
         });
-      },
+        return;
+      }
+      const token = localStorage.getItem('token');
+      if (token === 'fake-token') {
+        modal?.close();
+        this.showSuccessToast('Contraseña cambiada (local)', `Usuario: ${this.usuarioSeleccionado.userId}`);
+        return;
+      }
+      // Llamar servicio real de cambio de contraseña
+      const payload = {
+        userId: this.usuarioSeleccionado.userId,
+        password: this.passwordNueva,
+        passwordDays: this.passwordVigencia
+      };
+      this.loading = true;
+      this.usuariosService.changePassword(payload).subscribe({
+        next: (resp: any) => {
+          modal?.close();
+          this.showSuccessToast('Contraseña cambiada', `Usuario: ${this.usuarioSeleccionado?.userId}`);
+          this.loading = false;
+        },
+        error: (err: any) => {
+          this.loading = false;
+          Swal.fire({
+            title: 'Error',
+            text: 'No se pudo cambiar la contraseña.',
+            icon: 'error',
+          });
+        },
+      });
     });
   }
   // Loading states for modals
@@ -332,6 +337,7 @@ export class UsuariosComponent implements OnInit {
     private modificarStatusService: ModificarStatusService,
     private route: ActivatedRoute,
     private rolesService: RolesService
+    , private validarService: ValidarService
     , private jwtService: JwtService
   ) {}
   // Privileges resolved from JWT payload (set of URLs)
@@ -341,9 +347,39 @@ export class UsuariosComponent implements OnInit {
     if (!url) return false;
     // normalize
     const normalized = url.startsWith('/') ? url : '/' + url;
-    console.log('Checking privilege for URL:', url);
-    console.log('Checking privilege for URL set:', this.privileges);
+    // console.log('Checking privilege for URL:', url);
+    // console.log('Checking privilege for URL set:', this.privileges);
     return this.privileges.has(normalized);
+  }
+
+  /**
+   * Validate a privilege URL on the server and execute the provided callback only when allowed.
+   * Shows a Swal message if the server responds allowed: false or on error.
+   */
+  private validateAndExecute(privUrl: string, onAllowed: () => void) {
+    try {
+      this.validarService.validate(privUrl).subscribe({
+        next: (resp) => {
+          if (resp && resp.allowed === true) {
+           
+          }
+          // allowed
+          onAllowed();
+        },
+        error: (err) => {
+          console.error('Error validando privilegio', err);
+          Swal.fire({
+              title: 'Acceso denegado',
+              text: 'No tiene ese privilegio asociado a su rol actual.',
+              icon: 'warning',
+            });
+            return;
+        }
+      });
+    } catch (e) {
+      console.error('validateAndExecute exception', e);
+      Swal.fire({ title: 'Error', text: 'Error al validar privilegio', icon: 'error' });
+    }
   }
 
   itemsPorPagina: number = 10;
@@ -411,8 +447,10 @@ export class UsuariosComponent implements OnInit {
 
   // Abrir modal de agregar en lote
   openAgregarEnLote(template: TemplateRef<any>) {
-    this.archivoLoteSeleccionado = null;
-    this.modalService.open(template, { centered: true });
+    this.validateAndExecute('/lote_user', () => {
+      this.archivoLoteSeleccionado = null;
+      this.modalService.open(template, { centered: true });
+    });
   }
 
   // Abrir modal de eliminar en lote
@@ -435,20 +473,22 @@ export class UsuariosComponent implements OnInit {
 
   // Procesar subida (placeholder)
   procesarAgregarLote(modal: any) {
-    if (!this.archivoLoteSeleccionado) {
-      Swal.fire({
-        title: 'Sin archivo',
-        text: 'Seleccione un archivo Excel para procesar.',
-        icon: 'info',
-      });
-      return;
-    }
-    this.showSuccessToast(
-      'Procesando archivo',
-      `Archivo: ${this.archivoLoteSeleccionado.name}`
-    );
-    modal.close();
-    // TODO: implementar parsing y creación de usuarios
+    this.validateAndExecute('/lote_user', () => {
+      if (!this.archivoLoteSeleccionado) {
+        Swal.fire({
+          title: 'Sin archivo',
+          text: 'Seleccione un archivo Excel para procesar.',
+          icon: 'info',
+        });
+        return;
+      }
+      this.showSuccessToast(
+        'Procesando archivo',
+        `Archivo: ${this.archivoLoteSeleccionado.name}`
+      );
+      modal.close();
+      // TODO: implementar parsing y creación de usuarios
+    });
   }
 
   // Invocado por el modal para eliminar filtrados (usa el método existente confirmarEliminarEnLote)
@@ -666,16 +706,19 @@ export class UsuariosComponent implements OnInit {
 
   // Template in some views calls openAddApplicationModal — provide a wrapper
   openAddApplicationModal(content: any) {
-    // this.openAddUserModal(content);
-    const modalRef = this.modalService.open(content, { centered: true, size: 'lg' });
-    modalRef.result.finally(() => {
-      this.limpiarFormularioNuevoUsuario();
+    this.validateAndExecute('/add_user', () => {
+      // this.openAddUserModal(content);
+      const modalRef = this.modalService.open(content, { centered: true, size: 'lg' });
+      modalRef.result.finally(() => {
+        this.limpiarFormularioNuevoUsuario();
+      });
     });
   }
 
   addUser(modal: any) {
-    // Validar solo los campos relevantes según el tipo de acceso
-    if (this.nuevoTypeAccess === 'Local') {
+    this.validateAndExecute('/add_user', () => {
+      // Validar solo los campos relevantes según el tipo de acceso
+      if (this.nuevoTypeAccess === 'Local') {
       // Validar campos de Local
       if (!this.nuevoLogin || !this.nuevoFullName || !this.nuevoEmail || !this.nuevoClave || !this.nuevoCedula) {
         Swal.fire({
@@ -749,37 +792,38 @@ export class UsuariosComponent implements OnInit {
       };
     }
 
-    this.loading = true;
-    this.usuariosService.createUsuario(payload).subscribe({
-      next: (created: any) => {
-        // La suscripción al observable actualiza la lista automáticamente
-        this.filtrarUsuarios();
-        this.showSuccessToast('Usuario añadido', `User ID: ${created.userId}`);
-        modal.close();
-        this.limpiarFormularioNuevoUsuario();
-        this.loading = false;
-      },
-      error: (err: any) => {
-        this.loading = false;
+      this.loading = true;
+      this.usuariosService.createUsuario(payload).subscribe({
+        next: (created: any) => {
+          // La suscripción al observable actualiza la lista automáticamente
+          this.filtrarUsuarios();
+          this.showSuccessToast('Usuario añadido', `User ID: ${created.userId}`);
+          modal.close();
+          this.limpiarFormularioNuevoUsuario();
+          this.loading = false;
+        },
+        error: (err: any) => {
+          this.loading = false;
 
-        if (err && err.message.includes('El usuario ya existe')) {
-          Swal.fire({
-            title: 'Usuario existente',
-            text: 'Ya existe un usuario con el mismo ID.',
-            icon: 'warning',
-            showConfirmButton: false,
-            timer: 2000,
-          });
-        } else {
-           Swal.fire({
-            title: 'Error',
-            text: (err && err.message) ? err.message : JSON.stringify(err),
-            icon: 'error',
-            showConfirmButton: false,
-            timer: 2000,
-          });
-        }
-      },
+          if (err && err.message.includes('El usuario ya existe')) {
+            Swal.fire({
+              title: 'Usuario existente',
+              text: 'Ya existe un usuario con el mismo ID.',
+              icon: 'warning',
+              showConfirmButton: false,
+              timer: 2000,
+            });
+          } else {
+            Swal.fire({
+              title: 'Error',
+              text: (err && err.message) ? err.message : JSON.stringify(err),
+              icon: 'error',
+              showConfirmButton: false,
+              timer: 2000,
+            });
+          }
+        },
+      });
     });
   }
 
@@ -853,46 +897,48 @@ export class UsuariosComponent implements OnInit {
   }
 
   openEditarModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
-    console.log('Editar usuario:', usuario);
-    this.modalLoadingEditar = true;
-    const openModal = () => {
-      const modalRef = this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
-      modalRef.result.finally(() => {
-        this.limpiarFormularioNuevoUsuario();
-      });
-    };
-    // if (usuario.typeAccess === 'LDAP') {
-      this.usuariosService.buscarUsuarioLocal(usuario.userId).subscribe({
-        next: (resp: any) => {
-          let user = Array.isArray(resp) ? resp[0] : resp;
-          if (user) {
-            this.usuarioSeleccionado = {
-              ...usuario,
-              userId:  user.userId,
-              fullName: user.fullName,
-              email:  user.email,
-              userStatus: user.userStatus,
-              descCargo: user.descCargo,
-              cedula: user.cedula,
-              descGeneral: user.descGeneral,
-            };
-          } else {
+    this.validateAndExecute('/edit_user', () => {
+      console.log('Editar usuario:', usuario);
+      this.modalLoadingEditar = true;
+      const openModal = () => {
+        const modalRef = this.modalService.open(TemplateRef, { centered: true, size: 'lg' });
+        modalRef.result.finally(() => {
+          this.limpiarFormularioNuevoUsuario();
+        });
+      };
+      // if (usuario.typeAccess === 'LDAP') {
+        this.usuariosService.buscarUsuarioLocal(usuario.userId).subscribe({
+          next: (resp: any) => {
+            let user = Array.isArray(resp) ? resp[0] : resp;
+            if (user) {
+              this.usuarioSeleccionado = {
+                ...usuario,
+                userId:  user.userId,
+                fullName: user.fullName,
+                email:  user.email,
+                userStatus: user.userStatus,
+                descCargo: user.descCargo,
+                cedula: user.cedula,
+                descGeneral: user.descGeneral,
+              };
+            } else {
+              this.usuarioSeleccionado = { ...usuario };
+            }
+            this.modalLoadingEditar = false;
+            openModal();
+          },
+          error: () => {
             this.usuarioSeleccionado = { ...usuario };
+            this.modalLoadingEditar = false;
+            openModal();
           }
-          this.modalLoadingEditar = false;
-          openModal();
-        },
-        error: () => {
-          this.usuarioSeleccionado = { ...usuario };
-          this.modalLoadingEditar = false;
-          openModal();
-        }
-      });
-    // } else {
-    //   this.usuarioSeleccionado = { ...usuario };
-    //   this.modalLoadingEditar = false;
-    //   openModal();
-    // }
+        });
+      // } else {
+      //   this.usuarioSeleccionado = { ...usuario };
+      //   this.modalLoadingEditar = false;
+      //   openModal();
+      // }
+    });
   }
 
   procesarStatus(modal: any) {
@@ -918,53 +964,55 @@ export class UsuariosComponent implements OnInit {
   }
 
   guardarEdicionUsuario(modal: any) {
-    if (!this.usuarioSeleccionado) {
-      modal.close();
-      return;
-    }
-
-    const payload: any = {
-      userId: this.usuarioSeleccionado.userId,
-      cedula: this.usuarioSeleccionado.cedula,
-      description: this.usuarioSeleccionado.descGeneral,
-      passwordDays: this.usuarioSeleccionado.passwordDays,
-      fullName: this.usuarioSeleccionado.fullName,
-      email: this.usuarioSeleccionado.email,
-      userStatus: this.usuarioSeleccionado.userStatus,
-    };
-
-    this.loading = true;
-    // Call backend update with minimal payload { userId, userStatus }
-    this.usuariosService.updateUsuario(payload).subscribe({
-      next: (updated: any) => {
-        // Normalize and update local list
-        const mapped = this.mapBackendUsuarios([updated])[0] || {
-          ...this.usuarioSeleccionado,
-        };
-        const idx = this.usuarios.findIndex(
-          (u) =>
-            u.userId === (mapped.userId || this.usuarioSeleccionado!.userId)
-        );
-        if (idx !== -1) {
-          this.usuarios[idx] = mapped;
-        }
-        this.filtrarUsuarios();
-        this.loading = false;
+    this.validateAndExecute('/edit_user', () => {
+      if (!this.usuarioSeleccionado) {
         modal.close();
-        this.showSuccessToast(
-          'Usuario actualizado',
-          `Usuario ${payload.userId} actualizado.`
-        );
-      },
-      error: (err) => {
-        this.loading = false;
-        console.error('Error guardando edición', err);
-        Swal.fire({
-          title: 'Error',
-          text: 'No se pudo guardar la edición.',
-          icon: 'error',
-        });
-      },
+        return;
+      }
+
+      const payload: any = {
+        userId: this.usuarioSeleccionado.userId,
+        cedula: this.usuarioSeleccionado.cedula,
+        description: this.usuarioSeleccionado.descGeneral,
+        passwordDays: this.usuarioSeleccionado.passwordDays,
+        fullName: this.usuarioSeleccionado.fullName,
+        email: this.usuarioSeleccionado.email,
+        userStatus: this.usuarioSeleccionado.userStatus,
+      };
+
+      this.loading = true;
+      // Call backend update with minimal payload { userId, userStatus }
+      this.usuariosService.updateUsuario(payload).subscribe({
+        next: (updated: any) => {
+          // Normalize and update local list
+          const mapped = this.mapBackendUsuarios([updated])[0] || {
+            ...this.usuarioSeleccionado,
+          };
+          const idx = this.usuarios.findIndex(
+            (u) =>
+              u.userId === (mapped.userId || this.usuarioSeleccionado!.userId)
+          );
+          if (idx !== -1) {
+            this.usuarios[idx] = mapped;
+          }
+          this.filtrarUsuarios();
+          this.loading = false;
+          modal.close();
+          this.showSuccessToast(
+            'Usuario actualizado',
+            `Usuario ${payload.userId} actualizado.`
+          );
+        },
+        error: (err) => {
+          this.loading = false;
+          console.error('Error guardando edición', err);
+          Swal.fire({
+            title: 'Error',
+            text: 'No se pudo guardar la edición.',
+            icon: 'error',
+          });
+        },
+      });
     });
   }
 
@@ -1011,6 +1059,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   openAsociarRolesModal(usuario: Usuario, TemplateRef: TemplateRef<any>) {
+    this.validateAndExecute('/link_rol_user', () => {
   this.modalLoadingVincularRoles = true;
   this.usuarioSeleccionado = usuario;
   this.aplicacionSeleccionadaRolesModal = null;
@@ -1104,6 +1153,7 @@ export class UsuariosComponent implements OnInit {
         });
       },
     });
+  });
   }
 
   guardarAsociacionRoles(usuario: Usuario, modal: any) {
@@ -1236,67 +1286,72 @@ export class UsuariosComponent implements OnInit {
   }
 
   openModificarEstatusModal(template: TemplateRef<any>) {
-    // abrir modal mostrando resumen de seleccionados
-    const seleccionados = this.usuarios.filter((u) => (u as any).seleccionado);
-    if (!seleccionados || seleccionados.length === 0) {
-      Swal.fire({
-        title: 'Sin selección',
-        text: 'Debe seleccionar al menos 1 usuario.',
-        icon: 'info',
-      });
-      return;
-    }
-    this.nuevoEstatusMasivo = null;
-    this.modalService.open(template, { centered: true });
+    // validar permiso en servidor antes de abrir
+    this.validateAndExecute('/edit_status_user', () => {
+      // abrir modal mostrando resumen de seleccionados
+      const seleccionados = this.usuarios.filter((u) => (u as any).seleccionado);
+      if (!seleccionados || seleccionados.length === 0) {
+        Swal.fire({
+          title: 'Sin selección',
+          text: 'Debe seleccionar al menos 1 usuario.',
+          icon: 'info',
+        });
+        return;
+      }
+      this.nuevoEstatusMasivo = null;
+      this.modalService.open(template, { centered: true });
+    });
   }
 
   aplicarModificacionEstatus(modal: any) {
-    const seleccionados = this.usuarios.filter((u) => (u as any).seleccionado);
-    if (!seleccionados || seleccionados.length === 0) {
-      Swal.fire({
-        title: 'Sin selección',
-        text: 'No hay usuarios seleccionados.',
-        icon: 'info',
-      });
-      return;
-    }
-    const userIds = seleccionados.map((u) => u.userId);
-    const nuevoStatus = Number(this.nuevoEstatusMasivo);
-    const token = localStorage.getItem('token');
-    if (token === 'fake-token') {
-      // Modo offline: modificar localmente y limpiar selección
-      seleccionados.forEach((u) => (u.userStatus = nuevoStatus));
-      this.usuarios.forEach((u) => ((u as any).seleccionado = false));
-      this.filtrarUsuarios();
-      modal.close();
-      this.showSuccessToast(
-        'Estatus actualizado',
-        `${seleccionados.length} usuario(s) actualizados.`
-      );
-    } else {
-      this.usuariosService
-        .editarEstatusMasivo({ userId: userIds, userStatus: nuevoStatus })
-        .subscribe({
-          next: (resp: any) => {
-            // Actualizar localmente los usuarios seleccionados
-            seleccionados.forEach((u) => (u.userStatus = nuevoStatus));
-            this.usuarios.forEach((u) => ((u as any).seleccionado = false));
-            this.filtrarUsuarios();
-            modal.close();
-            this.showSuccessToast(
-              'Estatus actualizado',
-              `${seleccionados.length} usuario(s) actualizados.`
-            );
-          },
-          error: (err: any) => {
-            Swal.fire({
-              title: 'Error',
-              text: 'No se pudo actualizar el estatus masivo.',
-              icon: 'error',
-            });
-          },
+    this.validateAndExecute('/edit_status_user', () => {
+      const seleccionados = this.usuarios.filter((u) => (u as any).seleccionado);
+      if (!seleccionados || seleccionados.length === 0) {
+        Swal.fire({
+          title: 'Sin selección',
+          text: 'No hay usuarios seleccionados.',
+          icon: 'info',
         });
-    }
+        return;
+      }
+      const userIds = seleccionados.map((u) => u.userId);
+      const nuevoStatus = Number(this.nuevoEstatusMasivo);
+      const token = localStorage.getItem('token');
+      if (token === 'fake-token') {
+        // Modo offline: modificar localmente y limpiar selección
+        seleccionados.forEach((u) => (u.userStatus = nuevoStatus));
+        this.usuarios.forEach((u) => ((u as any).seleccionado = false));
+        this.filtrarUsuarios();
+        modal.close();
+        this.showSuccessToast(
+          'Estatus actualizado',
+          `${seleccionados.length} usuario(s) actualizados.`
+        );
+      } else {
+        this.usuariosService
+          .editarEstatusMasivo({ userId: userIds, userStatus: nuevoStatus })
+          .subscribe({
+            next: (resp: any) => {
+              // Actualizar localmente los usuarios seleccionados
+              seleccionados.forEach((u) => (u.userStatus = nuevoStatus));
+              this.usuarios.forEach((u) => ((u as any).seleccionado = false));
+              this.filtrarUsuarios();
+              modal.close();
+              this.showSuccessToast(
+                'Estatus actualizado',
+                `${seleccionados.length} usuario(s) actualizados.`
+              );
+            },
+            error: (err: any) => {
+              Swal.fire({
+                title: 'Error',
+                text: 'No se pudo actualizar el estatus masivo.',
+                icon: 'error',
+              });
+            },
+          });
+      }
+    });
   }
 
   salir() {

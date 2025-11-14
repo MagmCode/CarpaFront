@@ -12,7 +12,7 @@
     </div>
     <div class="d-flex justify-content-between mb-4">
       <div class="d-flex gap-3">
-        <button class="btn btn-success" (click)="openAddApplicationModal(appModal)">
+        <button class="btn btn-success" *ngIf="hasPrivilege('/add_system')" (click)="openAddApplicationModal(appModal)">
           <i class="mdi mdi-plus"></i> Agregar
         </button>
       </div>
@@ -30,7 +30,7 @@
         <thead class="table-light">
           <tr>
             <!-- <th>Eliminar</th> -->
-            <th class="fw-semibold">Editar</th>
+            <th class="fw-semibold" *ngIf="hasPrivilege('/edit_system')">Editar</th>
             <th (click)="ordenarPor('description')" style="cursor:pointer" class="fw-semibold">
               Nombre
               <span *ngIf="sortColumn === 'description'">
@@ -61,11 +61,11 @@
                 <i class="feather icon-trash-2"></i>
               </button>
             </td> -->
-                        <td>
-              <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditApplicationModal(appModal, app)">
-                <i class="feather icon-edit"></i>
-              </button>
-            </td>
+                        <td *ngIf="hasPrivilege('/edit_system')">
+                          <button class="btn btn-warning btn-sm" title="Editar" (click)="openEditApplicationModal(appModal, app)">
+                            <i class="feather icon-edit"></i>
+                          </button>
+                        </td>
             <td>{{ app.description }}</td>
             <td>{{ app.siglasApplic }}</td>
             <td>{{ app.comentarios }}</td>
@@ -160,7 +160,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button type="submit" class="btn btn-success">{{ modalModo === 'agregar' ? 'Añadir' : 'Guardar' }}</button>
+      <button type="submit" class="btn btn-success" *ngIf="hasPrivilege('/link_rol_user')">{{ modalModo === 'agregar' ? 'Añadir' : 'Guardar' }}</button>
       <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
     </div>
   </form>

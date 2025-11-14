@@ -44,7 +44,7 @@ export class CriteriosService {
    * Create new criteria profile
    */
   crearCriterios(payload: SystemParameters): Observable<SystemParameters> {
-    const url = `${this.apiUrl}/admin/systemparameters/crear`;
+    const url = `${this.apiUrl}/admin/systemparameters`;
     return this.http.post<SystemParameters>(url, payload).pipe(
       tap((resp) => this.criteriosSubject.next(resp)),
       catchError(this.handleError)
@@ -54,6 +54,25 @@ export class CriteriosService {
   /** Convenience: refresh current criterios from server and update subject */
   refresh(): Observable<SystemParameters> {
     return this.getSystemParameters();
+  }
+
+  /**
+   * POST /admin/systemparameters/buscar
+   * Search for system parameters by payload (e.g. { system: 'CARPA', profile: 'criterios' })
+   */
+  buscar(payload: { system: string; profile: string }): Observable<SystemParameters | SystemParameters[]> {
+    const url = `${this.apiUrl}/admin/systemparameters/buscar`;
+    return this.http.post<SystemParameters | SystemParameters[]>(url, payload).pipe(
+      tap((resp) => {
+        // if backend returns a single object or an array, update subject accordingly
+        if (resp && !Array.isArray(resp)) {
+          this.criteriosSubject.next(resp as SystemParameters);
+        } else {
+          // if array, don't pick automatically here; keep current subject but still return resp
+        }
+      }),
+      catchError(this.handleError)
+    );
   }
 
   /** Get current value synchronously (may be null) */
