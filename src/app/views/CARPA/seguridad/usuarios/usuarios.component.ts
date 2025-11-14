@@ -14,6 +14,7 @@ import Swal from 'sweetalert2';
 import { ValidarService } from 'src/app/services/validar.service';
 import { ModificarStatusService } from 'src/app/services/usuarios/modificarStatus.service';
 import { RolesService } from 'src/app/services/roles/roles.service';
+import { CriteriosService } from 'src/app/services/configuracion/criterios.service';
 
 @Component({
   selector: 'app-usuarios',
@@ -141,6 +142,8 @@ export class UsuariosComponent implements OnInit {
   modalLoadingVincularRoles: boolean = false;
   ldapLoading: boolean = false;
   ldapUsuarioBuscado: boolean = false;
+  // URL del servicio LDAP tomada de criterios (system parameters)
+  ldapServiceUrl: string | null = null;
   buscarUsuarioLDAP(login: string) {
     this.ldapLoading = true;
     this.ldapUsuarioBuscado = false;
@@ -338,6 +341,7 @@ export class UsuariosComponent implements OnInit {
     private route: ActivatedRoute,
     private rolesService: RolesService
     , private validarService: ValidarService
+    , private criteriosService: CriteriosService
     , private jwtService: JwtService
   ) {}
   // Privileges resolved from JWT payload (set of URLs)
@@ -439,6 +443,24 @@ export class UsuariosComponent implements OnInit {
         }
       });
     }
+
+    // Subscribe to criterios (system parameters) to obtain LDAP service URL for LDAP flows
+    try {
+      this.criteriosService.criterios$.subscribe((c) => {
+        if (c && Array.isArray((c as any).settings)) {
+          const ldapSetting = (c as any).settings.find((s: any) => s.key === 'ldap.service.url');
+          let value: any = ldapSetting ? ldapSetting.value : null;
+          if (value && typeof value === 'object' && '$numberInt' in value) {
+            value = String(value['$numberInt']);
+          }
+          this.ldapServiceUrl = value ?? null;
+        }
+      });
+      // If not loaded yet, trigger a buscar to fetch the criterios profile (non-blocking)
+      if (!this.criteriosService.currentValue) {
+        this.criteriosService.buscar({ system: 'CARPA', profile: 'criterios' }).subscribe({ next: () => {}, error: () => {} });
+      }
+    } catch (e) { /* ignore */ }
   }
 
   // --- Batch file handling state ---

@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { SessionSyncService, SessionEvent } from './services/session-sync.service';
 import { Router } from '@angular/router';
+import { SessionActivityService } from './services/session-activity.service';
 
 @Component({
   selector: 'app-root',
@@ -14,9 +15,13 @@ export class AppComponent implements OnInit, OnDestroy {
   private visibilityHandler = () => this.checkAuthAndRedirect();
   private focusHandler = () => this.checkAuthAndRedirect();
 
-  constructor(private sessionSync: SessionSyncService, private router: Router) {}
+  constructor(private sessionSync: SessionSyncService, private router: Router, private sessionActivityService: SessionActivityService) {}
 
   ngOnInit(): void {
+    // Start activity tracking (auto-logout on inactivity and handle unload)
+    try { this.sessionActivityService.start(); } catch (e) { /* ignore */ }
+
+    // Ensure activity service is stopped on destroy via ngOnDestroy
     // React to session events from other tabs
     this.sessionSync.onEvent((ev: SessionEvent) => {
       if (!ev || !ev.type) return;
@@ -56,6 +61,7 @@ export class AppComponent implements OnInit, OnDestroy {
       document.removeEventListener('visibilitychange', this.visibilityHandler);
       window.removeEventListener('focus', this.focusHandler);
     } catch (e) {}
+    try { this.sessionActivityService.stop(); } catch (e) {}
   }
 
   private checkAuthAndRedirect(): void {

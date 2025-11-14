@@ -665,6 +665,15 @@
         </div>
       </div>
       <div class="modal-footer">
+        <div *ngIf="nuevoTypeAccess === 'Directorio Activo'" class="me-auto text-muted">
+          <small>
+            Servicio Directorio Activo (LDAP): {{ ldapServiceUrl }}
+
+            <ng-template #noLdapUrl>
+              <span>No hay URL LDAP configurada.</span>
+            </ng-template>
+          </small>
+        </div>
         <button *ngIf="hasPrivilege('/add_user')" type="submit" class="btn btn-success" data-privilege="/add_user" [disabled]="(nuevoTypeAccess === 'Directorio Activo' && !ldapUsuarioBuscado)">Agregar</button>
         <button type="button" class="btn btn-secondary"
           (click)="modal.close(); limpiarFormularioNuevoUsuario()">Cerrar</button>
