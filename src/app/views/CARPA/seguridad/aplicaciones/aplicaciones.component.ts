@@ -60,6 +60,15 @@ export class AplicacionesComponent implements OnInit {
             onAllowed();
           },
           error: (err) => {
+            if (err.status === 500) {
+              Swal.fire({
+                title: 'Error al consultar',
+                text: 'No se pudo validar el privilegio, inténtelo más tarde.',
+                icon: 'error',
+              });
+              return;
+            } else {
+              
             console.error('Error validando privilegio', err);
             Swal.fire({
                 title: 'Acceso denegado',
@@ -67,6 +76,7 @@ export class AplicacionesComponent implements OnInit {
                 icon: 'warning',
               });
               return;
+            }
           }
         });
       } catch (e) {

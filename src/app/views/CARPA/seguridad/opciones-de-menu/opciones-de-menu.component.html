@@ -167,6 +167,33 @@
           [ngClass]="{'is-invalid': false}">
         <!-- URL es opcional, nunca muestra error -->
       </div>
+  <!-- Campo Icono (oculto cuando se agrega un submenú) -->
+<div class="mb-3" *ngIf="!parentForSubmenu">
+  <label for="icono" class="form-label">Icono</label>
+  <div class="d-flex gap-2 align-items-center">
+    <div class="input-group input-group-sm" style="width:220px;">
+      <span class="input-group-text" *ngIf="opcionSeleccionada.icono">
+        <i [attr.icon-bdv]="opcionSeleccionada.icono" [ngClass]="opcionSeleccionada.icono + ' icon-preview'"></i>
+      </span>
+      <!-- input visible solo para interfaz (readonly). El valor real queda en el hidden input ligado a ngModel -->
+      <!-- <input id="icono" class="form-control" readonly [value]="opcionSeleccionada.icono ? '' : ''" placeholder="Ninguno seleccionado"> -->
+  <input type="hidden" name="icono" [value]="opcionSeleccionada.icono" [ngClass]="(opcionSeleccionada.icono || '') + ' icon-selected'" >
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="showIconPicker = !showIconPicker">
+        +
+      </button>
+    </div>
+  </div>
+
+<div *ngIf="showIconPicker" class="icon-picker mt-2">
+  <div class="d-flex flex-wrap gap-2 icons-grid">
+    <button type="button" class="btn btn-light icon-btn" *ngFor="let ic of icons" (click)="selectIcon(ic)" [title]="ic">
+      <!-- usamos el atributo icon-bdv y aplicamos también la clase para que el font-face de style.css pinte el glifo -->
+      <i [attr.icon-bdv]="ic" [ngClass]="ic + ' icon-preview'"></i>
+      <!-- <div class="small text-truncate" style="max-width:96px">{{ ic }}</div> -->
+    </button>
+  </div>
+</div>
+</div>
       <div class="mb-3">
         <label for="aplicaciones" class="form-label">Sistema</label>
         <select id="aplicaciones" name="aplicaciones" class="form-select"

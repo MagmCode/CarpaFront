@@ -1,6 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { SessionSyncService } from './session-sync.service';
 import { environment } from 'src/environments/environment';
+import Swal from 'sweetalert2';
 
 /**
  * SessionActivityService
@@ -9,10 +10,20 @@ import { environment } from 'src/environments/environment';
  */
 @Injectable({ providedIn: 'root' })
 export class SessionActivityService {
-  // 1 minute inactivity timeout
-  private readonly INACTIVITY_MS = 60 * 1000;
+  // default inactivity timeout (fallback) — will be overridden from token exp when available
+  private INACTIVITY_MS = 300 * 1000;
   private timeoutId: any = null;
   private started = false;
+  // flag to indicate an extend-session prompt is currently shown
+  private promptActive = false;
+  
+
+  
+ // key para sincronizar actividad entre pestañas
+ private readonly LAST_ACTIVITY_KEY = '__last_activity__';
+ // checker que valida inactivity global periódicamente
+ private globalCheckerId: any = null;
+
 
   // list of event types to treat as activity
   private readonly activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
@@ -54,6 +65,12 @@ export class SessionActivityService {
     });
     this.resetTimer();
 
+   // publicar actividad inicial (para sincronizar entre pestañas)
+   try { localStorage.setItem(this.LAST_ACTIVITY_KEY, String(Date.now())); } catch (e) { /* ignore */ }
+   // iniciar checker global que comprueba última actividad en todas las pestañas
+   try { this.globalCheckerId = setInterval(() => this.checkGlobalInactivity(), 2000); } catch (e) { /* ignore */ }
+
+
   // If we are reloading this tab, signal cancel so other tabs don't treat this as a close
     try {
       const navEntries = (performance && (performance as any).getEntriesByType) ? (performance as any).getEntriesByType('navigation') : null;
@@ -83,6 +100,7 @@ export class SessionActivityService {
     window.removeEventListener('storage', this.boundStorageHandler as any);
     try { window.removeEventListener('keydown', this.handleKeydown as any); } catch (e) {}
     this.clearTimer();
+    try { if (this.globalCheckerId) { clearInterval(this.globalCheckerId); this.globalCheckerId = null; } } catch (e) {}
     try { if (this.heartbeatId) { clearInterval(this.heartbeatId); this.heartbeatId = null; } } catch (e) {}
     // remove own alive key
     try { localStorage.removeItem(`__tab_alive__:${this.tabId}`); } catch (e) {}
@@ -90,9 +108,19 @@ export class SessionActivityService {
 
   resetTimer(): void {
     this.clearTimer();
+    // If there's no session token, don't schedule inactivity checks (we're likely on login page)
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    if (!token) {
+      // keep timers cleared while unauthenticated
+      return;
+    }
+    // compute current inactivity interval (may be derived from token exp)
+    const ms = this.computeInactivityMsFromToken() || this.INACTIVITY_MS;
     this.timeoutId = setTimeout(() => {
-      try { this.logoutDueToInactivity(); } catch (e) { /* ignore */ }
-    }, this.INACTIVITY_MS);
+      try { this.handleInactivityTimeout(); } catch (e) { /* ignore */ }
+    }, ms);
+ // anunciar actividad globalmente para que otras pestañas reinicien su contador
+ try { localStorage.setItem(this.LAST_ACTIVITY_KEY, String(Date.now())); } catch (e) { /* ignore */ }
   }
 
   private clearTimer(): void {
@@ -165,6 +193,11 @@ export class SessionActivityService {
   private handleStorageEvent(ev: StorageEvent): void {
     try {
       if (!ev.key) return;
+     // si otra pestaña reportó actividad, reiniciamos timer local
+     if (ev.key === this.LAST_ACTIVITY_KEY) {
+       this.resetTimer();
+       return;
+     }
       if (ev.key === '__tab_unloading__' && ev.newValue) {
         // another tab announced unload; schedule a short wait to see if it's a reload
         try {
@@ -188,6 +221,123 @@ export class SessionActivityService {
       }
     } catch (e) { /* ignore */ }
   }
+
+  
+      // Chequeo periódico de última actividad global (por si setTimeout/intervals están throttled)
+  private checkGlobalInactivity(): void {
+    try {
+      // if a prompt is currently active, don't force logout from the global checker
+      if (this.promptActive) return;
+
+      // if not logged in, skip inactivity enforcement
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (!token) return;
+
+      const v = localStorage.getItem(this.LAST_ACTIVITY_KEY);
+      if (!v) return;
+      const lastTs = parseInt(v, 10) || 0;
+      const now = Date.now();
+      const ms = this.computeInactivityMsFromToken() || this.INACTIVITY_MS;
+      if (now - lastTs > ms) {
+        // no actividad global -> cerrar sesión
+        this.clearTimer();
+        try { this.logoutDueToInactivity(); } catch (e) { /* ignore */ }
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  /**
+   * Compute inactivity interval (ms) from token 'exp' claim divided by 3.
+   * Returns null if token/exp not available or already expired.
+   */
+  private computeInactivityMsFromToken(): number | null {
+    try {
+      // read token from session/local storage
+      let token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (!token) return null;
+      // If token stored as 'Bearer <jwt>' strip prefix
+      if (token.startsWith('Bearer ')) token = token.slice(7);
+      const parts = token.split('.');
+      if (parts.length < 2) return null;
+      const payload = parts[1];
+      const json = this.base64UrlDecode(payload);
+      const obj = JSON.parse(json || '{}');
+      const exp = obj && (obj.exp || obj.exp === 0) ? Number(obj.exp) : null;
+      if (!exp) return null;
+      // exp is usually in seconds since epoch
+      const expMs = exp * 1000;
+      const now = Date.now();
+      const remaining = expMs - now;
+      if (remaining <= 0) {
+        // token already expired -> force logout immediately
+        try { this.logoutDueToInactivity(); } catch (e) { /* ignore */ }
+        return null;
+      }
+      // inactivity threshold is one third of remaining lifetime
+      const ms = Math.floor(remaining / 3);
+      // ensure we give at least a small window to show the prompt (5s)
+      return Math.max(5000, ms);
+    } catch (e) {
+      // on any parse error, fallback to default
+      return Math.floor(this.INACTIVITY_MS / 3);
+    }
+  }
+
+  private base64UrlDecode(input: string): string {
+    // base64url -> base64
+    let s = input.replace(/-/g, '+').replace(/_/g, '/');
+    // pad
+    while (s.length % 4) s += '=';
+    try {
+      return decodeURIComponent(Array.prototype.map.call(atob(s), (c: string) => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+    } catch (e) {
+      // fallback
+      return atob(s);
+    }
+  }
+
+  /**
+   * Called when inactivity threshold reached. Shows a 5s prompt to extend session.
+   * If user accepts within 5s -> reset timers. Otherwise -> logout.
+   */
+  private async handleInactivityTimeout(): Promise<void> {
+    try {
+      // If not logged in, don't show prompts
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (!token) return;
+      // mark prompt active and bump last-activity so the global checker won't logout while the Swal is visible
+      this.promptActive = true;
+      try { localStorage.setItem(this.LAST_ACTIVITY_KEY, String(Date.now())); } catch (e) { /* ignore */ }
+
+      // show a SweetAlert2 prompt with 5s timer; if user confirms -> extend session
+      const result = await Swal.fire({
+        title: '¿Desea extender la sesión?',
+        showCancelButton: true,
+        confirmButtonText: 'Extender',
+        cancelButtonText: 'Cancelar',
+        timer: 5000,
+        timerProgressBar: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+
+      // clear promptActive regardless of outcome
+      this.promptActive = false;
+
+      if (result && (result as any).isConfirmed) {
+        // accepted -> treat as activity
+        this.resetTimer();
+        try { localStorage.setItem(this.LAST_ACTIVITY_KEY, String(Date.now())); } catch (e) { /* ignore */ }
+      } else {
+        // not accepted or timer elapsed -> logout
+        try { this.logoutDueToInactivity(); } catch (e) { /* ignore */ }
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  // The previous custom DOM prompt was removed in favor of SweetAlert2 (Swal.fire).
 
   private logoutDueToExternalTabClose(leavingTabId: string): void {
     try {

@@ -3,6 +3,7 @@ import Swal from 'sweetalert2';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AplicacionesService, Aplicacion } from 'src/app/services/aplicaciones-services/aplicaciones.service';
 import { MenuService } from 'src/app/services/menu/menu.service';
+import { HttpClient } from '@angular/common/http';
 
 export interface OpcionMenu {
   // backend-shaped fields
@@ -12,6 +13,7 @@ export interface OpcionMenu {
   orden: number;
   siglasAplicacion: string;
   idPadre: number | null;
+  icono?: string;
 
   // local/UI-only fields
   id?: number; // backend primary id
@@ -26,6 +28,8 @@ export interface OpcionMenu {
   styleUrls: ['./opciones-de-menu.component.scss']
 })
 export class OpcionesDeMenuComponent implements OnInit {
+  // default icon when user doesn't select one
+  readonly DEFAULT_ICON = 'icon-bdv-icon-file-l';
   public submitted = false;
 
   loading = false;
@@ -56,6 +60,18 @@ export class OpcionesDeMenuComponent implements OnInit {
     // }
     // // Puedes agregar más datos de prueba aquí
   ];
+ icons: string[] = [];
+ 
+  // Propiedades
+iconList: string[] = [];
+filteredIcons: string[] = [];
+iconSearch: string = '';
+showIconPicker = false;
+iconSpritePath = 'assets/icomoon.svg'; // ajusta la ruta si es otra
+
+// Si necesitas forzar un prefijo al selector, por ejemplo 'icon-bdv-':
+iconPrefix = ''; // deja vacío si el id ya viene con el prefijo
+
 
   // Paginación y búsqueda
   page: number = 1;
@@ -73,17 +89,19 @@ export class OpcionesDeMenuComponent implements OnInit {
 
 
   modalModo: 'agregar' | 'editar' = 'agregar';
-  opcionSeleccionada: OpcionMenu = { nombre: '', ruta: '', idAplicacion: null, orden: 1, siglasAplicacion: '', idPadre: null, checked: true };
+  opcionSeleccionada: OpcionMenu = { nombre: '', ruta: '', idAplicacion: null, orden: 1, siglasAplicacion: '', idPadre: null, checked: true, icono: this.DEFAULT_ICON };
 
   aplicaciones: Aplicacion[] = [];
 
   constructor(
     private modalService: NgbModal,
     private aplicacionesService: AplicacionesService
-    , private menuService: MenuService
+    , private menuService: MenuService,
+    private http: HttpClient
   ) { }
 
   ngOnInit(): void {
+     this.loadIconsFromCss();
     // subscribe to aplicaciones observable so we receive backend-loaded apps
     this.aplicacionesService.getAplicaciones$().subscribe(apps => {
       this.aplicaciones = apps || [];
@@ -92,6 +110,46 @@ export class OpcionesDeMenuComponent implements OnInit {
     this.aplicacionesService.loadAplicaciones().subscribe({ next: () => {}, error: () => {} });
     // load menu from backend
     this.reloadMenu();
+  }
+  private loadIconsFromCss() {
+    const cssPath = 'assets/style.css';
+    this.http.get(cssPath, { responseType: 'text' }).subscribe(css => {
+      // busca selectores del tipo .icon-bdv-nombre-l:before y sólo toma los que terminan en -l
+      const re = /\.([a-z0-9_-]*icon-bdv-[a-z0-9_-]+)\s*:\s*before/ig;
+      const set = new Set<string>();
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(css)) !== null) {
+        const cls = m[1].trim();
+        if (cls.endsWith('-l')) { // solo iconos con sufijo -l
+          set.add(cls);
+        }
+      }
+      this.icons = Array.from(set).sort();
+    }, err => {
+      console.error('No se pudo cargar', cssPath, err);
+    });
+  }
+
+filterIcons() {
+  const q = (this.iconSearch || '').toLowerCase();
+  if (!q) {
+    this.filteredIcons = [...this.iconList];
+  } else {
+    this.filteredIcons = this.iconList.filter(i => i.toLowerCase().includes(q));
+  }
+}
+
+getIconHref(id: string) {
+  // Algunos navegadores usan href, otros xlink:href; usar href funciona hoy en la mayoría. 
+  // Retornamos ruta completa al sprite + '#' + id.
+  return `${this.iconSpritePath}#${id}`;
+}
+
+  selectIcon(iconName: string) {
+    // guarda la selección en tu modelo/formulario
+    this.opcionSeleccionada.icono = iconName;
+    console.log('Icono seleccionado:', iconName);
+    this.showIconPicker = false;
   }
 
   private reloadMenu(): void {
@@ -106,6 +164,8 @@ export class OpcionesDeMenuComponent implements OnInit {
             ruta: i.ruta ?? i.url ?? '',
             orden: Number(i.orden ?? 0),
             siglasAplicacion: i.siglasAplicacion ?? i.aplicaciones ?? '',
+            // map backend icon field (stIcon) into our UI model (use undefined internally when no icon)
+            icono: i.stIcon ?? i.icono ?? undefined,
             // preserve backend id fields so we can use them when creating submenus
             id: i.id,
             idPadre: i.idPadre ?? null,
@@ -139,6 +199,8 @@ export class OpcionesDeMenuComponent implements OnInit {
         ruta: it.ruta || '',
         orden: Number(it.orden || 0),
         siglasAplicacion: it.siglasAplicacion || '',
+  // include icon from mapped data (undefined if none)
+  icono: (it as any).icono ?? undefined,
         checked: true,
         hijos: [] as OpcionMenu[],
         id: it.id,
@@ -305,9 +367,17 @@ export class OpcionesDeMenuComponent implements OnInit {
       orden: 1,
       siglasAplicacion: '',
   idPadre: parent && typeof parent.id === 'number' ? parent.id : null,
-      checked: true
+      checked: true,
+      // If creating a submenu, icon is not applicable: keep undefined so internal model has no icon
+      icono: parent ? undefined : this.DEFAULT_ICON
     };
-    this.modalService.open(content, { centered: true });
+    const modalRef = this.modalService.open(content, { centered: true });
+    modalRef.result.finally(() => {
+      // reset state in case the modal was dismissed without saving
+      this.parentForSubmenu = null;
+      this.showIconPicker = false;
+      this.submitted = false;
+    }).catch(() => { /* ignore */ });
   }
 
   private parentForEdit: OpcionMenu | null = null;
@@ -315,8 +385,11 @@ export class OpcionesDeMenuComponent implements OnInit {
 
   openEditOpcionModal(content: TemplateRef<any>, opcion: OpcionMenu, parent?: OpcionMenu, index?: number): void {
     this.modalModo = 'editar';
+    // if we open edit, ensure any previous "add submenu" state is cleared so icon-picker appears
+    this.parentForSubmenu = null;
+    this.showIconPicker = false;
     // Asegura que la lista de aplicaciones esté cargada antes de abrir el modal
-  this.submitted = false;
+    this.submitted = false;
     if (!this.aplicaciones || this.aplicaciones.length === 0) {
       this.aplicacionesService.loadAplicaciones().subscribe({
         next: () => this._openEditOpcionModal(content, opcion, parent, index),
@@ -341,11 +414,19 @@ export class OpcionesDeMenuComponent implements OnInit {
     console.log('[EDIT MODAL] selected idAplicacion:', selectedId);
     this.opcionSeleccionada = {
       ...opcion,
-      idAplicacion: selectedId
+      idAplicacion: selectedId,
+      // For edit: show the icon from backend's stIcon (mapped to icono). If it's missing, keep undefined so no icon preview is shown.
+      icono: (opcion && (opcion as any).icono != null) ? (opcion as any).icono : undefined
     };
     this.parentForEdit = parent || null;
     this.indexForEdit = typeof index === 'number' ? index : null;
-    this.modalService.open(content, { centered: true });
+    const modalRef = this.modalService.open(content, { centered: true });
+    // when modal closes by any reason, ensure icon-picker state and parentForSubmenu are reset
+    modalRef.result.finally(() => {
+      this.parentForSubmenu = null;
+      this.showIconPicker = false;
+      this.submitted = false;
+    }).catch(() => { /* ignore */ });
   }
 
   saveOpcion(modal: any, opcionForm: any): void {
@@ -374,6 +455,9 @@ export class OpcionesDeMenuComponent implements OnInit {
         orden: Number(this.opcionSeleccionada.orden) || 1,
         habilitado: this.opcionSeleccionada.checked ? 1 : 0,
         parentId: this.parentForSubmenu && (this.parentForSubmenu as any).id ? (this.parentForSubmenu as any).id : null
+        ,
+        // include stIcon in create payload: if adding a submenu, always send null; otherwise use selection or default
+        stIcon: this.parentForSubmenu ? null : (this.opcionSeleccionada.icono ?? this.DEFAULT_ICON)
       };
 
       this.loading = true;
@@ -401,6 +485,8 @@ export class OpcionesDeMenuComponent implements OnInit {
         orden: Number(this.opcionSeleccionada.orden) || 1,
         habilitado: this.opcionSeleccionada.checked ? 1 : 0
       };
+      // include stIcon in edit payload; if the field is null, send null to indicate no icon
+      payload.stIcon = this.opcionSeleccionada.icono ?? null;
       this.loading = true;
       this.menuService.editarMenu(payload).subscribe({
         next: (edited: any) => {

@@ -10,7 +10,8 @@
 
     <i class="icon user-icon icon-bdv-icon-profile-l" title="User"></i>
     <div class="ms-2 me-4 user-info d-flex" *ngIf="usuarioActual">
-      <div class="fw-bold">{{ usuarioActual }}</div>
+      <!-- <div class="fw-bold">{{ usuarioActual }}</div> -->
+      <div class="fw-bold">Usuario Carpa</div>
       <div class="text-muted small roleName" *ngIf="usuarioRoleName">{{ usuarioRoleName }}</div>
     </div>
       <i class="icon logout-icon icon-bdv-icon-exit-l" (click)="onLogout($event)" title="Cerrar sesión"></i>

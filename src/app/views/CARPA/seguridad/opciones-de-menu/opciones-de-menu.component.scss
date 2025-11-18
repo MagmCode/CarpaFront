@@ -1,0 +1,51 @@
+.icon-picker {
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid #e9ecef;
+  padding: 8px;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.icons-grid .icon-btn {
+  width: 96px;
+  height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  text-align: center;
+  border: 1px solid transparent;
+}
+
+.icons-grid .icon-btn:hover {
+  border-color: #ddd;
+  background: #f8f9fa;
+}
+
+.icon-preview {
+  display: inline-block; /* asegura que ::before respete tamaño */
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Tamaño grande para los íconos en la rejilla (picker) */
+.icons-grid .icon-btn .icon-preview::before {
+  font-size: 24px; /* reducido para la rejilla; el preview seleccionado mantiene 28px */
+  line-height: 1;
+  display: inline-block;
+}
+
+/* Preview pequeño/mediano en el input */
+.input-group-text .icon-preview::before {
+  font-size: 28px; /* aumentado para que el icono preseleccionado sea más visible */
+  line-height: 1;
+  display: inline-block;
+}
+
+/* Si quieres un preview aún más grande cuando el icono está seleccionado, puedes usar: */
+.input-group-text.icon-large .icon-preview::before {
+  font-size: 32px;
+}
