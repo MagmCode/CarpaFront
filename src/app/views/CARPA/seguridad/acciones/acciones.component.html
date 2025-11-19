@@ -183,6 +183,11 @@
           </div>
         </div>
         <div class="modal-footer">
+          <div class="me-auto">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="downloadTemplate('/assets/templates/plantilla-privilegios.xlsx','plantilla-privilegios.xlsx')" title="Descargar plantilla">
+              <i class="mdi mdi-download"></i>
+            </button>
+          </div>
           <button type="submit" class="btn btn-success">Procesar</button>
           <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
         </div>

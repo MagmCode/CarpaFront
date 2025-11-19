@@ -575,6 +575,29 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
+  public async downloadTemplate(url: string, filename: string): Promise<void> {
+  try {
+    const resp = await fetch(url, { credentials: 'same-origin' });
+    if (!resp.ok) {
+      console.error('Download failed', resp.status, resp.statusText);
+      alert('No se pudo descargar la plantilla (código ' + resp.status + '). Compruebe la ruta o la conexión.');
+      return;
+    }
+    const blob = await resp.blob();
+    const a = document.createElement('a');
+    const urlBlob = window.URL.createObjectURL(blob);
+    a.href = urlBlob;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(urlBlob);
+  } catch (err) {
+    console.error('Error descargando plantilla', err);
+    alert('Error al descargar la plantilla. Compruebe la conexión y el firewall/antivirus.');
+  }
+}
+
   usuariosAll() {
     this.usuariosService.consultarUsuarios().subscribe({
       next: (data) => {

@@ -691,12 +691,19 @@
 
       <div class="modal-body">
         <div class="mb-3">
-          <label for="archivoLote" class="form-label">Seleccionar archivo Excel (.xlsx)</label>
-          <input id="archivoLote" type="file" accept=".xls,.xlsx" class="form-control"
-            (change)="onFileSelected($event)">
-        </div>
+            <label for="archivoLote" class="form-label d-flex align-items-center justify-content-between">
+              <span>Seleccionar archivo Excel (.xlsx)</span>
+            </label>
+            <input id="archivoLote" type="file" accept=".xls,.xlsx" class="form-control"
+              (change)="onFileSelected($event)">
+          </div>
       </div>
       <div class="modal-footer">
+        <div class="me-auto">
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="downloadTemplate('/assets/templates/plantilla-usuarios.xlsx','plantilla-usuarios.xlsx')" title="Descargar plantilla">
+            <i class="mdi mdi-download"></i>
+          </button>
+        </div>
         <button type="submit" class="btn btn-success" *ngIf="hasPrivilege('/lote_user')">Procesar</button>
         <button type="button" class="btn btn-secondary" (click)="modal.close()">Cerrar</button>
       </div>

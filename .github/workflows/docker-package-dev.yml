@@ -12,6 +12,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Use dev environment file
+        run: |
+          if [ -f src/environments/environment.dev.ts ]; then
+            cp src/environments/environment.dev.ts src/environments/environment.ts
+            echo "Replaced src/environments/environment.ts with environment.dev.ts"
+          else
+            echo "src/environments/environment.dev.ts not found — skipping replacement"
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 

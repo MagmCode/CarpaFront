@@ -370,6 +370,30 @@ export class AccionesComponent implements OnInit {
       }
     });
   }
+
+  // Utility: download a template via fetch and trigger browser download; shows alerts on failure
+  public async downloadTemplate(url: string, filename: string): Promise<void> {
+    try {
+      const resp = await fetch(url, { credentials: 'same-origin' });
+      if (!resp.ok) {
+        console.error('Download failed', resp.status, resp.statusText);
+        Swal.fire({ title: 'Error', text: 'No se pudo descargar la plantilla (código ' + resp.status + '). Compruebe la ruta o la conexión.', icon: 'error' });
+        return;
+      }
+      const blob = await resp.blob();
+      const a = document.createElement('a');
+      const urlBlob = window.URL.createObjectURL(blob);
+      a.href = urlBlob;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(urlBlob);
+    } catch (err) {
+      console.error('Error descargando plantilla', err);
+      Swal.fire({ title: 'Error', text: 'Error al descargar la plantilla. Compruebe la conexión y el firewall/antivirus.', icon: 'error' });
+    }
+  }
 }
 
 
