@@ -1,6 +1,6 @@
 {
   "name": "nobleui-angular",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "scripts": {
     "ng": "ng",
    "start": "ng serve --ssl true --ssl-cert ssl/server.crt --ssl-key ssl/server.key --host 0.0.0.0 ",

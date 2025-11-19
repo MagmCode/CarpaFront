@@ -1,6 +1,6 @@
 services:
   carpa-dev:
-    image: carpa-dev:1.0.2
+    image: carpa-dev:1.0.4
     ports:
       - "4200:4200"
     environment:
