@@ -570,7 +570,7 @@ export class UsuariosComponent implements OnInit {
       title,
       text,
       showConfirmButton: false,
-      timer: 3000,
+      timer: 5000,
       timerProgressBar: true,
     });
   }
@@ -833,7 +833,7 @@ export class UsuariosComponent implements OnInit {
               text: 'Ya existe un usuario con el mismo ID.',
               icon: 'warning',
               showConfirmButton: false,
-              timer: 2000,
+              timer: 5000,
             });
           } else {
             Swal.fire({
@@ -841,7 +841,7 @@ export class UsuariosComponent implements OnInit {
               text: (err && err.message) ? err.message : JSON.stringify(err),
               icon: 'error',
               showConfirmButton: false,
-              timer: 2000,
+              timer: 5000,
             });
           }
         },

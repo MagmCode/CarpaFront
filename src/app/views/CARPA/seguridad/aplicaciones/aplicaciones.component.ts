@@ -235,7 +235,7 @@ export class AplicacionesComponent implements OnInit {
           title: 'Campos obligatorios',
           text: 'Debes completar todos los campos antes de guardar.',
           showConfirmButton: false,
-          timer: 3500,
+          timer: 5000,
           timerProgressBar: true
         });
         return;
@@ -255,7 +255,7 @@ export class AplicacionesComponent implements OnInit {
               title: 'Sistema creado',
               text: `${created.description}`,
               showConfirmButton: false,
-              timer: 3000,
+              timer: 5000,
               timerProgressBar: true
             });
             modal.close();
@@ -271,7 +271,7 @@ export class AplicacionesComponent implements OnInit {
               title: 'Sistema duplicado',
               text: 'Ya existe una sistema con las mismas siglas.',
               showConfirmButton: false,
-              timer: 2000,
+              timer: 5000,
               // timerProgressBar: true
             });
             } else {
@@ -282,7 +282,7 @@ export class AplicacionesComponent implements OnInit {
               title: 'Error al crear',
               text: (err && err.message) ? err.message : JSON.stringify(err),
               showConfirmButton: false,
-              timer: 2000,
+              timer: 5000,
               // timerProgressBar: true
             });
           }
@@ -307,7 +307,7 @@ export class AplicacionesComponent implements OnInit {
               title: 'Sistema actualizado',
               text: `${updated.description}`,
               showConfirmButton: false,
-              timer: 3000,
+              timer: 5000,
               timerProgressBar: true
             });
             modal.close();
@@ -359,7 +359,7 @@ export class AplicacionesComponent implements OnInit {
               title: 'Eliminado',
               text: `el sistema "${app.description}" ha sido eliminado.`,
               showConfirmButton: false,
-              timer: 2000
+              timer: 5000
             });
           },
           error: (err) => {

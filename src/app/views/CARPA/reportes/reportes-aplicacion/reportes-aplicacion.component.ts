@@ -4,7 +4,7 @@ import { ReportesService as ExportReportesService } from 'src/app/services/repor
 import { ReportesService as AuditReportesService } from 'src/app/services/auditoria/reportes.service';
 import Swal from 'sweetalert2';
 
-type ViewMode = 'usuarios' | 'acciones' | 'roles';
+type ViewMode = 'usuarios' | 'privilegios' | 'roles';
 
 @Component({
   selector: 'app-reportes-aplicacion',
@@ -120,7 +120,7 @@ export class ReportesAplicacionComponent implements OnInit {
   updateList() {
     let source: any[] = [];
     if (this.view === 'usuarios') source = this.usuarios;
-    if (this.view === 'acciones') source = this.acciones;
+    if (this.view === 'privilegios') source = this.acciones;
     if (this.view === 'roles') source = this.roles;
 
     if (this.searchTerm && this.searchTerm.trim()) {
@@ -131,7 +131,7 @@ export class ReportesAplicacionComponent implements OnInit {
             || (item.fullName || '').toLowerCase().includes(term)
             || (item.email || '').toLowerCase().includes(term);
         }
-        if (this.view === 'acciones') {
+        if (this.view === 'privilegios') {
           return (item.url || '').toLowerCase().includes(term)
             || (item.description || '').toLowerCase().includes(term)
             || (item.applicationName || '').toLowerCase().includes(term);
@@ -193,7 +193,7 @@ export class ReportesAplicacionComponent implements OnInit {
       return;
     }
 
-    if (this.view === 'acciones') {
+    if (this.view === 'privilegios') {
       const payload = { idApplication: this.selectedApp };
       this.exportReportesService.exportPrivilegios(payload).subscribe({
         next: (blob: Blob) => {
@@ -203,7 +203,7 @@ export class ReportesAplicacionComponent implements OnInit {
         },
         error: (err: any) => {
           this.loading = false;
-          console.error('Export acciones error', err);
+          console.error('Export privilegios error', err);
           Swal.fire({ title: 'Error exportando privilegios', text: (err && err.message) ? err.message : 'No se pudo generar el reporte de privilegios.', icon: 'error' });
         }
       });
